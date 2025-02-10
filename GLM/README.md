@@ -9,7 +9,7 @@ GLM
 ├── src                      # Source code
 │   ├── config.py            # Defines the directories
 │   ├── GLM_pipeline.py      # Main logic for the GLM pipeline (Run this!)
-│   └── tasks_contrasts.py   # Dictionary of tasks and their corresponding conditions -> 
+│   └── task_contrasts.py   # Dictionary of tasks and their corresponding conditions -> 
 ├── README.md                # Project documentation
 └── requirements.txt         # Project dependencies
 ```
@@ -18,7 +18,7 @@ GLM
 
 - **src/GLM_pipeline.py**: Contains the main logic for the GLM pipeline, including the selection and processing of tasks.
   
-- **src/tasks_contrasts.py**: This file will contain a list of tasks and their corresponding conditions based on user selections. It should be transformed into a dictionary with the contrasts (e.g. condition1 - condition2) that want to used for comparing beta maps.
+- **src/task_contrasts.py**: This contain a list of tasks and their corresponding conditions based on user selections. It should be transformed into a dictionary with the contrasts (e.g. condition1 - condition2) that want to used for comparing beta maps.
 
 - **config.py**: Defines the base_dir (where raw data is stored) and the output_dir (where the beta maps will be stored).
 

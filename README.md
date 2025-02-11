@@ -8,17 +8,19 @@ Raw data can be found on [OpenNeuro](https://openneuro.org/datasets/ds002685/ver
 ## Project Structure
 
 ```
-GLM                          # Creating beta maps for each subject and task condition/contrast
+GLM                                # Creating beta maps for each subject and task condition/contrast
 ├── src                      
-│   ├── config.py            # Defines the directories.
-│   ├── GLM_pipeline.py      # Main logic for the GLM pipeline.
-│   └── tasks_contrasts.py   # Dictionary of tasks and their corresponding conditions -> contrasts.
+│   ├── config.py                  # Defines the directories.
+│   ├── GLM_pipeline.py            # Main logic for the GLM pipeline.
+│   └── tasks_contrasts.py         # Dictionary of tasks and their corresponding conditions -> contrasts.
 ├── README.md                
-└── requirements.txt         # Project dependencies
-RSA                          # !! This folder will be added later to build latent representations.
+└── requirements.txt               # Project dependencies
+RSA                                # Representational Similarity Analysis
 ├── src                      
-│   ├── config.py            # Defines the directories.
-├── README.md                
-common_task_sessions.csv     # Contain for each subject an overview about in which sessions (+ how often) each task was done.
-First_GLM.ipynb              # Jupyter notebook to explore GLM outputs (tasks, design matrix,...)
+│   ├── config.py                  # Defines the directories.
+│   └── tasks_contrasts.py         # Dictionary of task contrasts that were chosen to be used for RSA
+├── data_descriptor_contrasts.pdf  # Descriptor of methods used in contrast calculations (from Ebrains, Thirion 2024)
+└── README.md                
+common_task_sessions.csv           # Contain for each subject an overview about in which sessions (+ how often) each task was done.
+First_GLM.ipynb                    # Jupyter notebook to explore GLM outputs (tasks, design matrix,...)
 ```

@@ -100,8 +100,10 @@ for subject in subjects:
                 # Extract parcel data
                 if hemisphere == 'lh':
                     parcel_data = extract_parcel_data(data, fpn_parcels_lh_mapping)
-                else:
+                elif hemisphere == 'rh':
                     parcel_data = extract_parcel_data(data, fpn_parcels_rh_mapping)
+                else:
+                    raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
                 
                 # Compute RDM for each parcel
                 for parcel_name, activations in parcel_data.items():

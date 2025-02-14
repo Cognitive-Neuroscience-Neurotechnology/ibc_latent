@@ -8,3 +8,4 @@ from task_contrasts import task_contrasts
 
 # Define the parameters to iterate over
 subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')] # Extract the subject ID after 'sub-'
+

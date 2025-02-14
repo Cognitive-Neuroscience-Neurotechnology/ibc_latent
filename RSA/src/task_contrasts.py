@@ -1,6 +1,6 @@
 # Chosen contrasts for modeling the FPN
 
-tasks_contrasts = {
+task_contrasts = {
     'ArchiStandard': [
         'audio_computation',              # Mental subtraction upon audio instruction
         #'audio_left_button_press',       # Left hand button presses upon audio instructions

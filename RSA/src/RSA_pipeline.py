@@ -70,6 +70,14 @@ def average_sessions(file_paths):
     print("Data averaged.")
     return average_data
 
+def compute_rsm_cosine(activations):
+    n_conditions = activations.shape[1]
+    rsm = np.zeros((n_conditions, n_conditions))
+    for i in range(n_conditions):
+        for j in range(n_conditions):
+            rsm[i, j] = np.dot(activations[:, i], activations[:, j]) / (np.linalg.norm(activations[:, i]) * np.linalg.norm(activations[:, j]))
+    return rsm
+
 # Define the parameters to iterate over
 print(f"Base directory: {base_dir}")
 subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')]
@@ -111,10 +119,10 @@ for subject_idx, subject in enumerate(subjects):
                 else:
                     raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
                 
-                # Compute RSM for each parcel
+                # Compute RSM for each parcel using cosine similarity
                 for parcel_idx, (parcel_name, activations) in enumerate(parcel_data.items()):
                     print(f"Computing RSM for parcel {parcel_name}...")
-                    rsm = np.corrcoef(activations.T)
+                    rsm = compute_rsm_cosine(activations)
                     rsms_parcels_allsubjs[parcel_idx, subject_idx, task_idx, contrast_idx] = rsm
 
 # Save RSMs to HDF5 file

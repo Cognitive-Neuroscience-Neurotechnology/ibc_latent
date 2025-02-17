@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 from nibabel.freesurfer.io import read_annot
-import h5py
 from config_RSA import base_dir, output_dir
 from task_contrasts import task_contrasts
 
@@ -42,14 +41,14 @@ fpn_parcels_rh_mapping = {vertex: rh_parcel_mapping[vertex] for vertex in vertic
 print("Vertex-to-parcel mappings created.")
 
 def load_surface_map(file_path):
-    #print(f"Loading surface map from {file_path}...")
+    print(f"Loading surface map from {file_path}...")
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
-    #print("Surface map loaded.")
+    print("Surface map loaded.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
-    #print("Extracting parcel data...")
+    print("Extracting parcel data...")
     parcel_data = {}
     for vertex, parcel in parcel_mapping.items():
         parcel_name = parcel.decode('utf-8')
@@ -60,50 +59,36 @@ def extract_parcel_data(data, parcel_mapping):
     # Convert lists to numpy arrays
     for parcel_name in parcel_data:
         parcel_data[parcel_name] = np.array(parcel_data[parcel_name])
-    #print("Parcel data extracted.")
+    print("Parcel data extracted.")
     return parcel_data
 
 def average_sessions(file_paths):
-    print(f"Averaging data across sessions for {file_paths} and {file_paths[0].split('_')[-1].split('.')[0]}...")
+    print("Averaging data across sessions...")
     data_sessions = [load_surface_map(fp) for fp in file_paths]
     average_data = np.mean(data_sessions, axis=0)
     print("Data averaged.")
     return average_data
 
-def compute_rsm_cosine(activations):
-    n_conditions = activations.shape[1]
-    rsm = np.zeros((n_conditions, n_conditions))
-    for i in range(n_conditions):
-        for j in range(n_conditions):
-            rsm[i, j] = np.dot(activations[:, i], activations[:, j]) / (np.linalg.norm(activations[:, i]) * np.linalg.norm(activations[:, j]))
-    
-    # Create the output directory if it doesn't exist
-    subject_dir = os.path.join(output_dir, f"sub-{subject}")
-    parcel_dir = os.path.join(subject_dir, parcel_name)
-    os.makedirs(parcel_dir, exist_ok=True)
-    # Save the RSM to a CSV file within the subject/parcel directory
-    output_file = os.path.join(parcel_dir, f"rsm_task-{task}_contrast-{contrast}_hemi-{hemisphere}.csv")
-    np.savetxt(output_file, rsm, delimiter=",")
-    return rsm
-
 # Define the parameters to iterate over
 print(f"Base directory: {base_dir}")
 subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')]
 hemispheres = ['lh', 'rh']
-nParcels = len(fpn_parcels_names)
-n_tasks = len(task_contrasts)
 
-# Initialize RSMs array
-rsms_parcels_allsubjs = np.zeros((nParcels, len(subjects), n_tasks, n_tasks))
-
-for subject_idx, subject in enumerate(subjects):
-    print("-" * 80)
+for subject in subjects:
     print(f"Processing subject {subject}...")
-    for task_idx, (task, contrasts) in enumerate(task_contrasts.items()):
-        for contrast_idx, contrast in enumerate(contrasts):
+    subject_output_dir = os.path.join(output_dir, f'sub-{subject}')
+    os.makedirs(subject_output_dir, exist_ok=True)
+    
+    for task, contrasts in task_contrasts.items():
+        task_output_dir = os.path.join(subject_output_dir, f'task-{task}')
+        os.makedirs(task_output_dir, exist_ok=True)
+        
+        for contrast in contrasts:
+            contrast_output_dir = os.path.join(task_output_dir, f'contrast-{contrast}')
+            os.makedirs(contrast_output_dir, exist_ok=True)
+            
             for hemisphere in hemispheres:
-                #print("-" * 30)
-                #print(f"Processing task {task}, contrast {contrast}, hemisphere {hemisphere}...")
+                print(f"Processing task {task}, contrast {contrast}, hemisphere {hemisphere}...")
                 # Find all sessions for the current subject, task, and contrast
                 session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
                 file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_hemi-{hemisphere}_ZMap-{contrast}.gii') for session in session_dirs]
@@ -113,7 +98,7 @@ for subject_idx, subject in enumerate(subjects):
                 if not file_paths:
                     print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
                     continue
-                #print(f"Found files: {file_paths}")
+                print(f"Found files: {file_paths}")
                 
                 # Average the data across sessions if there are multiple sessions
                 if len(file_paths) > 1:
@@ -129,14 +114,11 @@ for subject_idx, subject in enumerate(subjects):
                 else:
                     raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
                 
-                # Compute RSM for each parcel using cosine similarity
-                for parcel_idx, (parcel_name, activations) in enumerate(parcel_data.items()):
-                    rsm = compute_rsm_cosine(activations)
-                    rsms_parcels_allsubjs[parcel_idx, subject_idx, task_idx, contrast_idx] = rsm
-                #print("Done computing RSMs for all parcels for this contrast.")
-
-# Save RSMs to HDF5 file
-output_file = os.path.join(output_dir, 'rsms_parcels_allsubjs.h5')
-with h5py.File(output_file, 'w') as h5f:
-    h5f.create_dataset('data', data=rsms_parcels_allsubjs)
-print(f"RSMs saved to {output_file}.")
+                # Compute RDM for each parcel
+                for parcel_name, activations in parcel_data.items():
+                    print(f"Computing RDM for parcel {parcel_name}...")
+                    rdm = 1 - spearmanr(activations.T).correlation
+                    output_file = os.path.join(contrast_output_dir, f'hemi-{hemisphere}_parcel-{parcel_name}_RDM.npy')
+                    np.save(output_file, rdm)
+                    print(f"RDM saved to {output_file}.")
+    print(f"Processing for subject {subject} completed.")

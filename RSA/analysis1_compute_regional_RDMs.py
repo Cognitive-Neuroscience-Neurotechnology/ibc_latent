@@ -181,7 +181,11 @@ def run(args):
         pca = PCA(n_components=ncomponents,whiten=False)
         gradients = pca.fit_transform(groupfc)
         np.savetxt(outdir + outfilename + '_restFC_gradients.csv',gradients)
-
+    
+    
+    ####
+    ####
+    ####
     #### Load in data
     print('LOADING DATA AND COMPUTING REGIONAL RDMS')
     if os.path.exists(outdir + outfilename + '_regional_rdms_' + dimensionality + groupavg_str + '_allsubjs.h5'):

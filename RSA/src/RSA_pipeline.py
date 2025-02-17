@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 from nibabel.freesurfer.io import read_annot
+import h5py
 from config_RSA import base_dir, output_dir
 from task_contrasts import task_contrasts
 
@@ -56,9 +57,9 @@ def extract_parcel_data(data, parcel_mapping):
             parcel_data[parcel_name] = []
         parcel_data[parcel_name].append(data[:, vertex])
     
-    # Convert lists to numpy arrays
+    # Convert lists to numpy arrays and average activations across vertices
     for parcel_name in parcel_data:
-        parcel_data[parcel_name] = np.array(parcel_data[parcel_name])
+        parcel_data[parcel_name] = np.mean(parcel_data[parcel_name], axis=0)
     print("Parcel data extracted.")
     return parcel_data
 
@@ -73,11 +74,16 @@ def average_sessions(file_paths):
 print(f"Base directory: {base_dir}")
 subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')]
 hemispheres = ['lh', 'rh']
+nParcels = len(fpn_parcels_names)
+n_tasks = len(task_contrasts)
 
-for subject in subjects:
+# Initialize RSMs array
+rsms_parcels_allsubjs = np.zeros((nParcels, len(subjects), n_tasks, n_tasks))
+
+for subject_idx, subject in enumerate(subjects):
     print(f"Processing subject {subject}...")
-    for task, contrasts in task_contrasts.items():
-        for contrast in contrasts:
+    for task_idx, (task, contrasts) in enumerate(task_contrasts.items()):
+        for contrast_idx, contrast in enumerate(contrasts):
             for hemisphere in hemispheres:
                 print(f"Processing task {task}, contrast {contrast}, hemisphere {hemisphere}...")
                 # Find all sessions for the current subject, task, and contrast
@@ -105,11 +111,14 @@ for subject in subjects:
                 else:
                     raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
                 
-                # Compute RDM for each parcel
-                for parcel_name, activations in parcel_data.items():
-                    print(f"Computing RDM for parcel {parcel_name}...")
-                    rdm = 1 - spearmanr(activations.T).correlation
-                    output_file = os.path.join(output_dir, f'sub-{subject}_task-{task}_contrast-{contrast}_hemi-{hemisphere}_parcel-{parcel_name}_RDM.npy')
-                    np.save(output_file, rdm)
-                    print(f"RDM saved to {output_file}.")
-    print(f"Processing for subject {subject} completed.")
+                # Compute RSM for each parcel
+                for parcel_idx, (parcel_name, activations) in enumerate(parcel_data.items()):
+                    print(f"Computing RSM for parcel {parcel_name}...")
+                    rsm = np.corrcoef(activations.T)
+                    rsms_parcels_allsubjs[parcel_idx, subject_idx, task_idx, contrast_idx] = rsm
+
+# Save RSMs to HDF5 file
+output_file = os.path.join(output_dir, 'rsms_parcels_allsubjs.h5')
+with h5py.File(output_file, 'w') as h5f:
+    h5f.create_dataset('data', data=rsms_parcels_allsubjs)
+print(f"RSMs saved to {output_file}.")

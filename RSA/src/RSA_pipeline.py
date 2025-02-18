@@ -41,14 +41,14 @@ fpn_parcels_rh_mapping = {vertex: rh_parcel_mapping[vertex] for vertex in vertic
 print("Vertex-to-parcel mappings created.")
 
 def load_surface_map(file_path):
-    print(f"Loading surface map from {file_path}...")
+    #print(f"Loading surface map from {file_path}...")
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
-    print("Surface map loaded.")
+    #print("Surface map loaded.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
-    print("Extracting parcel data...")
+    #print("Extracting parcel data...")
     parcel_data = {}
     for vertex, parcel in parcel_mapping.items():
         parcel_name = parcel.decode('utf-8')
@@ -59,15 +59,41 @@ def extract_parcel_data(data, parcel_mapping):
     # Convert lists to numpy arrays
     for parcel_name in parcel_data:
         parcel_data[parcel_name] = np.array(parcel_data[parcel_name])
-    print("Parcel data extracted.")
+    #print("Parcel data extracted.")
     return parcel_data
 
 def average_sessions(file_paths):
-    print("Averaging data across sessions...")
+    #print("Averaging data across sessions...")
     data_sessions = [load_surface_map(fp) for fp in file_paths]
     average_data = np.mean(data_sessions, axis=0)
-    print("Data averaged.")
+    #print("Data averaged.")
     return average_data
+
+def compute_rsm_cosine(activations, output_dir, parcel_name, subject, task, contrast, hemisphere):
+    # Check if the input is a 2D array
+    assert activations.ndim == 2, f"Input activations should be a 2D array, but got {activations.ndim}D array"
+    
+    n_conditions = activations.shape[1]
+    rsm = np.zeros((n_conditions, n_conditions))
+    
+    for i in range(n_conditions):
+        for j in range(n_conditions):
+            norm_i = np.linalg.norm(activations[:, i])
+            norm_j = np.linalg.norm(activations[:, j])
+            if norm_i == 0 or norm_j == 0:
+                print(f"Warning: Zero norm encountered for conditions {i} or {j}")
+                rsm[i, j] = 0
+            else:
+                rsm[i, j] = np.dot(activations[:, i], activations[:, j]) / (norm_i * norm_j)
+    
+    # Check if the output is a 2D array
+    assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
+    
+    # Save the RSM to a CSV file
+    output_file = os.path.join(output_dir, f"rsm_{parcel_name}_sub-{subject}_task-{task}_contrast-{contrast}_hemi-{hemisphere}.csv")
+    np.savetxt(output_file, rsm, delimiter=",")
+    
+    return rsm
 
 # Define the parameters to iterate over
 print(f"Base directory: {base_dir}")
@@ -75,6 +101,7 @@ subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.pa
 hemispheres = ['lh', 'rh']
 
 for subject in subjects:
+    print("-" * 80)
     print(f"Processing subject {subject}...")
     subject_output_dir = os.path.join(output_dir, f'sub-{subject}')
     os.makedirs(subject_output_dir, exist_ok=True)
@@ -88,7 +115,7 @@ for subject in subjects:
             os.makedirs(contrast_output_dir, exist_ok=True)
             
             for hemisphere in hemispheres:
-                print(f"Processing task {task}, contrast {contrast}, hemisphere {hemisphere}...")
+                #print(f"Processing task {task}, contrast {contrast}, hemisphere {hemisphere}...")
                 # Find all sessions for the current subject, task, and contrast
                 session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
                 file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_hemi-{hemisphere}_ZMap-{contrast}.gii') for session in session_dirs]
@@ -98,7 +125,7 @@ for subject in subjects:
                 if not file_paths:
                     print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
                     continue
-                print(f"Found files: {file_paths}")
+                #print(f"Found files: {file_paths}")
                 
                 # Average the data across sessions if there are multiple sessions
                 if len(file_paths) > 1:
@@ -114,11 +141,17 @@ for subject in subjects:
                 else:
                     raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
                 
-                # Compute RDM for each parcel
+                # Compute RSM for each parcel using cosine similarity
                 for parcel_name, activations in parcel_data.items():
-                    print(f"Computing RDM for parcel {parcel_name}...")
-                    rdm = 1 - spearmanr(activations.T).correlation
-                    output_file = os.path.join(contrast_output_dir, f'hemi-{hemisphere}_parcel-{parcel_name}_RDM.npy')
-                    np.save(output_file, rdm)
-                    print(f"RDM saved to {output_file}.")
+                    #print(f"Computing RSM for parcel {parcel_name}...")
+                    rsm = compute_rsm_cosine(activations, contrast_output_dir, parcel_name, subject, task, contrast, hemisphere)
+                    #print(f"RSM saved to {contrast_output_dir}")
+    
     print(f"Processing for subject {subject} completed.")
+
+
+## plot verteces activation over time 
+
+## try the same with spearman etc?
+
+# integrate tools to swith between different methods of computing RSMs

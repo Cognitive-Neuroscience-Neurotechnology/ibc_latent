@@ -119,14 +119,18 @@ for subject in subjects:
             
             # Find all sessions for the current subject, task, and contrast
             session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
-            print(f"Session directories for subject {subject}: {session_dirs}")
+            #print(f"Session directories for subject {subject}: {session_dirs}")
             file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_ZMap-{contrast}.gii') for session in session_dirs]
+            
+            # Print the constructed file paths
+            #print(f"Constructed file paths for subject {subject}, task {task}, contrast {contrast}:")
+            #for fp in file_paths:
+                #print(fp)
             
             # Check if files exist
             file_paths = [fp for fp in file_paths if os.path.exists(fp)]
             if not file_paths:
                 print(f"No files found for subject {subject}, task {task}, contrast {contrast}. Skipping...")
-                print(f"Searched for file: {file_paths}")
                 continue
             print(f"Found files: {file_paths}")
             

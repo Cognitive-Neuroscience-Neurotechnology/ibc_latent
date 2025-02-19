@@ -33,8 +33,8 @@ vertices_lh = np.arange(len(labels_lh))
 vertices_rh = np.arange(len(labels_rh))
 lh_parcel_mapping = {vertex: names_lh[label] for vertex, label in zip(vertices_lh, labels_lh)}
 rh_parcel_mapping = {vertex: names_rh[label] for vertex, label in zip(vertices_rh, labels_rh)}
-fpn_parcels_mapping = {**{vertex: lh_parcel_mapping[vertex] for vertex in vertices_lh if lh_parcel_mapping[vertex].decode('utf-8') in fpn_parcels_names},
-                       **{vertex: rh_parcel_mapping[vertex] for vertex in vertices_rh if rh_parcel_mapping[vertex].decode('utf-8') in fpn_parcels_names}}
+fpn_parcels_lh_mapping = {vertex: lh_parcel_mapping[vertex] for vertex in vertices_lh if lh_parcel_mapping[vertex].decode('utf-8') in fpn_parcels_names}
+fpn_parcels_rh_mapping = {vertex: rh_parcel_mapping[vertex] for vertex in vertices_rh if rh_parcel_mapping[vertex].decode('utf-8') in fpn_parcels_names}
 print("Vertex-to-parcel mappings created.")
 
 
@@ -43,7 +43,8 @@ print("Vertex-to-parcel mappings created.")
 def load_contrast_map(file_path):
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
-    print("Contrast map loaded.")
+    session_number = os.path.basename(file_path).split('_')[1].split('-')[1]
+    print(f"Contrast map loaded for session {session_number}.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
@@ -117,40 +118,41 @@ for subject in subjects:
             contrast_output_dir = os.path.join(task_output_dir, f'contrast-{contrast}')
             os.makedirs(contrast_output_dir, exist_ok=True)
             
-            # Find all sessions for the current subject, task, and contrast
-            session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
-            #print(f"Session directories for subject {subject}: {session_dirs}")
-            file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_ZMap-{contrast}.gii') for session in session_dirs]
-            
-            # Print the constructed file paths
-            #print(f"Constructed file paths for subject {subject}, task {task}, contrast {contrast}:")
-            #for fp in file_paths:
-                #print(fp)
-            
-            # Check if files exist
-            file_paths = [fp for fp in file_paths if os.path.exists(fp)]
-            if not file_paths:
-                print(f"No files found for subject {subject}, task {task}, contrast {contrast}. Skipping...")
-                continue
-            print(f"Found files: {file_paths}")
-            
-            # Average the data across sessions if there are multiple sessions
-            if len(file_paths) > 1:
-                data = average_sessions(file_paths)
-            else:
-                data = load_contrast_map(file_paths[0])
-            
-            # Extract parcel data
-            parcel_data = extract_parcel_data(data, fpn_parcels_mapping)
-            
-            # Z-score the activations
-            for parcel_name in parcel_data:
-                parcel_data[parcel_name] = zscore(parcel_data[parcel_name], axis=0)
-            
-            # Compute RSM for each parcel using the specified method
-            for parcel_name, activations in parcel_data.items():
-                print(f"Computing RSM for parcel {parcel_name}...")
-                rsm = compute_rsm(activations, contrast_output_dir, parcel_name, subject, task, contrast)
-                print(f"RSM saved to {contrast_output_dir}")
-    
+            for hemisphere in ['lh', 'rh']:
+                # Find all sessions for the current subject, task, and contrast
+                session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
+                file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_hemi-{hemisphere}_ZMap-{contrast}.gii') for session in session_dirs]
+                
+                # Check if files exist
+                file_paths = [fp for fp in file_paths if os.path.exists(fp)]
+                print("-" * 50)
+                print(f"Processing task {task} contrast {contrast} for {hemisphere} hemisphere")
+                if not file_paths:
+                    print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
+                    continue
+                
+                # Average the data across sessions if there are multiple sessions
+                if len(file_paths) > 1:
+                    data = average_sessions(file_paths)
+                else:
+                    data = load_contrast_map(file_paths[0])
+                
+                # Extract parcel data
+                if hemisphere == 'lh':
+                    parcel_data = extract_parcel_data(data, fpn_parcels_lh_mapping)
+                elif hemisphere == 'rh':
+                    parcel_data = extract_parcel_data(data, fpn_parcels_rh_mapping)
+                else:
+                    raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
+                
+                # Z-score the activations
+                for parcel_name in parcel_data:
+                    parcel_data[parcel_name] = zscore(parcel_data[parcel_name], axis=0)
+                
+                # Compute RSM for each parcel using the specified method
+                for parcel_name, activations in parcel_data.items():
+                    #print(f"Computing RSM for parcel {parcel_name}...")
+                    rsm = compute_rsm(activations, contrast_output_dir, parcel_name, subject, task, contrast)
+                    print(f"RSM saved to {contrast_output_dir}")
+    print("-" * 50 + "Task Done" + "-" * 50) 
     print(f"Processing for subject {subject} completed.")

@@ -44,7 +44,7 @@ def load_contrast_map(file_path):
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
     session_number = os.path.basename(file_path).split('_')[1].split('-')[1]
-    print(f"Contrast map loaded for session {session_number} and shape {data.shape}.")
+    #print(f"Contrast map loaded for session {session_number} and shape {data.shape}.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
@@ -64,7 +64,7 @@ def extract_parcel_data(data, parcel_mapping):
 def average_sessions(file_paths):
     data_sessions = [load_contrast_map(fp) for fp in file_paths]
     average_data = np.mean(data_sessions, axis=0)
-    print(f"Data averaged across sessions with shape: {average_data.shape}")
+    #print(f"Data averaged across sessions with shape: {average_data.shape}")
     return average_data
 
 def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
@@ -92,9 +92,6 @@ def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
     # Check if the output is a 2D array
     assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
     
-    # Print the shape of the RSM
-    print(f"RSM shape: {rsm.shape}")
-    
     # Save the RSM to a CSV file
     output_file = os.path.join(output_dir, f"rsm_{parcel_name}_sub-{subject}_task-{task}_contrast-{contrast}.csv")
     np.savetxt(output_file, rsm, delimiter=",")
@@ -116,7 +113,7 @@ for subject in subjects:
     for hemisphere in ['lh', 'rh']:
         # Find all sessions for the current subject
         session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
-        print(f"Session directories for subject {subject}: {session_dirs}")
+        #print(f"Session directories for subject {subject}: {session_dirs}")
         
         # Load all contrast maps for all tasks and hemisphere
         contrast_maps = []
@@ -127,9 +124,9 @@ for subject in subjects:
                 # Check if files exist
                 file_paths = [fp for fp in file_paths if os.path.exists(fp)]
                 if not file_paths:
-                    print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
+                    #print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
                     continue
-                print(f"Found files for contrast {contrast}: {file_paths}")
+                #print(f"Found files for contrast {contrast}: {file_paths}")
                 
                 # Average the data across sessions if there are multiple sessions
                 if len(file_paths) > 1:
@@ -167,9 +164,9 @@ for subject in subjects:
         # Compute RSM for each parcel using the specified method
         for parcel_name, activations in parcel_data.items():
             # Print the shape of the activations array
-            print(f"Activations shape for parcel {parcel_name}: {activations.shape}")
+            #print(f"Activations shape for parcel {parcel_name}: {activations.shape}")
                 
             rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject, "all_tasks", "all_contrasts")
-            print(f"RSM saved to {subject_output_dir}")
-    print("-" * 50 + "Task Done" + "-" * 50) 
+            #print(f"RSM saved to {subject_output_dir}")
     print(f"Processing for subject {subject} completed.")
+print("-" * 50 + " All RSMs Done :) " + "-" * 50) 

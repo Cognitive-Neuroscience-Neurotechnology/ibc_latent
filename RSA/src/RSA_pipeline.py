@@ -44,7 +44,7 @@ def load_contrast_map(file_path):
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
     session_number = os.path.basename(file_path).split('_')[1].split('-')[1]
-    print(f"Contrast map loaded for session {session_number}.")
+    print(f"Contrast map loaded for session {session_number} and shape {data.shape}.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
@@ -53,18 +53,18 @@ def extract_parcel_data(data, parcel_mapping):
         parcel_name = parcel.decode('utf-8')
         if parcel_name not in parcel_data:
             parcel_data[parcel_name] = []
-        parcel_data[parcel_name].append(data[:, vertex])
+        parcel_data[parcel_name].append(data[vertex, :])
     
     # Convert lists to numpy arrays
     for parcel_name in parcel_data:
         parcel_data[parcel_name] = np.array(parcel_data[parcel_name])
-    print("Parcel data extracted.")
+    print(f"Parcel data extracted with shape: {parcel_data[parcel_name].shape}")
     return parcel_data
 
 def average_sessions(file_paths):
     data_sessions = [load_contrast_map(fp) for fp in file_paths]
     average_data = np.mean(data_sessions, axis=0)
-    print("Data averaged across sessions.")
+    print(f"Data averaged across sessions with shape: {average_data.shape}")
     return average_data
 
 def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
@@ -92,6 +92,9 @@ def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
     # Check if the output is a 2D array
     assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
     
+    # Print the shape of the RSM
+    print(f"RSM shape: {rsm.shape}")
+    
     # Save the RSM to a CSV file
     output_file = os.path.join(output_dir, f"rsm_{parcel_name}_sub-{subject}_task-{task}_contrast-{contrast}.csv")
     np.savetxt(output_file, rsm, delimiter=",")
@@ -110,26 +113,23 @@ for subject in subjects:
     subject_output_dir = os.path.join(output_dir, f'sub-{subject}')
     os.makedirs(subject_output_dir, exist_ok=True)
     
-    for task, contrasts in task_contrasts.items():
-        task_output_dir = os.path.join(subject_output_dir, f'task-{task}')
-        os.makedirs(task_output_dir, exist_ok=True)
+    for hemisphere in ['lh', 'rh']:
+        # Find all sessions for the current subject
+        session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
+        print(f"Session directories for subject {subject}: {session_dirs}")
         
-        for contrast in contrasts:
-            contrast_output_dir = os.path.join(task_output_dir, f'contrast-{contrast}')
-            os.makedirs(contrast_output_dir, exist_ok=True)
-            
-            for hemisphere in ['lh', 'rh']:
-                # Find all sessions for the current subject, task, and contrast
-                session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
+        # Load all contrast maps for all tasks and hemisphere
+        contrast_maps = []
+        for task, contrasts in task_contrasts.items():
+            for contrast in contrasts:
                 file_paths = [os.path.join(base_dir, f'sub-{subject}', session, f'sub-{subject}_ses-{session.split("-")[1]}_task-{task}_dir-ffx_space-fsaverage7_hemi-{hemisphere}_ZMap-{contrast}.gii') for session in session_dirs]
                 
                 # Check if files exist
                 file_paths = [fp for fp in file_paths if os.path.exists(fp)]
-                print("-" * 50)
-                print(f"Processing task {task} contrast {contrast} for {hemisphere} hemisphere")
                 if not file_paths:
                     print(f"No files found for subject {subject}, task {task}, contrast {contrast}, hemisphere {hemisphere}. Skipping...")
                     continue
+                print(f"Found files for contrast {contrast}: {file_paths}")
                 
                 # Average the data across sessions if there are multiple sessions
                 if len(file_paths) > 1:
@@ -137,22 +137,39 @@ for subject in subjects:
                 else:
                     data = load_contrast_map(file_paths[0])
                 
-                # Extract parcel data
-                if hemisphere == 'lh':
-                    parcel_data = extract_parcel_data(data, fpn_parcels_lh_mapping)
-                elif hemisphere == 'rh':
-                    parcel_data = extract_parcel_data(data, fpn_parcels_rh_mapping)
-                else:
-                    raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
+                contrast_maps.append(data)
+        
+        # Check if contrast_maps is not empty
+        if not contrast_maps:
+            print(f"No contrast maps found for subject {subject}, hemisphere {hemisphere}. Skipping...")
+            continue
+        
+        # Stack contrast maps to form the activations array
+        activations = np.stack(contrast_maps, axis=0)
+        print(f"Activations shape after stacking: {activations.shape}")
+
+        # Reshape the activations array to (n_voxels, n_conditions)
+        activations = activations.squeeze().transpose(1, 0)
+        print(f"Activations shape after reshaping: {activations.shape}")
+            
+        # Extract parcel data
+        if hemisphere == 'lh':
+            parcel_data = extract_parcel_data(activations, fpn_parcels_lh_mapping)
+        elif hemisphere == 'rh':
+            parcel_data = extract_parcel_data(activations, fpn_parcels_rh_mapping)
+        else:
+            raise ValueError(f"Unexpected hemisphere value: {hemisphere}")
+            
+        # Z-score the activations
+        for parcel_name in parcel_data:
+            parcel_data[parcel_name] = zscore(parcel_data[parcel_name], axis=0)
+            
+        # Compute RSM for each parcel using the specified method
+        for parcel_name, activations in parcel_data.items():
+            # Print the shape of the activations array
+            print(f"Activations shape for parcel {parcel_name}: {activations.shape}")
                 
-                # Z-score the activations
-                for parcel_name in parcel_data:
-                    parcel_data[parcel_name] = zscore(parcel_data[parcel_name], axis=0)
-                
-                # Compute RSM for each parcel using the specified method
-                for parcel_name, activations in parcel_data.items():
-                    #print(f"Computing RSM for parcel {parcel_name}...")
-                    rsm = compute_rsm(activations, contrast_output_dir, parcel_name, subject, task, contrast)
-                    print(f"RSM saved to {contrast_output_dir}")
+            rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject, "all_tasks", "all_contrasts")
+            print(f"RSM saved to {subject_output_dir}")
     print("-" * 50 + "Task Done" + "-" * 50) 
     print(f"Processing for subject {subject} completed.")

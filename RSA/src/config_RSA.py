@@ -12,3 +12,6 @@ else:
     code_dir = '/Users/hannahmuller/nyx_mount/ibc_code/ibc_latent'
 print(f"Base directory set to: {base_dir}")
 print(f"Output directory set to: {output_dir}")
+
+# Define RSA method
+method = 'cosine'  # Change to 'spearman' to use Spearman correlation

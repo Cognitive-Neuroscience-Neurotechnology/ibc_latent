@@ -8,28 +8,23 @@ from config_RSA import base_dir, output_dir
 from task_contrasts import task_contrasts
 
 # Load network_partition (.txt)
-print("Loading network partition...")
 network_partition_path = '/home/hmueller2/Downloads/Cole_FPN_Parcellation/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
 network_partition = pd.read_csv(network_partition_path, sep='\t')
 print("Network partition loaded.")
 
 # Only keep GLASSERLABELNAMEs of those that are in the frontoparietal network (Networkkey = 7)
-print("Filtering frontoparietal network parcels...")
 fpn_parcels = network_partition[network_partition['NETWORKKEY'] == 7]
 fpn_parcels_names = fpn_parcels['GLASSERLABELNAME'].dropna().tolist()
 print("Frontoparietal network parcels filtered.")
 
-# Load annot_file
-print("Loading annotation files...")
+# Load annot_files
 lh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
 rh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
-
 labels_lh, ctab_lh, names_lh = read_annot(lh_annot_file)
 labels_rh, ctab_rh, names_rh = read_annot(rh_annot_file)
 print("Annotation files loaded.")
 
 # Do a vertex-to-parcel mapping for Frontoparietal parcels
-print("Creating vertex-to-parcel mappings...")
 vertices_lh = np.arange(len(labels_lh))
 vertices_rh = np.arange(len(labels_rh))
 
@@ -40,15 +35,13 @@ fpn_parcels_lh_mapping = {vertex: lh_parcel_mapping[vertex] for vertex in vertic
 fpn_parcels_rh_mapping = {vertex: rh_parcel_mapping[vertex] for vertex in vertices_rh if rh_parcel_mapping[vertex].decode('utf-8') in fpn_parcels_names}
 print("Vertex-to-parcel mappings created.")
 
-def load_surface_map(file_path):
-    print(f"Loading surface map from {file_path}...")
+def load_contrast_map(file_path):
     img = nib.load(file_path)
     data = np.array([darray.data for darray in img.darrays])
-    print("Surface map loaded.")
+    print(f"Contrast map loaded from {file_path}.")
     return data
 
 def extract_parcel_data(data, parcel_mapping):
-    print("Extracting parcel data...")
     parcel_data = {}
     for vertex, parcel in parcel_mapping.items():
         parcel_name = parcel.decode('utf-8')
@@ -63,10 +56,9 @@ def extract_parcel_data(data, parcel_mapping):
     return parcel_data
 
 def average_sessions(file_paths):
-    print("Averaging data across sessions...")
-    data_sessions = [load_surface_map(fp) for fp in file_paths]
+    data_sessions = [load_contrast_map(fp) for fp in file_paths]
     average_data = np.mean(data_sessions, axis=0)
-    print("Data averaged.")
+    print("Data averaged across sessions.")
     return average_data
 
 def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast, hemisphere, method='cosine'):
@@ -112,6 +104,7 @@ hemispheres = ['lh', 'rh']
 method = 'cosine'  # Change to 'spearman' to use Spearman correlation
 parcel = 'L_7Pm_ROI'  # Define the specific parcel to process
 
+print('-' * 100)
 print(f"Processing subject {subject} for task {task} and contrast {contrast} using {method} method...")
 subject_output_dir = os.path.join(output_dir, f'sub-{subject}')
 os.makedirs(subject_output_dir, exist_ok=True)
@@ -123,6 +116,7 @@ contrast_output_dir = os.path.join(task_output_dir, f'contrast-{contrast}')
 os.makedirs(contrast_output_dir, exist_ok=True)
 
 for hemisphere in hemispheres:
+    print('-' * 30)
     print(f"Processing hemisphere {hemisphere}...")
     # Find all sessions for the current subject, task, and contrast
     session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
@@ -139,7 +133,7 @@ for hemisphere in hemispheres:
     if len(file_paths) > 1:
         data = average_sessions(file_paths)
     else:
-        data = load_surface_map(file_paths[0])
+        data = load_contrast_map(file_paths[0])
     
     # Extract parcel data
     if hemisphere == 'lh':
@@ -155,7 +149,8 @@ for hemisphere in hemispheres:
         print(f"Computing RSM for parcel {parcel} using {method} method...")
         rsm = compute_rsm(activations, contrast_output_dir, parcel, subject, task, contrast, hemisphere, method)
         print(f"RSM saved to {contrast_output_dir}")
+        print('-' * 30)
     else:
         print(f"Parcel {parcel} not found in hemisphere {hemisphere}. Skipping...")
 
-print(f"Processing for subject {subject} completed.")
+print(f"Processing for subject {subject} completed. {'-' * 50}")

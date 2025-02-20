@@ -4,7 +4,7 @@ import os
 hostname = os.uname().nodename
 if hostname == 'nyx-login0.hpc.kyb.local':
     base_dir = '/home/hmueller2/Downloads/contrast_maps/resulting_smooth_maps_surface/' # find the contrast maps here
-    output_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_test'
+    output_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_spearman'
     code_dir = '/home/hmueller2/ibc_code/ibc_latent'
 else:
     base_dir = '/Users/hannahmuller/nyx_mount/Downloads/contrast_maps/resulting_smooth_maps_surface/'
@@ -14,4 +14,4 @@ print(f"Base directory set to: {base_dir}")
 print(f"Output directory set to: {output_dir}")
 
 # Define RSA method
-method = 'cosine'  # Change to 'spearman' to use Spearman correlation
+method = 'spearman'  # Change to 'spearman' to use Spearman correlation

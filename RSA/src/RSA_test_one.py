@@ -8,7 +8,7 @@ from config_RSA import base_dir, output_dir
 from task_contrasts import task_contrasts
 
 # Load network_partition (.txt)
-network_partition_path = '/home/hmueller2/Downloads/Cole_FPN_Parcellation/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
+network_partition_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
 network_partition = pd.read_csv(network_partition_path, sep='\t')
 print("Network partition loaded.")
 
@@ -18,8 +18,8 @@ fpn_parcels_names = fpn_parcels['GLASSERLABELNAME'].dropna().tolist()
 print("Frontoparietal network parcels filtered.")
 
 # Load annot_files
-lh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
-rh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
+lh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
+rh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
 labels_lh, ctab_lh, names_lh = read_annot(lh_annot_file)
 labels_rh, ctab_rh, names_rh = read_annot(rh_annot_file)
 print("Annotation files loaded.")

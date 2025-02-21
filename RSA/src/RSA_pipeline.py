@@ -12,7 +12,7 @@ if not base_dir or not output_dir:
 from task_contrasts import task_contrasts
 
 # Load network_partition (.txt)
-network_partition_path = '/home/hmueller2/Downloads/Cole_FPN_Parcellation/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
+network_partition_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
 network_partition = pd.read_csv(network_partition_path, sep='\t')
 print("Network partition loaded.")
 
@@ -22,8 +22,8 @@ fpn_parcels_names = fpn_parcels['GLASSERLABELNAME'].dropna().tolist()
 print("Frontoparietal network parcels filtered.")
 
 # Load annot_file
-lh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
-rh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
+lh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
+rh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
 labels_lh, ctab_lh, names_lh = read_annot(lh_annot_file)
 labels_rh, ctab_rh, names_rh = read_annot(rh_annot_file)
 print("Annotation files loaded.")
@@ -67,7 +67,7 @@ def average_sessions(file_paths):
     #print(f"Data averaged across sessions with shape: {average_data.shape}")
     return average_data
 
-def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
+def compute_rsm(activations, output_dir, parcel_name, subject):
     # Check if the input is a 2D array
     assert activations.ndim == 2, f"Input activations should be a 2D array, but got {activations.ndim}D array"
     
@@ -93,7 +93,7 @@ def compute_rsm(activations, output_dir, parcel_name, subject, task, contrast):
     assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
     
     # Save the RSM to a CSV file
-    output_file = os.path.join(output_dir, f"rsm_{parcel_name}_sub-{subject}_task-{task}_contrast-{contrast}.csv")
+    output_file = os.path.join(output_dir, f"rsm_{parcel_name}_sub-{subject}_all-contrasts_method-{method}.csv")
     np.savetxt(output_file, rsm, delimiter=",")
     
     return rsm
@@ -166,7 +166,7 @@ for subject in subjects:
             # Print the shape of the activations array
             #print(f"Activations shape for parcel {parcel_name}: {activations.shape}")
                 
-            rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject, "all_tasks", "all_contrasts")
+            rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject, )
             #print(f"RSM saved to {subject_output_dir}")
     print(f"Processing for subject {subject} completed.")
 print("-" * 50 + " All RSMs Done :) " + "-" * 50) 

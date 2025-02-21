@@ -13,14 +13,26 @@ GLM                                # Creating beta maps for each subject and tas
 │   ├── config.py                  # Defines the directories.
 │   ├── GLM_pipeline.py            # Main logic for the GLM pipeline.
 │   └── tasks_contrasts.py         # Dictionary of tasks and their corresponding conditions -> contrasts.
+├── First_GLM.ipynb                # Jupyter notebook to explore GLM outputs (tasks, design matrix,...)
 ├── README.md                
 └── requirements.txt               # Project dependencies
 RSA                                # Representational Similarity Analysis
+├── Parcellation                      
+│   ├── FPN_vertices_parcels.py    # ???
 ├── src                      
-│   ├── config.py                  # Defines the directories.
+│   ├── config_RSA.py              # Defines the directories.
+│   ├── RSA_pipeline.py            # ???
+│   ├── RSA_test_one.py            # ???
 │   └── tasks_contrasts.py         # Dictionary of task contrasts that were chosen to be used for RSA
-├── data_descriptor_contrasts.pdf  # Descriptor of methods used in contrast calculations (from Ebrains, Thirion 2024)
-└── README.md                
+├── glossary.md                    # ???
+├── RSM_Visualization.ipynb        # ???
+├── !!README.md                      # !! Missing
+└── !!requirements.txt               # !! Missing
+latent_analysis                    # Directory for latent representation analysis
+├── src                      
+│   ├── 
+├── README.md                
+└── requirements.txt               # Project dependencies
 common_task_sessions.csv           # Contain for each subject an overview about in which sessions (+ how often) each task was done.
-First_GLM.ipynb                    # Jupyter notebook to explore GLM outputs (tasks, design matrix,...)
+data_descriptor_contrasts.pdf      # Descriptor of methods used in contrast calculations (from Ebrains, Thirion 2024)
 ```

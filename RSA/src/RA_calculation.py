@@ -54,10 +54,10 @@ def main(threshold=False):
                 else:
                     suffix = '_raw.csv'
                 
-                ra_output_file = os.path.join(subject_output_dir, f'ra_{parcel1}_vs_{parcel2}_sub-{subject}{suffix}')
+                ra_output_file = os.path.join(subject_output_dir, f'ra_{parcel1}_vs_{parcel2}_{subject}{suffix}')
                 np.savetxt(ra_output_file, ra_matrix, delimiter=",")
         print(f"Done with subject {subject}")
 
 if __name__ == "__main__":
     # Set threshold to True or False based on your requirement
-    main(threshold=True)
+    main(threshold=False)

@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.stats import spearmanr, zscore
 from nibabel.freesurfer.io import read_annot
 from config_RSA import base_dir, output_dir, method
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Ensure base_dir and output_dir are not empty
 if not base_dir or not output_dir:
@@ -98,6 +99,14 @@ def compute_rsm(activations, output_dir, parcel_name, subject):
     
     return rsm
 
+def compute_ra(rsm1, rsm2):
+    """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
+    assert rsm1.shape == rsm2.shape, "RSMs must have the same shape to compute RA."
+    rsm1_flat = rsm1.flatten().reshape(1, -1)
+    rsm2_flat = rsm2.flatten().reshape(1, -1)
+    ra = cosine_similarity(rsm1_flat, rsm2_flat)[0, 0]
+    return ra
+
 
 ## MAIN
 
@@ -110,6 +119,8 @@ for subject in subjects:
     subject_output_dir = os.path.join(output_dir, f'sub-{subject}')
     os.makedirs(subject_output_dir, exist_ok=True)
     
+    ra_results = []
+
     for hemisphere in ['lh', 'rh']:
         # Find all sessions for the current subject
         session_dirs = [d for d in os.listdir(os.path.join(base_dir, f'sub-{subject}')) if d.startswith('ses-')]
@@ -166,7 +177,21 @@ for subject in subjects:
             # Print the shape of the activations array
             #print(f"Activations shape for parcel {parcel_name}: {activations.shape}")
                 
-            rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject, )
+            rsm = compute_rsm(activations, subject_output_dir, parcel_name, subject)
             #print(f"RSM saved to {subject_output_dir}")
-    print(f"Processing for subject {subject} completed.")
-print("-" * 50 + " All RSMs Done :) " + "-" * 50) 
+
+            # Compute RA between parcels
+            for other_parcel_name, other_activations in parcel_data.items():
+                if parcel_name != other_parcel_name:
+                    other_rsm = compute_rsm(other_activations, subject_output_dir, other_parcel_name, subject)
+                    ra = compute_ra(rsm, other_rsm)
+                    ra_results.append([subject, parcel_name, other_parcel_name, ra])
+    
+    # Save RA results to a CSV file
+    ra_df = pd.DataFrame(ra_results, columns=['subject', 'parcel1', 'parcel2', 'ra'])
+    ra_output_file = os.path.join(subject_output_dir, f'ra_sub-{subject}.csv')
+    ra_df.to_csv(ra_output_file, index=False)
+    print(f"RA results saved to {ra_output_file}")
+
+print("-" * 50 + " All RSMs and RAs Done :) " + "-" * 50)
+

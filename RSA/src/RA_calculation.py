@@ -2,20 +2,19 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
+import bct
 
 def compute_ra(rsm1, rsm2):
     """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
     assert rsm1.shape == rsm2.shape, "RSMs must have the same shape to compute RA."
-    rsm1_flat = rsm1.flatten().reshape(1, -1)
-    rsm2_flat = rsm2.flatten().reshape(1, -1)
-    ra = cosine_similarity(rsm1_flat, rsm2_flat)[0, 0]
+    ra = cosine_similarity(rsm1, rsm2)
     return ra
 
 def load_rsm(file_path):
     """Load an RSM from a CSV file."""
     return np.loadtxt(file_path, delimiter=",")
 
-def main():
+def main(threshold=False):
     RSA_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine'
     output_dir = '/home/hmueller2/ibc_code/ibc_output_RA'
 
@@ -25,28 +24,40 @@ def main():
         subject_RSA_dir = os.path.join(RSA_dir, subject)
         subject_output_dir = os.path.join(output_dir, subject)
         os.makedirs(subject_output_dir, exist_ok=True)
-        ra_results = []
 
         rsm_files = [f for f in os.listdir(subject_RSA_dir) if f.startswith('rsm_') and f.endswith('.csv')]
         
+        ra_matrices = {}
+        
         for i, rsm_file1 in enumerate(rsm_files):
             rsm1 = load_rsm(os.path.join(subject_RSA_dir, rsm_file1))
-            parcel_name1 = rsm_file1.split('_')[1]
+            parcel_name1 = '_'.join(rsm_file1.split('_')[1:3])  # Correctly extract the parcel name
             
             for j, rsm_file2 in enumerate(rsm_files):
                 if i >= j:
                     continue
                 rsm2 = load_rsm(os.path.join(subject_RSA_dir, rsm_file2))
-                parcel_name2 = rsm_file2.split('_')[1]
+                parcel_name2 = '_'.join(rsm_file2.split('_')[1:3])  # Correctly extract the parcel name
                 
                 ra = compute_ra(rsm1, rsm2)
-                ra_results.append([subject, parcel_name1, parcel_name2, ra])
+                
+                if parcel_name1 not in ra_matrices:
+                    ra_matrices[parcel_name1] = {}
+                ra_matrices[parcel_name1][parcel_name2] = ra
         
-        # Save RA results to a CSV file
-        ra_df = pd.DataFrame(ra_results, columns=['subject', 'parcel1', 'parcel2', 'ra'])
-        ra_output_file = os.path.join(subject_output_dir, f'ra_sub-{subject}.csv')
-        ra_df.to_csv(ra_output_file, index=False)
-        print(f"RA results saved to {ra_output_file}")
+        # Save RA matrices to files
+        for parcel1, parcel_dict in ra_matrices.items():
+            for parcel2, ra_matrix in parcel_dict.items():
+                if threshold:
+                    ra_matrix = bct.threshold_proportional(ra_matrix, 0.2)
+                    suffix = '_thresholded.csv'
+                else:
+                    suffix = '_raw.csv'
+                
+                ra_output_file = os.path.join(subject_output_dir, f'ra_{parcel1}_vs_{parcel2}_sub-{subject}{suffix}')
+                np.savetxt(ra_output_file, ra_matrix, delimiter=",")
+        print(f"Done with subject {subject}")
 
 if __name__ == "__main__":
-    main()
+    # Set threshold to True or False based on your requirement
+    main(threshold=True)

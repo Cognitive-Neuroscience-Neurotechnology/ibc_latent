@@ -60,6 +60,18 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
                     ra_matrices[parcel_name1] = {}
                 ra_matrices[parcel_name1][parcel_name2] = ra
         
+        # Debugging: Print parcel names and number of conditions
+        print(f"Subject: {subject}")
+        print(f"Number of Parcels: {len(parcel_names)}")
+        if ra_matrices:
+            first_parcel = list(ra_matrices.keys())[0]
+            first_condition = list(ra_matrices[first_parcel].keys())[0]
+            n_conditions = ra_matrices[first_parcel][first_condition].shape[0]
+            print(f"Number of Conditions: {n_conditions}")
+        else:
+            print("No RA matrices found.")
+            continue
+        
         # Save individual RA matrices to files
         if save_individual:
             for parcel1, parcel_dict in ra_matrices.items():
@@ -76,15 +88,18 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
         # Initialize the big matrix
         if save_big_matrix:
             n_parcels = len(parcel_names)
-            big_matrix = np.zeros((n_parcels, n_parcels))
+            big_matrix = np.zeros((n_parcels * n_conditions, n_parcels * n_conditions))
+            print(f"Big Matrix Dimensions: {big_matrix.shape}")
             
-            # Fill the big matrix
+            # Fill the big matrix with RA values
             for i, parcel1 in enumerate(parcel_names):
                 for j, parcel2 in enumerate(parcel_names):
                     if parcel1 in ra_matrices and parcel2 in ra_matrices[parcel1]:
-                        big_matrix[i, j] = np.mean(ra_matrices[parcel1][parcel2])
+                        ra_matrix = ra_matrices[parcel1][parcel2]
+                        big_matrix[i*n_conditions:(i+1)*n_conditions, j*n_conditions:(j+1)*n_conditions] = ra_matrix
                     elif parcel2 in ra_matrices and parcel1 in ra_matrices[parcel2]:
-                        big_matrix[i, j] = np.mean(ra_matrices[parcel2][parcel1])
+                        ra_matrix = ra_matrices[parcel2][parcel1]
+                        big_matrix[i*n_conditions:(i+1)*n_conditions, j*n_conditions:(j+1)*n_conditions] = ra_matrix
             
             # Save the big matrix to a file
             big_matrix_output_file = os.path.join(topographic_alignment_dir, f'topographic_alignment_{subject}.npy')

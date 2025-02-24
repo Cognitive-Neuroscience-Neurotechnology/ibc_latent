@@ -16,7 +16,13 @@ def load_rsm(file_path):
 
 def main(threshold=False):
     RSA_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine'
-    output_dir = '/home/hmueller2/ibc_code/ibc_output_RA'
+    output_dir = '/home/hmueller2/ibc_code/ibc_output_RA_npy'
+
+    # Create separate output directories for thresholded and raw RA matrices
+    if threshold:
+        output_dir = os.path.join(output_dir, 'thresholded')
+    else:
+        output_dir = os.path.join(output_dir, 'raw')
 
     subjects = [d for d in os.listdir(RSA_dir) if os.path.isdir(os.path.join(RSA_dir, d)) and d.startswith('sub-')]
     
@@ -50,12 +56,12 @@ def main(threshold=False):
             for parcel2, ra_matrix in parcel_dict.items():
                 if threshold:
                     ra_matrix = bct.threshold_proportional(ra_matrix, 0.2)
-                    suffix = '_thresholded.csv'
+                    suffix = '_thresholded.npy'
                 else:
-                    suffix = '_raw.csv'
+                    suffix = '_raw.npy'
                 
                 ra_output_file = os.path.join(subject_output_dir, f'ra_{parcel1}_vs_{parcel2}_{subject}{suffix}')
-                np.savetxt(ra_output_file, ra_matrix, delimiter=",")
+                np.save(ra_output_file, ra_matrix)
         print(f"Done with subject {subject}")
 
 if __name__ == "__main__":

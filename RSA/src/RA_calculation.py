@@ -89,7 +89,7 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
         if save_big_matrix:
             n_parcels = len(parcel_names)
             big_matrix = np.zeros((n_parcels * n_conditions, n_parcels * n_conditions))
-            print(f"Big Matrix Dimensions: {big_matrix.shape}")
+            print(f"Big Matrix Dimensions (initialized): {big_matrix.shape}")
             
             # Fill the big matrix with RA values
             for i, parcel1 in enumerate(parcel_names):
@@ -100,6 +100,9 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
                     elif parcel2 in ra_matrices and parcel1 in ra_matrices[parcel2]:
                         ra_matrix = ra_matrices[parcel2][parcel1]
                         big_matrix[i*n_conditions:(i+1)*n_conditions, j*n_conditions:(j+1)*n_conditions] = ra_matrix
+            
+            # Debugging: Print the shape of the big matrix before saving
+            print(f"Big Matrix Dimensions (filled): {big_matrix.shape}")
             
             # Save the big matrix to a file
             big_matrix_output_file = os.path.join(topographic_alignment_dir, f'topographic_alignment_{subject}.npy')

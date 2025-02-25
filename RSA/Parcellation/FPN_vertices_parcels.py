@@ -3,7 +3,7 @@ import numpy as np
 from nibabel.freesurfer.io import read_annot
 
 # Step 1: Load network_partition (.txt)
-network_partition_path = '/home/hmueller2/Downloads/Cole_FPN_Parcellation/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
+network_partition_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
 network_partition = pd.read_csv(network_partition_path, sep='\t')
 
 # Step 2: Only keep GLASSERLABELNAMEs of those that are in the frontoparietal network (Networkkey = 7)
@@ -11,8 +11,8 @@ fpn_parcels = network_partition[network_partition['NETWORKKEY'] == 7]
 fpn_parcels_names = fpn_parcels['GLASSERLABELNAME'].dropna().tolist()
 
 # Step 3: Load annot_file
-lh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
-rh_annot_file = '/home/hmueller2/Downloads/Atlas/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
+lh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/lh.HCP-MMP1.annot'
+rh_annot_file = '/home/hmueller2/Downloads/atlas_glasser/glasser_fsaverage/3498446/rh.HCP-MMP1.annot'
 
 labels_lh, ctab_lh, names_lh = read_annot(lh_annot_file)
 labels_rh, ctab_rh, names_rh = read_annot(rh_annot_file)
@@ -36,4 +36,11 @@ print("Right Hemisphere Parcel Mapping (last 5 entries):")
 print({k: fpn_parcels_rh_mapping[k] for k in list(fpn_parcels_rh_mapping)[-5:]})
 print(f"length of rh mapping: {len(fpn_parcels_rh_mapping)}")
 
+
+# Count unique parcels for left and right hemispheres
+unique_parcels_lh = set(fpn_parcels_lh_mapping.values())
+unique_parcels_rh = set(fpn_parcels_rh_mapping.values())
+
+print(f"Number of unique parcels in the left hemisphere: {len(unique_parcels_lh)}")
+print(f"Number of unique parcels in the right hemisphere: {len(unique_parcels_rh)}")
 # Use fpn_parcels_lh_mapping & fpn_parcels_rh_mapping to extract which vertices belong to which parcels of the frontoparietal network

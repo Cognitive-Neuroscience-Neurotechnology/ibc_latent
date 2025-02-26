@@ -76,7 +76,7 @@ def compute_rsm(activations, output_dir, parcel_name, subject):
     rsm = np.zeros((n_conditions, n_conditions))
     
     for i in range(n_conditions):
-        for j in range(n_conditions):
+        for j in range(i + 1, n_conditions):  # Only compute for upper triangle
             if method == 'cosine':
                 norm_i = np.linalg.norm(activations[:, i])
                 norm_j = np.linalg.norm(activations[:, j])
@@ -90,6 +90,9 @@ def compute_rsm(activations, output_dir, parcel_name, subject):
             else:
                 raise ValueError(f"Unknown method: {method}")
     
+    # Mirror the upper triangle to the lower triangle
+    rsm = rsm + rsm.T
+    
     # Check if the output is a 2D array
     assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
     
@@ -102,9 +105,16 @@ def compute_rsm(activations, output_dir, parcel_name, subject):
 def compute_ra(rsm1, rsm2):
     """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
     assert rsm1.shape == rsm2.shape, "RSMs must have the same shape to compute RA."
-    rsm1_flat = rsm1.flatten().reshape(1, -1)
-    rsm2_flat = rsm2.flatten().reshape(1, -1)
-    ra = cosine_similarity(rsm1_flat, rsm2_flat)[0, 0]
+    
+    # Get the upper triangle indices, excluding the diagonal
+    triu_indices = np.triu_indices(rsm1.shape[0], k=1)
+    
+    # Extract the upper triangle values
+    rsm1_upper = rsm1[triu_indices]
+    rsm2_upper = rsm2[triu_indices]
+    
+    # Compute cosine similarity
+    ra = cosine_similarity(rsm1_upper.reshape(1, -1), rsm2_upper.reshape(1, -1))[0, 0]
     return ra
 
 

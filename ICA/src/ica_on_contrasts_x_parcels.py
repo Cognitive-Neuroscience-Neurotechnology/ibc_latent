@@ -8,6 +8,19 @@ import time
 from nibabel.freesurfer.io import read_annot
 from task_contrasts import task_contrasts
 from config_ICA import base_dir, output_dir
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+def visualize_components_heatmap(components, title, output_dir, parcel_names):
+    """Visualize the ICA components as a heatmap and save the plot."""
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(components, xticklabels=parcel_names, yticklabels=[f'Component {i+1}' for i in range(components.shape[1])], cmap='viridis', annot=True)
+    plt.title(f'{title} - ICA Components Heatmap')
+    plt.xlabel('Parcels')
+    plt.ylabel('Components')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'{title}_components_heatmap.png'))
+    plt.close()
 
 def load_contrast_map(file_path):
     try:
@@ -159,8 +172,11 @@ def main():
             print(f"ICA components for subject {subject} saved to {components_output_dir}")
             
             # Visualize and save the components
-            visualize_components(components, f'sub-{subject}', components_output_dir)
-            print(f"ICA component plots for subject {subject} saved to {components_output_dir}")
+            parcel_names = list(matrix.columns)  # Assuming matrix columns are parcel names
+            visualize_components_heatmap(components, f'sub-{subject}', components_output_dir, parcel_names)
+            print(f"ICA component heatmap for subject {subject} saved to {components_output_dir}")
 
+if __name__ == "__main__":
+    main()
 if __name__ == "__main__":
     main()

@@ -10,7 +10,7 @@ def load_rdm(file_path):
 
 def perform_tsne(rdm, n_components=2, perplexity=30, n_iter=1000):
     """Perform t-SNE on the RDM."""
-    tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, metric='precomputed', random_state=42)
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, n_iter=n_iter, metric='precomputed', init='random', random_state=42)
     tsne_coords = tsne.fit_transform(rdm)
     return tsne_coords
 
@@ -42,7 +42,6 @@ def main():
 
     # Get the list of subjects from the filenames in the directory
     subjects = [f.split('_')[-1].replace('.npy', '') for f in os.listdir(topographic_alignment_RDM_dir) if f.startswith('topographic_alignment_rdm_')]
-
 
     for subject in subjects:
         rdm_file = os.path.join(topographic_alignment_RDM_dir, f'topographic_alignment_rdm_{subject}.npy')

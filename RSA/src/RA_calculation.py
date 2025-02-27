@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import bct
+import scipy.stats as stats
 
 def compute_ra(rsm1, rsm2):
     """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
     assert rsm1.shape == rsm2.shape, "RSMs must have the same shape to compute RA."
     
-    # Get the upper triangle indices, excluding the diagonal
+    # Get the upper triangle indices, excluding the diagonal (k=1 means diagonal is excluded)
     triu_indices = np.triu_indices(rsm1.shape[0], k=1)
     
     # Extract the upper triangle values
@@ -23,7 +24,14 @@ def load_rsm(file_path):
     """Load an RSM from a CSV file."""
     return np.loadtxt(file_path, delimiter=",")
 
-def main(threshold=False, save_individual=True, save_big_matrix=True):
+def normalize_rsm(rsm):
+    """Normalize an RSM by the geometric mean of its diagonal values."""
+    diag = np.diag(rsm, k=0)
+    geomean = stats.gmean(diag)
+    normalized_rsm = np.divide(rsm, geomean)
+    return normalized_rsm
+
+def main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True):
     RSA_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine'
     output_dir = '/home/hmueller2/ibc_code/ibc_output_RA'
 
@@ -51,6 +59,8 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
         
         for i, rsm_file1 in enumerate(rsm_files):
             rsm1 = load_rsm(os.path.join(subject_RSA_dir, rsm_file1))
+            if correct_geomean:
+                rsm1 = normalize_rsm(rsm1)
             parcel_name1 = '_'.join(rsm_file1.split('_')[1:3])  # Correctly extract the parcel name
             if parcel_name1 not in parcel_names:
                 parcel_names.append(parcel_name1)
@@ -59,6 +69,8 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
                 if i >= j:
                     continue
                 rsm2 = load_rsm(os.path.join(subject_RSA_dir, rsm_file2))
+                if correct_geomean:
+                    rsm2 = normalize_rsm(rsm2)
                 parcel_name2 = '_'.join(rsm_file2.split('_')[1:3])  # Correctly extract the parcel name
                 if parcel_name2 not in parcel_names:
                     parcel_names.append(parcel_name2)
@@ -71,11 +83,11 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
         
         # Debugging: Print parcel names and number of conditions
         print(f"Subject: {subject}")
-        print(f"Number of Parcels: {len(parcel_names)}")
+        #print(f"Number of Parcels: {len(parcel_names)}")
         if ra_matrices:
             first_parcel = list(ra_matrices.keys())[0]
             first_condition = list(ra_matrices[first_parcel].keys())[0]
-            print(f"Number of Conditions: 1 (since RA is a single value)")
+            #print(f"Number of Conditions: 1 (since RA is a single value)")
         else:
             print("No RA matrices found.")
             continue
@@ -97,7 +109,7 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
         if save_big_matrix:
             n_parcels = len(parcel_names)
             big_matrix = np.zeros((n_parcels, n_parcels))
-            print(f"Big Matrix Dimensions (initialized): {big_matrix.shape}")
+            #print(f"Big Matrix Dimensions (initialized): {big_matrix.shape}")
             
             # Fill the big matrix with RA values
             for i, parcel1 in enumerate(parcel_names):
@@ -113,14 +125,15 @@ def main(threshold=False, save_individual=True, save_big_matrix=True):
             np.fill_diagonal(big_matrix, 1)
             
             # Debugging: Print the shape of the big matrix before saving
-            print(f"Big Matrix Dimensions (filled): {big_matrix.shape}")
+            #print(f"Big Matrix Dimensions (filled): {big_matrix.shape}")
             
             # Save the big matrix to a file
             big_matrix_output_file = os.path.join(topographic_alignment_dir, f'topographic_alignment_{subject}.npy')
             np.save(big_matrix_output_file, big_matrix)
         
-        print(f"Done with subject {subject}")
+        print(f"--- Done with subject {subject} ---")
+    print(f"All topographic alignment matrices have been saved in {topographic_alignment_dir}.")
 
 if __name__ == "__main__":
     # Set threshold, save_individual, and save_big_matrix based on your requirement
-    main(threshold=False, save_individual=True, save_big_matrix=True)
+    main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True)

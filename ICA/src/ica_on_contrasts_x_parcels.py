@@ -11,26 +11,13 @@ from config_ICA import base_dir, output_dir
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def visualize_components_heatmap(components, title, output_dir, parcel_names):
-    """Visualize the ICA components as a heatmap and save the plot."""
-    plt.figure(figsize=(15, 10))
-    sns.heatmap(components, xticklabels=parcel_names, yticklabels=[f'Component {i+1}' for i in range(components.shape[1])], cmap='viridis', annot=True)
-    plt.title(f'{title} - ICA Components Heatmap')
-    plt.xlabel('Parcels')
-    plt.ylabel('Components')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'{title}_components_heatmap.png'))
-    plt.close()
-
 def load_contrast_map(file_path):
     try:
         img = nib.load(file_path)
         data = np.array([darray.data for darray in img.darrays])
         data = data.squeeze()  # Remove any singleton dimensions
-        #print(f"Loaded contrast map from {file_path} with shape {data.shape}")
         return data
     except FileNotFoundError:
-        #print(f"File not found: {file_path}")
         return None
 
 def extract_parcel_data(data, parcel_mapping):
@@ -98,10 +85,15 @@ def create_contrast_parcel_matrix(subject, base_dir, task_contrasts, lh_parcel_m
     # Extract parcel data
     parcel_data = {}
     for contrast, data, hemisphere in contrast_maps:
+        if contrast not in parcel_data:
+            parcel_data[contrast] = {}
+            
         if hemisphere == 'lh':
-            parcel_data[contrast] = extract_parcel_data(data, lh_parcel_mapping)
+            lh_data = extract_parcel_data(data, lh_parcel_mapping)
+            parcel_data[contrast].update(lh_data)
         elif hemisphere == 'rh':
-            parcel_data[contrast] = extract_parcel_data(data, rh_parcel_mapping)
+            rh_data = extract_parcel_data(data, rh_parcel_mapping)
+            parcel_data[contrast].update(rh_data)
     
     # Create the contrast x parcel matrix
     parcels = list(parcel_data[contrast].keys())
@@ -112,27 +104,81 @@ def create_contrast_parcel_matrix(subject, base_dir, task_contrasts, lh_parcel_m
             matrix[i, j] = np.mean(parcel_data[contrast][parcel])
     
     print(f"Matrix for subject {subject} created with shape {matrix.shape}")
-    return matrix
+    return matrix, parcels
 
 def perform_ica(matrix, n_components):
     """Perform Independent Component Analysis (ICA) on the provided matrix."""
+    # Transpose the matrix to have parcels as observations and contrasts as features
+    matrix_T = matrix.T  # Shape (n_parcels, n_contrasts)
+    
     ica = FastICA(n_components=n_components, random_state=0, max_iter=500)
-    components = ica.fit_transform(matrix)
-    return components
+    components = ica.fit_transform(matrix_T)  # Shape (n_parcels, n_components)
+    
+    # Transpose the result to get components x parcels
+    components_T = components.T  # Shape (n_components, n_parcels)
+    
+    return components_T
 
-def visualize_components(components, title, output_dir):
-    """Visualize the ICA components and save the plots."""
-    n_components = components.shape[1]
-    plt.figure(figsize=(15, 5))
-    for i in range(n_components):
-        plt.subplot(1, n_components, i + 1)
-        plt.plot(components[:, i])
-        plt.title(f'{title} - Component {i + 1}')
+def visualize_components_heatmap(components, matrix, title, output_dir, parcel_names):
+    """Visualize the ICA components mapped to parcels as a heatmap."""
+    # Get the mapping from components to parcels
+    # For FastICA, we need to use the components_ attribute from the model
+    ica = FastICA(n_components=components.shape[1])
+    ica.fit(matrix)
+    component_parcel_mapping = ica.components_  # Shape (n_components, n_parcels)
+    
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(component_parcel_mapping,
+                xticklabels=parcel_names, 
+                yticklabels=[f'Component {i+1}' for i in range(components.shape[1])],
+                cmap='viridis', 
+                annot=False)  # Set annot=False for better visibility with many parcels
+    plt.title(f'{title} - ICA Components by Parcels')
+    plt.xlabel('Parcels')
+    plt.ylabel('Components')
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'{title}_components.png'))
+    plt.savefig(os.path.join(output_dir, f'{title}_components_parcels_heatmap.png'))
     plt.close()
 
-def main():
+def visualize_components_heatmap(components, title, output_dir, parcel_names):
+    """Visualize the ICA components as a heatmap and save the plot."""
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(components, xticklabels=parcel_names, yticklabels=[f'Component {i+1}' for i in range(components.shape[1])], cmap='viridis', annot=True)
+    plt.title(f'{title} - ICA Components Heatmap')
+    plt.xlabel('Parcels')
+    plt.ylabel('Components')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'{title}_components_heatmap.png'))
+    plt.close()
+
+def visualize_component_clusters(components, matrix, title, output_dir, parcel_names):
+    """Visualize hierarchical clustering of parcels based on ICA components."""
+    from scipy.cluster.hierarchy import dendrogram, linkage
+    
+    # Get the mapping from components to parcels
+    ica = FastICA(n_components=components.shape[1])
+    ica.fit(matrix)
+    component_weights = ica.components_  # Shape (n_components, n_parcels)
+    
+    # Transpose to get parcels as observations
+    parcel_by_component = component_weights.T  # Shape (n_parcels, n_components)
+    
+    # Perform hierarchical clustering
+    linked = linkage(parcel_by_component, 'ward')
+    
+    plt.figure(figsize=(18, 10))
+    dendrogram(linked, 
+               orientation='top',
+               labels=parcel_names,
+               distance_sort='descending',
+               show_leaf_counts=True)
+    plt.title(f'{title} - Hierarchical Clustering of Parcels by Component Weights')
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f'{title}_parcels_dendrogram.png'))
+    plt.close()
+
+def main(n_components):
     # Load network partition and filter for frontoparietal network parcels
     network_partition_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
     network_partition = pd.read_csv(network_partition_path, sep='\t')
@@ -157,9 +203,9 @@ def main():
     subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')]
     for subject in subjects:
         print(f"Processing subject {subject}...")
-        matrix = create_contrast_parcel_matrix(subject, base_dir, task_contrasts, fpn_parcels_lh_mapping, fpn_parcels_rh_mapping)
+        matrix, parcels = create_contrast_parcel_matrix(subject, base_dir, task_contrasts, fpn_parcels_lh_mapping, fpn_parcels_rh_mapping)
         if matrix is not None:
-            n_components = min(matrix.shape[0], 3)  # Set the number of components
+            n_components = min(matrix.shape[1], n_components)  # Set the number of components
             
             # Create subfolder in output_dir based on the number of components
             components_output_dir = os.path.join(output_dir, f'{n_components}_components')
@@ -169,14 +215,14 @@ def main():
             
             # Save ICA components
             np.save(os.path.join(components_output_dir, f'sub-{subject}_ica_components.npy'), components)
-            print(f"ICA components for subject {subject} saved to {components_output_dir}")
+            print(f"ICA components for subject {subject} with shape {components.shape} (components × parcels) saved to {components_output_dir}")
             
-            # Visualize and save the components
-            parcel_names = list(matrix.columns)  # Assuming matrix columns are parcel names
-            visualize_components_heatmap(components, f'sub-{subject}', components_output_dir, parcel_names)
+            # Visualize and save the components as heatmap
+            visualize_components_heatmap(components, f'sub-{subject}', components_output_dir, parcels)
             print(f"ICA component heatmap for subject {subject} saved to {components_output_dir}")
-
+            
+            # Add hierarchical clustering visualization
+            visualize_component_clusters(components, matrix, f'sub-{subject}', components_output_dir, parcels)
+            print(f"ICA component clustering for subject {subject} saved to {components_output_dir}")
 if __name__ == "__main__":
-    main()
-if __name__ == "__main__":
-    main()
+    main(n_components=3)  # Specify the number of components here

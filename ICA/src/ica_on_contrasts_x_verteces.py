@@ -1,0 +1,1 @@
+# Do as in x parcels but reduce all parcels

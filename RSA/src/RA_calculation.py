@@ -9,7 +9,7 @@ def compute_ra(rsm1, rsm2):
     """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
     assert rsm1.shape == rsm2.shape, "RSMs must have the same shape to compute RA."
     
-    # Get the upper triangle indices, excluding the diagonal (k=1 means diagonal is excluded)
+    # Get the upper triangle indices, excluding the diagonal
     triu_indices = np.triu_indices(rsm1.shape[0], k=1)
     
     # Extract the upper triangle values
@@ -27,11 +27,18 @@ def load_rsm(file_path):
 def normalize_rsm(rsm):
     """Normalize an RSM by the geometric mean of its diagonal values."""
     diag = np.diag(rsm, k=0)
+    if np.any(diag == 0):
+        print("Warning: Zero values found in the diagonal. Skipping normalization.")
+        return rsm
     geomean = stats.gmean(diag)
     normalized_rsm = np.divide(rsm, geomean)
     return normalized_rsm
 
-def main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True):
+def convert_to_rdm(rsm):
+    """Convert an RSM to an RDM by subtracting the similarity values from 1."""
+    return 1 - rsm
+
+def main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True, save_type='both'):
     RSA_dir = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine'
     output_dir = '/home/hmueller2/ibc_code/ibc_output_RA'
 
@@ -44,6 +51,12 @@ def main(threshold=False, save_individual=True, save_big_matrix=True, correct_ge
     # Create the topographic alignment output directory
     topographic_alignment_dir = os.path.join(output_dir, 'topographic_alignment')
     os.makedirs(topographic_alignment_dir, exist_ok=True)
+
+    # Create subdirectories for RSM and RDM
+    rsm_dir = os.path.join(topographic_alignment_dir, 'rsm')
+    rdm_dir = os.path.join(topographic_alignment_dir, 'rdm')
+    os.makedirs(rsm_dir, exist_ok=True)
+    os.makedirs(rdm_dir, exist_ok=True)
 
     subjects = [d for d in os.listdir(RSA_dir) if os.path.isdir(os.path.join(RSA_dir, d)) and d.startswith('sub-')]
     
@@ -83,11 +96,9 @@ def main(threshold=False, save_individual=True, save_big_matrix=True, correct_ge
         
         # Debugging: Print parcel names and number of conditions
         print(f"Subject: {subject}")
-        #print(f"Number of Parcels: {len(parcel_names)}")
         if ra_matrices:
             first_parcel = list(ra_matrices.keys())[0]
             first_condition = list(ra_matrices[first_parcel].keys())[0]
-            #print(f"Number of Conditions: 1 (since RA is a single value)")
         else:
             print("No RA matrices found.")
             continue
@@ -109,7 +120,6 @@ def main(threshold=False, save_individual=True, save_big_matrix=True, correct_ge
         if save_big_matrix:
             n_parcels = len(parcel_names)
             big_matrix = np.zeros((n_parcels, n_parcels))
-            #print(f"Big Matrix Dimensions (initialized): {big_matrix.shape}")
             
             # Fill the big matrix with RA values
             for i, parcel1 in enumerate(parcel_names):
@@ -123,17 +133,21 @@ def main(threshold=False, save_individual=True, save_big_matrix=True, correct_ge
             
             # Set the diagonal to 1 (self-similarity)
             np.fill_diagonal(big_matrix, 1)
+
+            # Convert the big matrix to an RDM
+            big_matrix_rdm = convert_to_rdm(big_matrix)
             
-            # Debugging: Print the shape of the big matrix before saving
-            #print(f"Big Matrix Dimensions (filled): {big_matrix.shape}")
-            
-            # Save the big matrix to a file
-            big_matrix_output_file = os.path.join(topographic_alignment_dir, f'topographic_alignment_{subject}.npy')
-            np.save(big_matrix_output_file, big_matrix)
+            # Save the big matrix to a file based on save_type
+            if save_type in ['both', 'rsm']:
+                big_matrix_output_file_rsm = os.path.join(rsm_dir, f'topographic_alignment_rsm_{subject}.npy')
+                np.save(big_matrix_output_file_rsm, big_matrix)
+            if save_type in ['both', 'rdm']:
+                big_matrix_output_file_rdm = os.path.join(rdm_dir, f'topographic_alignment_rdm_{subject}.npy')
+                np.save(big_matrix_output_file_rdm, big_matrix_rdm)
         
         print(f"--- Done with subject {subject} ---")
     print(f"All topographic alignment matrices have been saved in {topographic_alignment_dir}.")
 
 if __name__ == "__main__":
-    # Set threshold, save_individual, and save_big_matrix based on your requirement
-    main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True)
+    # Set threshold, save_individual, save_big_matrix, and save_type based on your requirement
+    main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True, save_type='rdm')

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from sklearn.decomposition import FastICA
+from sklearn.decomposition import FastICA, PCA
 import matplotlib.pyplot as plt
 import pandas as pd
 import nibabel as nib
@@ -106,18 +106,17 @@ def create_contrast_parcel_matrix(subject, base_dir, task_contrasts, lh_parcel_m
     print(f"Matrix for subject {subject} created with shape {matrix.shape}")
     return matrix, parcels
 
+def perform_pca(matrix, n_components):
+    """Perform Principal Component Analysis (PCA) on the provided matrix."""
+    pca = PCA(n_components=n_components)
+    reduced_matrix = pca.fit_transform(matrix)
+    return reduced_matrix, pca
+
 def perform_ica(matrix, n_components):
     """Perform Independent Component Analysis (ICA) on the provided matrix."""
-    # Transpose the matrix to have parcels as observations and contrasts as features
-    matrix_T = matrix.T  # Shape (n_parcels, n_contrasts)
-    
     ica = FastICA(n_components=n_components, random_state=0, max_iter=500)
-    components = ica.fit_transform(matrix_T)  # Shape (n_parcels, n_components)
-    
-    # Transpose the result to get components x parcels
-    components_T = components.T  # Shape (n_components, n_parcels)
-    
-    return components_T
+    components = ica.fit_transform(matrix)  # Shape (n_samples, n_components)
+    return components, ica
 
 def visualize_components_heatmap(components, matrix, title, output_dir, parcel_names):
     """Visualize the ICA components mapped to parcels as a heatmap."""
@@ -151,20 +150,12 @@ def visualize_components_heatmap(components, title, output_dir, parcel_names):
     plt.savefig(os.path.join(output_dir, f'{title}_components_heatmap.png'))
     plt.close()
 
-def visualize_component_clusters(components, matrix, title, output_dir, parcel_names):
+def visualize_component_clusters(components, title, output_dir, parcel_names):
     """Visualize hierarchical clustering of parcels based on ICA components."""
     from scipy.cluster.hierarchy import dendrogram, linkage
     
-    # Get the mapping from components to parcels
-    ica = FastICA(n_components=components.shape[1])
-    ica.fit(matrix)
-    component_weights = ica.components_  # Shape (n_components, n_parcels)
-    
-    # Transpose to get parcels as observations
-    parcel_by_component = component_weights.T  # Shape (n_parcels, n_components)
-    
     # Perform hierarchical clustering
-    linked = linkage(parcel_by_component, 'ward')
+    linked = linkage(components.T, 'ward')  # Transpose to get parcels as observations
     
     plt.figure(figsize=(18, 10))
     dendrogram(linked, 
@@ -178,7 +169,7 @@ def visualize_component_clusters(components, matrix, title, output_dir, parcel_n
     plt.savefig(os.path.join(output_dir, f'{title}_parcels_dendrogram.png'))
     plt.close()
 
-def main(n_components):
+def main(n_pca_components, n_ica_components):
     # Load network partition and filter for frontoparietal network parcels
     network_partition_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'
     network_partition = pd.read_csv(network_partition_path, sep='\t')
@@ -191,7 +182,7 @@ def main(n_components):
     labels_lh, ctab_lh, names_lh = read_annot(lh_annot_file)
     labels_rh, ctab_rh, names_rh = read_annot(rh_annot_file)
     
-    # Create vertex-to-parcel mappings for frontoparietal parcels
+    # Create vertex-to-parcel mappings for frontoparietal network parcels
     vertices_lh = np.arange(len(labels_lh))
     vertices_rh = np.arange(len(labels_rh))
     lh_parcel_mapping = {vertex: names_lh[label] for vertex, label in zip(vertices_lh, labels_lh)}
@@ -205,24 +196,29 @@ def main(n_components):
         print(f"Processing subject {subject}...")
         matrix, parcels = create_contrast_parcel_matrix(subject, base_dir, task_contrasts, fpn_parcels_lh_mapping, fpn_parcels_rh_mapping)
         if matrix is not None:
-            n_components = min(matrix.shape[1], n_components)  # Set the number of components
+            # Apply PCA to reduce the number of contrasts
+            reduced_matrix, pca = perform_pca(matrix, n_pca_components)
+            print(f"PCA reduced matrix for subject {subject} with shape {reduced_matrix.shape} (reduced contrasts × parcels)")
+            
+            # Apply ICA to the reduced matrix
+            components, ica = perform_ica(reduced_matrix.T, n_ica_components)
+            components_T = components.T  # Shape (n_components, n_parcels)
             
             # Create subfolder in output_dir based on the number of components
-            components_output_dir = os.path.join(output_dir, f'{n_components}_components')
+            components_output_dir = os.path.join(output_dir, f'{n_ica_components}_components')
             os.makedirs(components_output_dir, exist_ok=True)
             
-            components = perform_ica(matrix, n_components)
-            
             # Save ICA components
-            np.save(os.path.join(components_output_dir, f'sub-{subject}_ica_components.npy'), components)
-            print(f"ICA components for subject {subject} with shape {components.shape} (components × parcels) saved to {components_output_dir}")
+            np.save(os.path.join(components_output_dir, f'sub-{subject}_ica_components.npy'), components_T)
+            print(f"ICA components for subject {subject} with shape {components_T.shape} (components × parcels) saved to {components_output_dir}")
             
             # Visualize and save the components as heatmap
-            visualize_components_heatmap(components, f'sub-{subject}', components_output_dir, parcels)
+            visualize_components_heatmap(components_T, f'sub-{subject}', components_output_dir, parcels)
             print(f"ICA component heatmap for subject {subject} saved to {components_output_dir}")
             
             # Add hierarchical clustering visualization
-            visualize_component_clusters(components, matrix, f'sub-{subject}', components_output_dir, parcels)
+            visualize_component_clusters(components_T, f'sub-{subject}', components_output_dir, parcels)
             print(f"ICA component clustering for subject {subject} saved to {components_output_dir}")
+
 if __name__ == "__main__":
-    main(n_components=3)  # Specify the number of components here
+    main(n_pca_components=7, n_ica_components=6)  # Specify the number of PCA and ICA components here

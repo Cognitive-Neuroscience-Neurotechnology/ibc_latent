@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import bct
 import scipy.stats as stats
+import json
 
 def compute_ra(rsm1, rsm2):
     """Compute the regional alignment (RA) between two RSMs using cosine similarity."""
@@ -144,10 +145,15 @@ def main(threshold=False, save_individual=True, save_big_matrix=True, correct_ge
             if save_type in ['both', 'rdm']:
                 big_matrix_output_file_rdm = os.path.join(rdm_dir, f'topographic_alignment_rdm_{subject}.npy')
                 np.save(big_matrix_output_file_rdm, big_matrix_rdm)
+            
+            # Save the parcel names
+            parcel_names_file = os.path.join(topographic_alignment_dir, f'parcel_names_{subject}.json')
+            with open(parcel_names_file, 'w') as f:
+                json.dump(parcel_names, f)
         
         print(f"--- Done with subject {subject} ---")
     print(f"All topographic alignment matrices have been saved in {topographic_alignment_dir}.")
 
 if __name__ == "__main__":
     # Set threshold, save_individual, save_big_matrix, and save_type based on your requirement
-    main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True, save_type='rdm')
+    main(threshold=False, save_individual=True, save_big_matrix=True, correct_geomean=True, save_type='both')

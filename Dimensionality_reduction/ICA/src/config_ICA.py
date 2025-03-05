@@ -4,7 +4,7 @@ import os
 hostname = os.uname().nodename
 if hostname == 'nyx-login0.hpc.kyb.local':
     base_dir = '/home/hmueller2/Downloads/ibc_contrast_maps/resulting_smooth_maps_surface/' # find the contrast maps here
-    output_dir = '/home/hmueller2/ibc_code/ibc_output_ICA'
+    output_dir = '/home/hmueller2/ibc_code/ibc_output_ICA_vertices'
     code_dir = '/home/hmueller2/ibc_code/ibc_latent'
 else:
     base_dir = '/Users/hannahmuller/nyx_mount/Downloads/ibc_contrast_maps/resulting_smooth_maps_surface/'

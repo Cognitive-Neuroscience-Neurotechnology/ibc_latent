@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import seaborn as sns
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 import matplotlib.pyplot as plt
 
@@ -30,6 +31,18 @@ def plot_dendrogram(Z, title, output_dir, subject):
     plt.close()
     print(f"Dendrogram saved to {plot_file}")
 
+def plot_clustered_ra(data, Z, title, output_dir, subject):
+    """Plot the clustered RA and save the plot."""
+    print("Reorder RA matrix according to hierarchical clustering")
+    sns.clustermap(data, row_linkage=Z, col_linkage=Z, cmap='viridis', figsize=(10, 10))
+    plt.title(title)
+    
+    # Save the plot
+    plot_file = os.path.join(output_dir, f'clustermap_{subject}.png')
+    plt.savefig(plot_file)
+    plt.close()
+    print(f"Clustermap saved to {plot_file}")
+
 def main():
     base_dir = '/home/hmueller2/ibc_code'
     topographic_alignment_RSM_dir = os.path.join(base_dir, 'ibc_output_RA', 'raw', 'topographic_alignment', 'rsm')
@@ -57,6 +70,9 @@ def main():
         # Plot the dendrogram and save the plot
         plot_dendrogram(Z, f'Dendrogram for {subject}', output_dir, subject)
         print(f"Hierarchical labels for {subject}: {hier_labels}")
+        
+        # Plot the clustermap and save the plot
+        plot_clustered_ra(rsm, Z, f'RA Matrix Clustermap for {subject}', output_dir, subject)
 
 if __name__ == "__main__":
     main()

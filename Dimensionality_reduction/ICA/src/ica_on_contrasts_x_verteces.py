@@ -1,11 +1,8 @@
 import os
 import numpy as np
-from sklearn.decomposition import FastICA, PCA
+from sklearn.decomposition import FastICA
 import matplotlib.pyplot as plt
-import pandas as pd
 import nibabel as nib
-import time
-from nibabel.freesurfer.io import read_annot
 from task_contrasts import task_contrasts
 from config_ICA import base_dir, output_dir
 import seaborn as sns
@@ -27,12 +24,6 @@ def average_sessions(file_paths):
         return None
     average_data = np.mean(data_sessions, axis=0)
     return average_data
-
-def perform_pca(matrix, n_components):
-    """Perform Principal Component Analysis (PCA) on the provided matrix."""
-    pca = PCA(n_components=n_components)
-    reduced_matrix = pca.fit_transform(matrix)
-    return reduced_matrix, pca
 
 def perform_ica(matrix, n_components):
     """Perform Independent Component Analysis (ICA) on the provided matrix."""
@@ -69,7 +60,7 @@ def visualize_component_clusters(components, title, output_dir):
     plt.savefig(os.path.join(output_dir, f'{title}_vertices_dendrogram.png'))
     plt.close()
 
-def main(n_pca_components, n_ica_components):
+def main(n_ica_components):
     # Process each subject
     subjects = [d.split('-')[1] for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d)) and d.startswith('sub-')]
     for subject in subjects:
@@ -131,4 +122,4 @@ def main(n_pca_components, n_ica_components):
         #print(f"ICA component clustering for subject {subject} saved to {components_output_dir}")
 
 if __name__ == "__main__":
-    main(n_pca_components=7, n_ica_components=4)  # Specify the number of PCA and ICA components here
+    main(n_ica_components=4)  # Specify the number of PCA and ICA components here

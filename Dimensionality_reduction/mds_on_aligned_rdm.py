@@ -16,7 +16,7 @@ def perform_mds(rdm, n_components=3): # n_components gives the number of dimensi
     mds_coords = mds.fit_transform(rdm)
     return mds_coords
 
-def cluster_data(data, n_clusters=2):
+def cluster_data(data, n_clusters=3):
     """Cluster the data using m."""
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(data)

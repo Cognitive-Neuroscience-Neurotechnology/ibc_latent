@@ -3,7 +3,7 @@ import json
 import os
 
 subjects = [f'sub-{i:02d}' for i in range(1, 16) if i not in [3, 10]]
-run = 'run_06'
+run = 'run_07'
 
 # Load the FPN parcellation file
 fpn_parcellation_path = '/home/hmueller2/Downloads/FPN_parcellation_cole/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR_LabelKey.txt'

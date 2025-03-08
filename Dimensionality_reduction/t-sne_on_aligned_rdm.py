@@ -9,13 +9,13 @@ def load_rdm(file_path):
     """Load an RDM from a .npy file."""
     return np.load(file_path)
 
-def perform_tsne(rdm, n_components=3, perplexity=25, max_iter=5000):
+def perform_tsne(rdm, n_components=3, perplexity=25, max_iter=5000): # Parameters: n_components = number of dimensions, perplexity = number of neighbors
     """Perform t-SNE on the RDM."""
     tsne = TSNE(n_components=n_components, perplexity=perplexity, max_iter=max_iter, metric='precomputed', init='random', random_state=42)
     tsne_coords = tsne.fit_transform(rdm)
     return tsne_coords
 
-def cluster_data(data, n_clusters=2):
+def cluster_data(data, n_clusters=2): # Number of clusters (assumed subnetworks)
     """Cluster the data using KMeans."""
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(data)

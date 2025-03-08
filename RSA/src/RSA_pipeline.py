@@ -130,6 +130,7 @@ for subject in subjects:
     os.makedirs(subject_output_dir, exist_ok=True)
     
     ra_results = []
+    contrast_names = []
 
     for hemisphere in ['lh', 'rh']:
         # Find all sessions for the current subject
@@ -156,6 +157,7 @@ for subject in subjects:
                     data = load_contrast_map(file_paths[0])
                 
                 contrast_maps.append(data)
+                contrast_names.append(f"{task}_{contrast}")
         
         # Check if contrast_maps is not empty
         if not contrast_maps:
@@ -202,6 +204,13 @@ for subject in subjects:
     ra_output_file = os.path.join(subject_output_dir, f'ra_sub-{subject}.csv')
     ra_df.to_csv(ra_output_file, index=False)
     print(f"RA results saved to {ra_output_file}")
+
+    # Save contrast names to a file
+    contrast_names_file = os.path.join(subject_output_dir, f'contrast_names_sub-{subject}.txt')
+    with open(contrast_names_file, 'w') as f:
+        for name in contrast_names:
+            f.write(f"{name}\n")
+    print(f"Contrast names saved to {contrast_names_file}")
 
 print("-" * 50 + " All RSMs and RAs Done :) " + "-" * 50)
 

@@ -13,7 +13,8 @@ def perform_tsne(rdm, n_components=3, perplexity=25, max_iter=5000): # Parameter
     """Perform t-SNE on the RDM."""
     tsne = TSNE(n_components=n_components, perplexity=perplexity, max_iter=max_iter, metric='precomputed', init='random', random_state=42)
     tsne_coords = tsne.fit_transform(rdm)
-    return tsne_coords
+    kl_divergence = tsne.kl_divergence_
+    return tsne_coords, kl_divergence
 
 def cluster_data(data, n_clusters=2): # Number of clusters (assumed subnetworks)
     """Cluster the data using KMeans."""
@@ -59,8 +60,9 @@ def main():
         rdm = load_rdm(rdm_file)
         
         # Perform t-SNE
-        tsne_coords = perform_tsne(rdm)
-        
+        tsne_coords, kl_divergence = perform_tsne(rdm)
+        print(f'KL Divergence for {subject}: {kl_divergence}')
+
         # Cluster the t-SNE coordinates
         labels = cluster_data(tsne_coords)
         

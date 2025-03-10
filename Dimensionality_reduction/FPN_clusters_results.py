@@ -140,7 +140,7 @@ def save_pairwise_similarity(cluster_rsms, subject, output_dir):
 
 ### MAIN ###
 
-run = 'run_06'
+run = 'run_10-3d-2clusters'
 base_path = '/home/hmueller2/ibc_code/ibc_output_KMeans_onMDS/'
 rsm_base_path = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine/'
 

@@ -1,8 +1,9 @@
 import os
 import numpy as np
+import pandas as pd
 from sklearn.manifold import MDS
 from sklearn.cluster import KMeans
-from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+from sklearn.metrics import silhouette_score, adjusted_rand_score, normalized_mutual_info_score
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 
@@ -10,17 +11,22 @@ def load_rdm(file_path):
     """Load an RDM from a .npy file."""
     return np.load(file_path)
 
-def perform_mds(rdm, n_components=3): # n_components gives the number of dimensions to reduce to
+def perform_mds(rdm, n_components=5): # n_components gives the number of dimensions to reduce to
     """Perform MDS on the RDM."""
     mds = MDS(n_components=n_components, dissimilarity='precomputed', random_state=42)
     mds_coords = mds.fit_transform(rdm)
-    return mds_coords
+    stress = mds.stress_
+    # Compute R-squared value
+    r_squared = 1 - (stress / np.sum(rdm ** 2))
+    return mds_coords, r_squared, stress
 
-def cluster_data(data, n_clusters=3):
-    """Cluster the data using m."""
+def cluster_data(data, n_clusters=2):
+    """Cluster the data using KMeans."""
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(data)
-    return labels
+    inertia = kmeans.inertia_
+    silhouette_avg = silhouette_score(data, labels)
+    return labels, inertia, silhouette_avg
 
 def hierarchical_clustering(data, n_clusters=3):
     """Perform hierarchical clustering on the data."""
@@ -92,17 +98,25 @@ def main():
 
     all_kmeans_labels = {}
     all_hier_labels = {}
+    r_squared_values = {}
+    stress_values = {}
+    inertia_values = {}
+    silhouette_scores = {}
 
     for subject in subjects:
         rdm_file = os.path.join(topographic_alignment_RDM_dir, f'topographic_alignment_rdm_{subject}.npy')
         rdm = load_rdm(rdm_file)
         
         # Perform MDS
-        mds_coords = perform_mds(rdm)
+        mds_coords, r_squared, stress = perform_mds(rdm)
+        r_squared_values[subject] = r_squared
+        stress_values[subject] = stress
         
         # Cluster the MDS coordinates using KMeans
-        kmeans_labels = cluster_data(mds_coords)
+        kmeans_labels, inertia, silhouette_avg = cluster_data(mds_coords)
         all_kmeans_labels[subject] = kmeans_labels
+        inertia_values[subject] = inertia
+        silhouette_scores[subject] = silhouette_avg
         
         # Save the KMeans labels to a CSV file
         kmeans_labels = kmeans_labels + 1  # Change labels from 0,1 to 1,2
@@ -121,6 +135,17 @@ def main():
         
         # Plot the dendrogram and save the plot
         plot_dendrogram(Z, f'Dendrogram for {subject}', current_run_dir, subject)
+
+    # Save the R-squared values, Kruskal's Stress, Inertia, and Silhouette Score to a file
+    metrics_file = os.path.join(current_run_dir, 'mds_metrics.csv')
+    metrics_df = pd.DataFrame({
+        'Subject': subjects,
+        'R_squared': [r_squared_values[subj] for subj in subjects],
+        'Stress': [stress_values[subj] for subj in subjects],
+        'Inertia': [inertia_values[subj] for subj in subjects],
+        'Silhouette_Score': [silhouette_scores[subj] for subj in subjects]
+    })
+    metrics_df.to_csv(metrics_file, index=False)
 
     # Compute and print the similarity between the clusters of different subjects
     subjects_pairs = [(subjects[i], subjects[j]) for i in range(len(subjects)) for j in range(i+1, len(subjects))]

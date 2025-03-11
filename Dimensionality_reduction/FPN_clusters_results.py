@@ -7,7 +7,7 @@ import nibabel as nib
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 
-def plot_brain_surface(cortex_data, subject, output_path, min_thresh=1, max_thresh=2, cm='plasma'):
+def plot_brain_surface(cortex_data, subject, output_path, min_thresh=1, max_thresh=2, cm='gist_rainbow'):
     fig = plt.figure(figsize=[20, 10])
     ax = fig.add_subplot(1, 6, 1, projection='3d')
     plotting.plot_surf_stat_map(
@@ -140,7 +140,7 @@ def save_pairwise_similarity(cluster_rsms, subject, output_dir):
 
 ### MAIN ###
 
-run = 'run_10-3d-2clusters'
+run = 'run_10'
 base_path = '/home/hmueller2/ibc_code/ibc_output_KMeans_onMDS/'
 rsm_base_path = '/home/hmueller2/ibc_code/ibc_output_RSA_cosine/'
 
@@ -175,8 +175,9 @@ for subject in subjects:
     output_path = os.path.join(base_path, run, f'cluster-brain_{subject}.png')
 
     # Plot and save the brain surface
+    print(f'Saving brain surface plot to {output_path}')
     plot_brain_surface(cortex_data, subject, output_path)
-###
+
     # Group parcels by cluster
     clusters = parcel_clusters_df.groupby('cluster')['parcel_label'].apply(list).to_dict()
 
@@ -184,4 +185,7 @@ for subject in subjects:
     cluster_rsms = average_rsms_within_clusters(subject, clusters, os.path.join(rsm_base_path, f'{subject}'))
 
     # Save pairwise similarity between clusters
+    print(f'Saving pairwise similarity for {subject}')
     save_pairwise_similarity(cluster_rsms, subject, os.path.join(base_path, run))
+
+print('Processing complete.')

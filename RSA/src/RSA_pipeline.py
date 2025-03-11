@@ -93,6 +93,9 @@ def compute_rsm(activations, output_dir, parcel_name, subject):
     # Mirror the upper triangle to the lower triangle
     rsm = rsm + rsm.T
     
+    # Set the diagonal to 1
+    np.fill_diagonal(rsm, 1)
+    
     # Check if the output is a 2D array
     assert rsm.ndim == 2, f"Output RSM should be a 2D array, but got {rsm.ndim}D array"
     

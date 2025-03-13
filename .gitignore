@@ -1,3 +1,5 @@
 *.nii
 *.nii.gz
+First_GLM.ipynb
+First_RSA.ipynb
 GLM/src/find_incorrect_naming.py

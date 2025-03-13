@@ -2,6 +2,17 @@ import pandas as pd
 import json
 import os
 
+### THIS CODE IS USED TO CREATE A FILE THAT MAPS PARCELS TO CLUSTERS ###
+# The code reads the KMeans cluster results and the parcel labels for each subject
+# The resulting dataframe has columns: index (original) - parcel_label - index_Xp (indices from matrices) - cluster
+
+'''
+Steps:
+1. import cluster results per index from /home/hmueller2/ibc_code/ibc_output_MDS/run_06/kmeans_labels_sub-XX.csv
+2. import parcel labels from indexing '/home/hmueller2/ibc_output_RA/raw/topographic_alignment/parcel_names_sub-XX.json'
+3. Concetanate the two to get a File with columns: index - parcel_label - cluster
+'''
+
 subjects = [f'sub-{i:02d}' for i in range(1, 16) if i not in [3, 10]]
 run = 'run_10-3d-2clusters'
 

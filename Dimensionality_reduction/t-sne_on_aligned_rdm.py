@@ -16,7 +16,7 @@ def perform_tsne(rdm, n_components=3, perplexity=25, max_iter=5000): # Parameter
     kl_divergence = tsne.kl_divergence_
     return tsne_coords, kl_divergence
 
-def cluster_data(data, n_clusters=2): # Number of clusters (assumed subnetworks)
+def cluster_data(data, n_clusters=3): # Number of clusters (assumed subnetworks)
     """Cluster the data using KMeans."""
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(data)
@@ -49,7 +49,9 @@ def plot_clusters(data, labels, title, output_dir, subject):
 def main():
     base_dir = '/home/hmueller2/ibc_code'
     topographic_alignment_RDM_dir = os.path.join(base_dir, 'ibc_output_RA', 'raw', 'topographic_alignment', 'rdm')
-    output_dir = os.path.join(base_dir, 'ibc_output_tSNE', 'run_03')
+    n_components = 3
+    n_clusters = 3
+    output_dir = os.path.join(base_dir, f'ibc_output_tSNE', f'tSNE-{n_components}d-{n_clusters}clusters')
     os.makedirs(output_dir, exist_ok=True)
 
     # Get the list of subjects from the filenames in the directory

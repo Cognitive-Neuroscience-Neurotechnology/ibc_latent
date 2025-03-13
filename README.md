@@ -34,24 +34,25 @@ ICA
 └── requirements.txt            # Project dependencies   
 
 MDS and Clustering                       
-├── DimRed_Visualization.ipynb    
-├── FPN_clusters_results.py
-├── hierarchical_clustering_on_rsm.py
-├── Index_parcel_cluster.py
-├── mds_on_aligned_rdm.py
-├── Surface_Visualization.ipynb
-├── t-sne_on_aligned_rdm.py
-├── README.md
+├── DimRed_Visualization.ipynb  # Visualization of RSMs and MDS results & comparing RSMs between clusters
+├── FPN_clusters_results.py     # Plotting all subjects' clusters onto surface
+├── hierarchical_clustering_.py # Second approach to create clusters after MDS
+├── Index_parcel_cluster.py     # Map cluster labels to parcel indices and labels
+├── mds_on_aligned_rdm.py       # Multidimensional Scaling on RA matrix
+├── Surface_Visualization.ipynb # Visualization of obtained clusters in FPN parcels on surface
+├── t-sne_on_aligned_rdm.py     # Alternative dimensionality reduction with clustering
+├── README.md           
 └── requirements.txt            # Project dependencies
 
 RSA                             # Representational Similarity Analysis
 ├── src
 │   ├── config_RSA.py           # Defines the directories.
-│   ├── count_contrast.py
+│   ├── count_contrast.py       # Creates scv file with amount of task contrast done
+│   ├── RA_calculation.py       # Representational Alignment with RSMs
 │   ├── RSA_pipeline.py         # Main logic for RSA pipeline.
 │   ├── RSA_test_one.py         # Test script for RSA.
 │   └── tasks_contrasts.py      # Dictionary of task contrasts used for RSA.
-├── FPN_vertices_parcels.py
+├── FPN_vertices_parcels.py     # Vertex-to-parcel mapping for Frontoparietal parcels
 ├── glossary.md                 # Glossary of terms
 ├── RSM_Visualization.ipynb     # Jupyter notebook for RSM visualization
 ├── README.md                   # Project documentation

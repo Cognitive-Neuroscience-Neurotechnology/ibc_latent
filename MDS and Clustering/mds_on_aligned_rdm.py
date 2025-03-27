@@ -11,7 +11,7 @@ def load_rdm(file_path):
     """Load an RDM from a .npy file."""
     return np.load(file_path)
 
-def perform_mds(rdm, n_components=5): # n_components gives the number of dimensions to reduce to
+def perform_mds(rdm, n_components=3): # n_components gives the number of dimensions to reduce to
     """Perform MDS on the RDM."""
     mds = MDS(n_components=n_components, dissimilarity='precomputed', random_state=42)
     mds_coords = mds.fit_transform(rdm)
@@ -39,28 +39,27 @@ def plot_clusters(data, labels, title, output_dir, subject):
     if data.shape[1] == 2:
         plt.figure(figsize=(10, 8))
         plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', s=50)
+        plt.xticks([])  # Remove x-axis numbers
+        plt.yticks([])  # Remove y-axis numbers
         plt.title(title)
-        plt.xlabel('MDS Dimension 1')
-        plt.ylabel('MDS Dimension 2')
-        plt.colorbar()
         
-        # Save the plot
+        # Save the plot in high resolution
         plot_file = os.path.join(output_dir, f'clusters_{subject}_2d.png')
-        plt.savefig(plot_file)
+        plt.savefig(plot_file, dpi=300)
         plt.close()
+    
     elif data.shape[1] == 3:
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
-        scatter = ax.scatter(data[:, 0], data[:, 1], data[:, 2], c=labels, cmap='viridis', s=50)
+        ax.scatter(data[:, 0], data[:, 1], data[:, 2], c=labels, cmap='viridis', s=50)
+        ax.set_xticks([])  # Remove x-axis numbers
+        ax.set_yticks([])  # Remove y-axis numbers
+        ax.set_zticks([])  # Remove z-axis numbers
         ax.set_title(title)
-        ax.set_xlabel('MDS Dimension 1')
-        ax.set_ylabel('MDS Dimension 2')
-        ax.set_zlabel('MDS Dimension 3')
-        fig.colorbar(scatter)
         
-        # Save the plot
-        plot_file = os.path.join(output_dir, f'clusters_{title}_{subject}_3d.png')
-        plt.savefig(plot_file)
+        # Save the plot in high resolution
+        plot_file = os.path.join(output_dir, f'clusters_{subject}_3d.png')
+        plt.savefig(plot_file, dpi=300)
         plt.close()
 
 def plot_dendrogram(Z, title, output_dir, subject):
@@ -124,17 +123,17 @@ def main():
         np.savetxt(kmeans_labels_file, kmeans_labels, delimiter=",", fmt='%d')
         
         # Plot the KMeans clusters and save the plot
-        plot_clusters(mds_coords, kmeans_labels, f'KMeans Clusters for {subject}', current_run_dir, subject)
+        plot_clusters(mds_coords, kmeans_labels, f'KMeans Clusters for Subject {subject.split("-")[1]}', current_run_dir, subject)
         
         # Perform hierarchical clustering
         hier_labels, Z = hierarchical_clustering(mds_coords)
         all_hier_labels[subject] = hier_labels
         
         # Plot the clusters in dimensions and save the plot
-        plot_clusters(mds_coords, hier_labels, f'Hierarchical Clusters for {subject}', current_run_dir, subject)
+        #plot_clusters(mds_coords, hier_labels, f'Subject {subject.split("-")[1]}', current_run_dir, subject)
         
         # Plot the dendrogram and save the plot
-        plot_dendrogram(Z, f'Dendrogram for {subject}', current_run_dir, subject)
+        plot_dendrogram(Z, f'Dendrogram for Subject {subject.split("-")[1]}', current_run_dir, subject)
 
     # Save the R-squared values, Kruskal's Stress, Inertia, and Silhouette Score to a file
     metrics_file = os.path.join(current_run_dir, 'mds_metrics.csv')

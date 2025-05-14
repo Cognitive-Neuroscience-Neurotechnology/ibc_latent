@@ -11,7 +11,7 @@ def load_rdm(file_path):
     """Load an RDM from a .npy file."""
     return np.load(file_path)
 
-def perform_mds(rdm, n_components=3): # n_components gives the number of dimensions to reduce to
+def perform_mds(rdm, n_components=6): # n_components gives the number of dimensions to reduce to
     """Perform MDS on the RDM."""
     mds = MDS(n_components=n_components, dissimilarity='precomputed', random_state=42)
     mds_coords = mds.fit_transform(rdm)
@@ -28,7 +28,7 @@ def cluster_data(data, n_clusters=2):
     silhouette_avg = silhouette_score(data, labels)
     return labels, inertia, silhouette_avg
 
-def hierarchical_clustering(data, n_clusters=3):
+def hierarchical_clustering(data, n_clusters=2):
     """Perform hierarchical clustering on the data."""
     Z = linkage(data, method='ward')
     labels = fcluster(Z, n_clusters, criterion='maxclust')
@@ -41,7 +41,6 @@ def plot_clusters(data, labels, title, output_dir, subject):
         plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', s=50)
         plt.xticks([])  # Remove x-axis numbers
         plt.yticks([])  # Remove y-axis numbers
-        plt.title(title)
         
         # Save the plot in high resolution
         plot_file = os.path.join(output_dir, f'clusters_{subject}_2d.png')
@@ -55,7 +54,6 @@ def plot_clusters(data, labels, title, output_dir, subject):
         ax.set_xticks([])  # Remove x-axis numbers
         ax.set_yticks([])  # Remove y-axis numbers
         ax.set_zticks([])  # Remove z-axis numbers
-        ax.set_title(title)
         
         # Save the plot in high resolution
         plot_file = os.path.join(output_dir, f'clusters_{subject}_3d.png')

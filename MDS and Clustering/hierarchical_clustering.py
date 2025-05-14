@@ -9,7 +9,7 @@ def load_rsm(file_path):
     print(f"Loading RA from {file_path}")
     return np.load(file_path)
 
-def hierarchical_clustering(data, n_clusters=5):
+def hierarchical_clustering(data, n_clusters=3):
     """Perform hierarchical clustering on the data."""
     print("Performing hierarchical clustering")
     Z = linkage(data, method='ward')
@@ -21,25 +21,37 @@ def plot_dendrogram(Z, title, output_dir, subject):
     print(f"Plotting dendrogram for {subject}")
     plt.figure(figsize=(10, 8))
     dendrogram(Z)
-    plt.title(title)
-    plt.xlabel('Sample index')
-    plt.ylabel('Distance')
+    plt.gca().set_xticks([])  # Remove x-axis labels
+    plt.gca().set_yticks([])  # Remove y-axis labels
+    plt.title("")  # Remove the title
     
-    # Save the plot
+    # Save the plot in high resolution
     plot_file = os.path.join(output_dir, f'dendrogram_{subject}.png')
-    plt.savefig(plot_file)
+    plt.savefig(plot_file, dpi=300)  # Save with high DPI
     plt.close()
     print(f"Dendrogram saved to {plot_file}")
 
 def plot_clustered_ra(data, Z, title, output_dir, subject):
     """Plot the clustered RA and save the plot."""
     print("Reorder RA matrix according to hierarchical clustering")
-    sns.clustermap(data, row_linkage=Z, col_linkage=Z, cmap='viridis', figsize=(10, 10))
-    plt.title(title)
+    cluster_map = sns.clustermap(
+        data, 
+        row_linkage=Z, 
+        col_linkage=Z, 
+        cmap='viridis', 
+        figsize=(10, 10), 
+        cbar=False  # Disable the colorbar
+    )
+    # Remove the title
+    cluster_map.ax_heatmap.set_title("")  # Clear the title if any
     
-    # Save the plot
+    # Remove any residual colorbar numbers or labels
+    cluster_map.ax_heatmap.set_xticks([])
+    cluster_map.ax_heatmap.set_yticks([])
+
+    # Save the plot in high resolution
     plot_file = os.path.join(output_dir, f'clustermap_{subject}.png')
-    plt.savefig(plot_file)
+    plt.savefig(plot_file, dpi=300)  # Save with high DPI
     plt.close()
     print(f"Clustermap saved to {plot_file}")
 
@@ -54,13 +66,13 @@ def main():
     print(os.listdir(topographic_alignment_RSM_dir))
 
     # Get the list of subjects from the filenames in the directory
-    subjects = [f.split('_')[-1].replace('.npy', '') for f in os.listdir(topographic_alignment_RSM_dir) if f.startswith('topographic_alignment_sub-')]
+    subjects = [f.split('_')[-1].replace('.npy', '') for f in os.listdir(topographic_alignment_RSM_dir) if f.startswith('topographic_alignment_rsm_sub-')]
     print(f"Found subjects: {subjects}")
 
     all_hier_labels = {}
 
     for subject in subjects:
-        rsm_file = os.path.join(topographic_alignment_RSM_dir, f'topographic_alignment_{subject}.npy')
+        rsm_file = os.path.join(topographic_alignment_RSM_dir, f'topographic_alignment_rsm_{subject}.npy')
         rsm = load_rsm(rsm_file)
         
         # Perform hierarchical clustering

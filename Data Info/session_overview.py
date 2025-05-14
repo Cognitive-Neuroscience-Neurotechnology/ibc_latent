@@ -1,27 +1,36 @@
 import os
 import pandas as pd
+import glob
 
 # Paths
-csv_path = "ptmp/hmueller2/ibc_code/ibc_latent/Data Info/subject_contrast_counts.csv"
-base_path = "ptmp/hmueller2/Downloads/ibc_preprocessed"
+base_dir = "/ptmp/hmueller2/Downloads/ibc_preprocessed"
+overview_path = "/home/hmueller2/ibc_code/ibc_latent/Data Info/session_overview.csv"
 
-# Load original CSV
-df = pd.read_csv(csv_path)
+# Load overview CSV
+overview_df = pd.read_csv(overview_path)
+overview_df["overall_task_minutes"] = 0.0  # Initialize column as float for minutes
 
-# Initialize new columns
-df["session_count"] = 0
-df["overall_time"] = 0  # Placeholder
+# Go through all subject folders
+for subject_folder in glob.glob(os.path.join(base_dir, "sub-*")):
+    subject_id = os.path.basename(subject_folder).replace("sub-", "")
+    total_duration = 0.0
 
-# Iterate over each subject to get session count
-for idx, row in df.iterrows():
-    subject = row["subject"]
-    subject_dir = os.path.join(base_path, f"sub-{subject}")
-    try:
-        sessions = [d for d in os.listdir(subject_dir) if os.path.isdir(os.path.join(subject_dir, d))]
-        df.at[idx, "session_count"] = len(sessions)
-    except FileNotFoundError:
-        print(f"Directory not found for subject: {subject}")
-        df.at[idx, "session_count"] = 0
+    # Find all func/ folders within this subject directory
+    for root, dirs, files in os.walk(subject_folder):
+        if os.path.basename(root) == "func":
+            for file in files:
+                if file.endswith("_dir-ap_events.tsv"):
+                    file_path = os.path.join(root, file)
+                    try:
+                        df = pd.read_csv(file_path, sep="\t")
+                        if "duration" in df.columns:
+                            total_duration += df["duration"].sum()
+                    except Exception as e:
+                        print(f"Error reading {file_path}: {e}")
+
+    # Convert total duration to minutes, round to 1 decimal place, and fill in overall_task_minutes for this subject
+    total_duration_minutes = round(total_duration / 60, 1)
+    overview_df.loc[overview_df["subject"] == int(subject_id), "overall_task_minutes"] = total_duration_minutes
 
 # Save updated CSV
-df.to_csv(csv_path, index=False)
+overview_df.to_csv(overview_path, index=False)

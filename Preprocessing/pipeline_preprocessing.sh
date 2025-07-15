@@ -55,17 +55,42 @@ wb_command -cifti-math "x - m" "${detrended}" -var x "${bold}" -var m "${meaned}
 echo "demeaned std:"
 wb_command -cifti-stats "${detrended}" -reduce STDEV -axis 1
 
-# -3-
-echo "***** 3: Removing Initial Volumes *****"
-# Remove initial transients / artifacts
-# = Step 5 in Aradia's pipeline
+
+
+# -3- WORK ON THIS !!!!!
+echo "***** 3: Medial wall removal (keep subcortex) *****"
+
+# Separate cortex and subcortex
+wb_command -cifti-separate "${detrended}" COLUMN \
+    -metric CORTEX_LEFT "${demean_dir}/${fBaseName}_L.func.gii" \
+    -metric CORTEX_RIGHT "${demean_dir}/${fBaseName}_R.func.gii" \
+    -volume-all "${demean_dir}/${fBaseName}_subcortex.nii.gz"
+
+# Apply medial wall mask to cortex metrics
+wb_command -metric-mask "${demean_dir}/${fBaseName}_L.func.gii" L.medial_wall.shape.gii "${demean_dir}/${fBaseName}_L.nomw.func.gii"
+wb_command -metric-mask "${demean_dir}/${fBaseName}_R.func.gii" R.medial_wall.shape.gii "${demean_dir}/${fBaseName}_R.nomw.func.gii"
+
+# Recombine cortex (masked) and subcortex into a new CIFTI file
+wb_command -cifti-create-dense-timeseries "${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii" \
+    -left-metric "${demean_dir}/${fBaseName}_L.nomw.func.gii" \
+    -right-metric "${demean_dir}/${fBaseName}_R.nomw.func.gii" \
+    -volume "${demean_dir}/${fBaseName}_subcortex.nii.gz" "${bold}"
+
+# Use the new file for downstream steps
+detrended="${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii"
+
+
+
+# -4-
+echo "***** 4: Removing Initial Volumes *****"
+# Remove initial transients / artifacts. Equivalent to step 5 in Aradia's pipeline
 # Cannot use fslroi because cifti files are not supported by fslroi.
 n_remove=5
 detrended_trim="${demean_dir}/${fBaseName}_detrend_trim.dtseries.nii"
 python3 Dependencies/trim_cifti.py "${detrended}" "${detrended_trim}" ${n_remove}
 
-# -4-
-echo "***** 4: Preparing Regressors (Motion, WM, CSF, Global) *****"
+# -5-
+echo "***** 5: Preparing Regressors (Motion, WM, CSF, Global) *****"
 regressors_txt="${regressors_dir}/${fBaseName}_regressors.txt"
 python3 <<EOF
 import pandas as pd
@@ -80,19 +105,19 @@ cols = [
 conf[cols].iloc[${n_remove}:].to_csv("${regressors_txt}", sep=' ', index=False, header=False)
 EOF
 
-# -5- (Same as Aradia's step 5b)
-echo "***** 5: Demeaning, Detrending, Z-scoring Regressors *****"
+# -6- (Same as Aradia's step 5b)
+echo "***** 6: Demeaning, Detrending, Z-scoring Regressors *****"
 regressors_dm="${regressors_dir}/${fBaseName}_regressors_demeaned_detrended.txt"
 regressors_z="${regressors_dir}/${fBaseName}_regressors_z.txt"
 python3 Aradia/demean_detrend_reg.py -i "${regressors_txt}" -odmdt "${regressors_dm}" -o "${regressors_z}"
 
-# -6- (Same as Aradia's step 5c)
-echo "***** 6: Plotting Regressors *****"
+# -7- (Same as Aradia's step 5c)
+echo "***** 7: Plotting Regressors *****"
 reg_png="${plots_dir}/${fBaseName}_regressors_z.png"
 python3 Aradia/regressor_plots.py -i "${regressors_z}" -glob yes -o "${reg_png}"
 
-# -7- 
-echo "***** 7: Regression, Scrubbing, Bandpass Filtering *****"
+# -8- 
+echo "***** 8: Regression, Scrubbing, Bandpass Filtering *****"
 # Extract TR from JSON
 TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."

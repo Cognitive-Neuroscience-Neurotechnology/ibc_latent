@@ -27,12 +27,6 @@ out_dir="${base_dir}/sub-${subject}/ses-${session}/postfmriprep"
 mkdir -p "${out_dir}"
 
 # 1. Extract FD and apply threshold (scrubbing mask)
-echo "***** 1: Calculating Framewise Displacement and Scrubbing Mask *****"
-FD_mask="${out_dir}/${fBaseName}_FD_scrub_mask.txt"
-FD_threshold=0.2
-python3 Dependencies/Aradia/process_fd.py -i "${confounds}" -FD ${FD_threshold} -o "${FD_mask}"
-
-
 FD_col=$(head -1 ${confounds} | tr '\t' '\n' | grep -n '^framewise_displacement$' | cut -d: -f1)
 awk -v col=${FD_col} -v thresh=0.2 'NR>1 {print ($col=="" ? 0 : ($col>thresh ? 1 : 0))}' ${confounds} > "${out_dir}/${fBaseName}_FD_scrub_mask.txt"
 

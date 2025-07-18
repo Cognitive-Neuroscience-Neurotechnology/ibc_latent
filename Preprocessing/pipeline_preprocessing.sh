@@ -114,7 +114,22 @@ EOF
 
 # Use the new file for downstream steps
 detrended="${detrended_nomw}"
-
+echo "***** Output file structure (R, L, subcortex) *****"
+python3 <<EOF
+import nibabel as nib
+img = nib.load("${detrended}")
+axes = img.header.get_axis(1)
+if hasattr(axes, 'brain_models'):
+    bm = axes.brain_models
+    left = sum(bm.model[0].index_count for bm in bm if bm.model[0].structure == 'CIFTI_STRUCTURE_CORTEX_LEFT')
+    right = sum(bm.model[0].index_count for bm in bm if bm.model[0].structure == 'CIFTI_STRUCTURE_CORTEX_RIGHT')
+    subcortex = sum(bm.model[0].index_count for bm in bm if 'SUBCORTICAL' in bm.model[0].structure)
+    print(f"Left cortex: {left} vertices")
+    print(f"Right cortex: {right} vertices")
+    print(f"Subcortex: {subcortex} voxels")
+else:
+    print("Could not determine brain model structure.")
+EOF
 
 
 # -4-

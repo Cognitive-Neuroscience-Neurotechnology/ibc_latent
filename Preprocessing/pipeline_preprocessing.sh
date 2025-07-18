@@ -19,6 +19,7 @@ regressors_dir="${out_dir}/regressors"
 glm_dir="${out_dir}/GLM"
 plots_dir="${out_dir}/plots"
 mkdir -p "${demean_dir}" "${regressors_dir}" "${glm_dir}" "${plots_dir}"
+medial_wall_dir="/ptmp/hmueller2/Downloads/fsLR_masks"
 
 fBaseName="sub-${subject}_ses-${session}_task-${task}_dir-${direction}"
 bold="${func_dir}/${fBaseName}_space-fsLR_den-91k_bold.dtseries.nii"
@@ -42,42 +43,77 @@ EOF
 
 # -2-: Detrend and demean with workbench
 echo "***** 2: Demeaning and Detrending BOLD *****"
-detrended="${demean_dir}/${fBaseName}_detrend.dtseries.nii"
-meaned="${demean_dir}/${fBaseName}_mean.dtseries.nii"
-# I use workbench instead of fslmaths because cifti files are not supported by fslmaths.
+demeaned_detrended="${demean_dir}/${fBaseName}_demean_detrend.dtseries.nii"
+python3 <<EOF
+import nibabel as nib
+import numpy as np
+from scipy.signal import detrend
 
-# Calculate mean across time
-wb_command -cifti-reduce "${bold}" MEAN "${meaned}"
+img = nib.load("${bold}")
+data = img.get_fdata()
+# Demean and detrend along time axis (last axis)
+demeaned = data - data.mean(axis=-1, keepdims=True)
+detrended = detrend(demeaned, axis=-1, type='linear')
+nib.save(nib.Cifti2Image(detrended, img.header), "${demeaned_detrended}")
+EOF
 
-# Subtract mean from each timepoint (demean)
-wb_command -cifti-math "x - m" "${detrended}" -var x "${bold}" -var m "${meaned}"
+detrended="${demeaned_detrended}"
 
 echo "demeaned std:"
-wb_command -cifti-stats "${detrended}" -reduce STDEV -axis 1
+python3 <<EOF
+import nibabel as nib
+import numpy as np
+img = nib.load("${detrended}")
+data = img.get_fdata()
+print(np.std(data, axis=-1))
+EOF
 
 
-
-# -3- WORK ON THIS !!!!!
+# -3- Medial wall removal (keep subcortex) using RR_utils
 echo "***** 3: Medial wall removal (keep subcortex) *****"
 
-# Separate cortex and subcortex
-wb_command -cifti-separate "${detrended}" COLUMN \
-    -metric CORTEX_LEFT "${demean_dir}/${fBaseName}_L.func.gii" \
-    -metric CORTEX_RIGHT "${demean_dir}/${fBaseName}_R.func.gii" \
-    -volume-all "${demean_dir}/${fBaseName}_subcortex.nii.gz"
+detrended_nomw="${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii"
 
-# Apply medial wall mask to cortex metrics
-wb_command -metric-mask "${demean_dir}/${fBaseName}_L.func.gii" L.medial_wall.shape.gii "${demean_dir}/${fBaseName}_L.nomw.func.gii"
-wb_command -metric-mask "${demean_dir}/${fBaseName}_R.func.gii" R.medial_wall.shape.gii "${demean_dir}/${fBaseName}_R.nomw.func.gii"
+python3 <<EOF
+import os
+import subprocess
 
-# Recombine cortex (masked) and subcortex into a new CIFTI file
-wb_command -cifti-create-dense-timeseries "${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii" \
-    -left-metric "${demean_dir}/${fBaseName}_L.nomw.func.gii" \
-    -right-metric "${demean_dir}/${fBaseName}_R.nomw.func.gii" \
-    -volume "${demean_dir}/${fBaseName}_subcortex.nii.gz" "${bold}"
+dtseries = "${detrended}"
+ciftify_dir = "${medial_wall_dir}"
+resolution = "32k"
+
+mw_dir = os.path.join(ciftify_dir)
+left_mw = os.path.join(mw_dir, "L.atlasroi.32k_fs_LR.shape.gii")
+right_mw = os.path.join(mw_dir, "R.atlasroi.32k_fs_LR.shape.gii")
+
+print("dtseries:", dtseries)
+
+if dtseries.endswith('.dtseries.nii'):
+    output_file = dtseries.replace('.dtseries.nii', '_no_medial_wall.dtseries.nii')
+elif dtseries.endswith('.dlabel.nii'):
+    output_file = dtseries.replace('.dlabel.nii', '_no_medial_wall.dlabel.nii')
+elif dtseries.endswith('.dscalar.nii'):
+    output_file = dtseries.replace('.dscalar.nii', '_no_medial_wall.dscalar.nii')
+    print('Code is not optimized for this file type. Attempting medial wall removal.')
+else:
+    raise ValueError("Input file must be .dtseries.nii or .dlabel.nii")
+
+subprocess.run([
+    'wb_command', '-cifti-restrict-dense-map',
+    dtseries,
+    'COLUMN',
+    output_file,
+    '-left-roi', left_mw,
+    '-right-roi', right_mw
+], check=True)
+
+# Move to expected output location
+import shutil
+shutil.move(output_file, "${detrended_nomw}")
+EOF
 
 # Use the new file for downstream steps
-detrended="${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii"
+detrended="${detrended_nomw}"
 
 
 

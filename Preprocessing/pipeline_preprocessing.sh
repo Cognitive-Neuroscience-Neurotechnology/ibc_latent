@@ -3,7 +3,7 @@
 # Usage: ./pipeline_preprocessing.sh <subject> <session> <task> <direction>
 # Example: ./pipeline_preprocessing.sh 01 15 RestingState pa
 
-set -e
+set -e # Exit on error
 
 subject=$1
 session=$2
@@ -69,52 +69,49 @@ print(np.std(data, axis=-1))
 EOF
 
 
-# -3- Medial wall removal (keep subcortex) using RR_utils
+# -3- Medial wall removal (keep subcortex) using separate/mask/recombine
 echo "***** 3: Medial wall removal (keep subcortex) *****"
 
-detrended_nomw="${demean_dir}/${fBaseName}_detrend_nomw.dtseries.nii"
+left_gii="${demean_dir}/${fBaseName}_L.func.gii"
+right_gii="${demean_dir}/${fBaseName}_R.func.gii"
+subcort_nifti="${demean_dir}/${fBaseName}_subcort.nii.gz"
+left_nomw="${demean_dir}/${fBaseName}_L.nomw.func.gii"
+right_nomw="${demean_dir}/${fBaseName}_R.nomw.func.gii"
 
-python3 <<EOF
-import os
-import subprocess
+# Separate cifti into left, right, and subcortex
+wb_command -cifti-separate "${detrended}" COLUMN \
+  -metric CORTEX_LEFT "${left_gii}" \
+  -metric CORTEX_RIGHT "${right_gii}" \
+  -volume-all "${subcort_nifti}" \
+  -label "${demean_dir}/${fBaseName}_subcort_label.nii.gz" \
+  -crop
 
-dtseries = "${detrended}"
-ciftify_dir = "${medial_wall_dir}"
-resolution = "32k"
+echo -n "Non-zero voxels (subcortical label): "
+wb_command -volume-stats "${demean_dir}/${fBaseName}_subcort_label.nii.gz" -reduce COUNT_NONZERO
+echo -n "Non-zero voxels (left.gii): "
+wb_command -metric-stats "${left_gii}" -column 1 -reduce COUNT_NONZERO 
+echo -n "Non-zero voxels (right.gii): "
+wb_command -metric-stats "${right_gii}" -column 1 -reduce COUNT_NONZERO
 
-mw_dir = os.path.join(ciftify_dir)
-left_mw = os.path.join(mw_dir, "L.atlasroi.32k_fs_LR.shape.gii")
-right_mw = os.path.join(mw_dir, "R.atlasroi.32k_fs_LR.shape.gii")
+# Mask cortex with medial wall
+wb_command -metric-mask "${left_gii}" "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" "${left_nomw}"
+wb_command -metric-mask "${right_gii}" "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" "${right_nomw}"
 
-print("dtseries:", dtseries)
+# Recombine left, right, and subcortex into a new cifti
+detrended_nomw="${demean_dir}/${fBaseName}_detrended_nomw.dtseries.nii"
 
-if dtseries.endswith('.dtseries.nii'):
-    output_file = dtseries.replace('.dtseries.nii', '_no_medial_wall.dtseries.nii')
-elif dtseries.endswith('.dlabel.nii'):
-    output_file = dtseries.replace('.dlabel.nii', '_no_medial_wall.dlabel.nii')
-elif dtseries.endswith('.dscalar.nii'):
-    output_file = dtseries.replace('.dscalar.nii', '_no_medial_wall.dscalar.nii')
-    print('Code is not optimized for this file type. Attempting medial wall removal.')
-else:
-    raise ValueError("Input file must be .dtseries.nii or .dlabel.nii")
-
-subprocess.run([
-    'wb_command', '-cifti-restrict-dense-map',
-    dtseries,
-    'COLUMN',
-    output_file,
-    '-left-roi', left_mw,
-    '-right-roi', right_mw
-], check=True)
-
-# Move to expected output location
-import shutil
-shutil.move(output_file, "${detrended_nomw}")
-EOF
+wb_command -cifti-create-dense-timeseries "${detrended_nomw}" \
+  -left-metric "${left_nomw}" \
+  -roi-left "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" \
+  -right-metric "${right_nomw}" \
+  -roi-right "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" \
+  -volume "${subcort_nifti}" "${demean_dir}/${fBaseName}_subcort_label.nii.gz"
 
 # Use the new file for downstream steps
 detrended="${detrended_nomw}"
+
 echo "***** Output file structure (R, L, subcortex) *****"
+echo "Total number of time series (left + right cortex + subcortex):"
 python3 <<EOF
 import nibabel as nib
 img = nib.load("${detrended}")
@@ -127,6 +124,7 @@ if hasattr(axes, 'brain_models'):
     print(f"Left cortex: {left} vertices")
     print(f"Right cortex: {right} vertices")
     print(f"Subcortex: {subcortex} voxels")
+    print(f"Total: {left + right + subcortex} time series")
 else:
     print("Could not determine brain model structure.")
 EOF
@@ -138,7 +136,7 @@ echo "***** 4: Removing Initial Volumes *****"
 # Cannot use fslroi because cifti files are not supported by fslroi.
 n_remove=5
 detrended_trim="${demean_dir}/${fBaseName}_detrend_trim.dtseries.nii"
-python3 Dependencies/trim_cifti.py "${detrended}" "${detrended_trim}" ${n_remove}
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Dependencies/trim_cifti.py "${detrended}" "${detrended_trim}" ${n_remove}
 
 # -5-
 echo "***** 5: Preparing Regressors (Motion, WM, CSF, Global) *****"

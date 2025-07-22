@@ -84,18 +84,73 @@ wb_command -cifti-separate "${detrended}" COLUMN \
   -metric CORTEX_RIGHT "${right_gii}" \
   -volume-all "${subcort_nifti}" \
   -label "${demean_dir}/${fBaseName}_subcort_label.nii.gz" \
-  -crop
-
-echo -n "Non-zero voxels (subcortical label): "
-wb_command -volume-stats "${demean_dir}/${fBaseName}_subcort_label.nii.gz" -reduce COUNT_NONZERO
-echo -n "Non-zero voxels (left.gii): "
-wb_command -metric-stats "${left_gii}" -column 1 -reduce COUNT_NONZERO 
-echo -n "Non-zero voxels (right.gii): "
-wb_command -metric-stats "${right_gii}" -column 1 -reduce COUNT_NONZERO
 
 # Mask cortex with medial wall
 wb_command -metric-mask "${left_gii}" "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" "${left_nomw}"
 wb_command -metric-mask "${right_gii}" "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" "${right_nomw}"
+
+: '
+##### Bugfix
+wb_command -metric-stats "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+wb_command -metric-stats "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+#python3 <<EOF
+#import nibabel as nib
+#img = nib.load("${detrended_nomw}")
+#print(img.shape)
+#EOF
+
+echo -n "Non-zero voxels (subcortical label): "
+wb_command -volume-stats "${demean_dir}/${fBaseName}_subcort_label.nii.gz" -reduce COUNT_NONZERO
+
+#echo -n "Non-zero vertices before medial wall mask (left.gii): "
+#wb_command -metric-stats "${left_gii}" -column 1 -reduce COUNT_NONZERO
+echo -n "Non-zero vertices after medial wall mask (left_nomw): "
+wb_command -metric-stats "${left_nomw}" -column 1 -reduce COUNT_NONZERO
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${left_nomw}")
+print("Total vertices (left_nomw):", m.darrays[0].data.shape[0])
+EOF
+
+#echo -n "Non-zero vertices before medial wall mask (right.gii): "
+#wb_command -metric-stats "${right_gii}" -column 1 -reduce COUNT_NONZERO
+echo -n "Non-zero vertices after medial wall mask (right_nomw): "
+wb_command -metric-stats "${right_nomw}" -column 1 -reduce COUNT_NONZERO
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${right_nomw}")
+print("Total vertices (right_nomw):", m.darrays[0].data.shape[0])
+EOF
+
+wb_command -metric-stats "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii")
+print("Total vertices (left ROI):", m.darrays[0].data.shape[0])
+EOF
+wb_command -metric-stats "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii")
+print("Total vertices (right ROI):", m.darrays[0].data.shape[0])
+EOF
+
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${left_nomw}")
+print("Total vertices (left_nomw):", m.darrays[0].data.shape[0])
+EOF
+echo "Left ROI vertex count:"
+wb_command -file-information "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii"
+
+python3 <<EOF
+import nibabel as nib
+m = nib.load("${right_nomw}")
+print("Total vertices (right_nomw):", m.darrays[0].data.shape[0])
+EOF
+echo "Right ROI vertex count:"
+wb_command -file-information "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii"
+'
 
 # Recombine left, right, and subcortex into a new cifti
 detrended_nomw="${demean_dir}/${fBaseName}_detrended_nomw.dtseries.nii"
@@ -107,6 +162,39 @@ wb_command -cifti-create-dense-timeseries "${detrended_nomw}" \
   -roi-right "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" \
   -volume "${subcort_nifti}" "${demean_dir}/${fBaseName}_subcort_label.nii.gz"
 
+#####
+# QC: Print file paths and nonzero counts before CIFTI creation
+echo "Using files for CIFTI creation:"
+echo "Left metric: ${left_nomw}"
+echo "Left ROI: ${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii"
+echo "Right metric: ${right_nomw}"
+echo "Right ROI: ${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii"
+echo "Subcortical volume: ${subcort_nifti}"
+echo "Subcortical label: ${demean_dir}/${fBaseName}_subcort_label.nii.gz"
+
+echo "Left ROI nonzero vertices:"
+wb_command -metric-stats "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+echo "Right ROI nonzero vertices:"
+wb_command -metric-stats "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
+echo "Subcortical label nonzero voxels:"
+wb_command -volume-stats "${demean_dir}/${fBaseName}_subcort_label.nii.gz" -reduce COUNT_NONZERO
+
+# Create CIFTI
+wb_command -cifti-create-dense-timeseries "${detrended_nomw}" \
+  -left-metric "${left_nomw}" \
+  -roi-left "${medial_wall_dir}/L.atlasroi.32k_fs_LR.shape.gii" \
+  -right-metric "${right_nomw}" \
+  -roi-right "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" \
+  -volume "${subcort_nifti}" "${demean_dir}/${fBaseName}_subcort_label.nii.gz"
+
+# QC: Print output CIFTI shape
+python3 <<EOF
+import nibabel as nib
+img = nib.load("${detrended_nomw}")
+print("CIFTI shape:", img.shape)
+EOF
+
+
 # Use the new file for downstream steps
 detrended="${detrended_nomw}"
 
@@ -115,25 +203,26 @@ echo "Total number of time series (left + right cortex + subcortex):"
 python3 <<EOF
 import nibabel as nib
 img = nib.load("${detrended}")
-axes = img.header.get_axis(1)
-if hasattr(axes, 'brain_models'):
-    bm = axes.brain_models
-    left = sum(bm.model[0].index_count for bm in bm if bm.model[0].structure == 'CIFTI_STRUCTURE_CORTEX_LEFT')
-    right = sum(bm.model[0].index_count for bm in bm if bm.model[0].structure == 'CIFTI_STRUCTURE_CORTEX_RIGHT')
-    subcortex = sum(bm.model[0].index_count for bm in bm if 'SUBCORTICAL' in bm.model[0].structure)
-    print(f"Left cortex: {left} vertices")
-    print(f"Right cortex: {right} vertices")
-    print(f"Subcortex: {subcortex} voxels")
-    print(f"Total: {left + right + subcortex} time series")
-else:
-    print("Could not determine brain model structure.")
+axis = img.header.get_axis(1)
+for tup in axis.iter_structures():
+    print(tup)
+counts = {}
+for name, slc, _ in axis.iter_structures():
+    if slc.stop is not None:
+        counts[name] = slc.stop - slc.start
+    else:
+        counts[name] = "unknown"
+for k, v in counts.items():
+    print(f"{k}: {v}")
+print(f"Total: {sum([v for v in counts.values() if isinstance(v, int)])} time series")
 EOF
-
 
 # -4-
 echo "***** 4: Removing Initial Volumes *****"
 # Remove initial transients / artifacts. Equivalent to step 5 in Aradia's pipeline
 # Cannot use fslroi because cifti files are not supported by fslroi.
+# Something was off here and it reduced the number of voxels instead of timepoints.
+# Instead, we will use a custom Python script to trim the CIFTI file.
 n_remove=5
 detrended_trim="${demean_dir}/${fBaseName}_detrend_trim.dtseries.nii"
 python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Dependencies/trim_cifti.py "${detrended}" "${detrended_trim}" ${n_remove}
@@ -158,12 +247,12 @@ EOF
 echo "***** 6: Demeaning, Detrending, Z-scoring Regressors *****"
 regressors_dm="${regressors_dir}/${fBaseName}_regressors_demeaned_detrended.txt"
 regressors_z="${regressors_dir}/${fBaseName}_regressors_z.txt"
-python3 Aradia/demean_detrend_reg.py -i "${regressors_txt}" -odmdt "${regressors_dm}" -o "${regressors_z}"
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/demean_detrend_reg.py -i "${regressors_txt}" -odmdt "${regressors_dm}" -o "${regressors_z}"
 
 # -7- (Same as Aradia's step 5c)
 echo "***** 7: Plotting Regressors *****"
 reg_png="${plots_dir}/${fBaseName}_regressors_z.png"
-python3 Aradia/regressor_plots.py -i "${regressors_z}" -glob yes -o "${reg_png}"
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regressor_plots.py -i "${regressors_z}" -glob yes -o "${reg_png}"
 
 # -8- 
 echo "***** 8: Regression, Scrubbing, Bandpass Filtering *****"
@@ -172,7 +261,7 @@ TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."
 
 cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
-python3 Aradia/regression_interpolation.py \
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
     -i "${detrended_trim}" \
     -r "${regressors_z}" \
     -FD "${FD_mask}" \

@@ -59,7 +59,7 @@ def compute_friston24(in_file, out_file, rot_type='degrees'):
     # Add the square of those parameters to allow correction of nonlinear effects
     mp_friston = np.hstack((mp_combine, mp_combine**2))
 
-    print("Computed Friston parameters.")
+    #print("Computed Friston parameters.")
 
     # # Save friston 24-parameter model in new txt file
     # out_file = abspath(basename(in_file).replace('.txt', 'friston24.txt'))
@@ -71,7 +71,7 @@ def compute_friston24(in_file, out_file, rot_type='degrees'):
 print("Computing Friston regression parameters now.")
 compute_friston24(in_file, out_file, rot_type='degrees')
 
-print("Loading other regressors now.")
+#print("Loading other regressors now.")
 # merge this file with the txt files containing wm, csf, global signal for the regressions
 # csf_ts, wm_ts, global_signal
 csf_ts = np.loadtxt(csf_txt)
@@ -80,14 +80,14 @@ wm_ts = np.loadtxt(wm_txt)
 # re-load the friston 24 parameters
 friston_motion= np.loadtxt(out_file)
 
-print("Compiling arrays.")
+#print("Compiling arrays.")
 
 # check if global signal regression was selected
 if global_signal_txt == "None":
     print("No global signal extraction was chosen.")
     array_list=[csf_ts,wm_ts,friston_motion]
 else:
-    print("Including global signal regressors.")
+    #print("Including global signal regressors.")
     global_signal = np.loadtxt(global_signal_txt)
     array_list=[csf_ts,wm_ts,global_signal,friston_motion]
 
@@ -95,9 +95,9 @@ else:
 nuisance_regressors = np.column_stack(array_list)
 
 # print the first 5 for quality checking
-print(nuisance_regressors[:5,:])
+#print(nuisance_regressors[:5,:])
 
-print("Saving regressors.")
+#print("Saving regressors.")
 np.savetxt(out_nuisance, nuisance_regressors,fmt='%.6f', delimiter=' ', newline='\n')
 print(nuisance_regressors.shape)
 print("Saved regressors. Done.")

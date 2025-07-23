@@ -162,7 +162,8 @@ wb_command -cifti-create-dense-timeseries "${detrended_nomw}" \
   -roi-right "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" \
   -volume "${subcort_nifti}" "${demean_dir}/${fBaseName}_subcort_label.nii.gz"
 
-#####
+: '
+##### Bugfix
 # QC: Print file paths and nonzero counts before CIFTI creation
 echo "Using files for CIFTI creation:"
 echo "Left metric: ${left_nomw}"
@@ -178,6 +179,7 @@ echo "Right ROI nonzero vertices:"
 wb_command -metric-stats "${medial_wall_dir}/R.atlasroi.32k_fs_LR.shape.gii" -column 1 -reduce COUNT_NONZERO
 echo "Subcortical label nonzero voxels:"
 wb_command -volume-stats "${demean_dir}/${fBaseName}_subcort_label.nii.gz" -reduce COUNT_NONZERO
+'
 
 # Create CIFTI
 wb_command -cifti-create-dense-timeseries "${detrended_nomw}" \
@@ -197,7 +199,8 @@ EOF
 
 # Use the new file for downstream steps
 detrended="${detrended_nomw}"
-
+: '
+##### Bugfix
 echo "***** Output file structure (R, L, subcortex) *****"
 echo "Total number of time series (left + right cortex + subcortex):"
 python3 <<EOF
@@ -216,6 +219,7 @@ for k, v in counts.items():
     print(f"{k}: {v}")
 print(f"Total: {sum([v for v in counts.values() if isinstance(v, int)])} time series")
 EOF
+'
 
 # -4-
 echo "***** 4: Removing Initial Volumes *****"
@@ -229,38 +233,57 @@ python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Dependencies/trim_cift
 
 # -5-
 echo "***** 5: Preparing Regressors (Motion, WM, CSF, Global) *****"
-regressors_txt="${regressors_dir}/${fBaseName}_regressors.txt"
+# Extract motion parameters
+motion_txt="${regressors_dir}/${fBaseName}_motion.txt"
 python3 <<EOF
 import pandas as pd
 conf = pd.read_csv("${confounds}", sep='\t')
-cols = [
-    'trans_x', 'trans_y', 'trans_z',
-    'rot_x', 'rot_y', 'rot_z',
-    'white_matter', 'white_matter_derivative1',
-    'csf', 'csf_derivative1',
-    'global_signal', 'global_signal_derivative1'
-]
-conf[cols].iloc[${n_remove}:].to_csv("${regressors_txt}", sep=' ', index=False, header=False)
+motion_cols = ['rot_x', 'rot_y', 'rot_z', 'trans_x', 'trans_y', 'trans_z']
+conf[motion_cols].iloc[${n_remove}:].to_csv("${motion_txt}", sep=' ', index=False, header=False)
 EOF
+
+# Extract CSF, WM, and global signal as txt
+csf_txt="${regressors_dir}/${fBaseName}_csf.txt"
+wm_txt="${regressors_dir}/${fBaseName}_wm.txt"
+global_txt="${regressors_dir}/${fBaseName}_global.txt"
+python3 <<EOF
+import pandas as pd
+conf = pd.read_csv("${confounds}", sep='\t')
+conf['csf'].iloc[${n_remove}:].to_csv("${csf_txt}", sep=' ', index=False, header=False)
+conf['white_matter'].iloc[${n_remove}:].to_csv("${wm_txt}", sep=' ', index=False, header=False)
+conf['global_signal'].iloc[${n_remove}:].to_csv("${global_txt}", sep=' ', index=False, header=False)
+EOF
+
+# Run friston_regression.py to generate full nuisance regressor file
+friston_out="${regressors_dir}/${fBaseName}_friston24.txt"
+nuisance_out="${regressors_dir}/${fBaseName}_nuisance_regressors.txt"
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/friston_regression.py \
+    -im "${motion_txt}" \
+    -i_csf "${csf_txt}" \
+    -i_wm "${wm_txt}" \
+    -i_glob "${global_txt}" \
+    -o "${friston_out}" \
+    -o_nuis "${nuisance_out}"
+
 
 # -6- (Same as Aradia's step 5b)
 echo "***** 6: Demeaning, Detrending, Z-scoring Regressors *****"
 regressors_dm="${regressors_dir}/${fBaseName}_regressors_demeaned_detrended.txt"
 regressors_z="${regressors_dir}/${fBaseName}_regressors_z.txt"
-python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/demean_detrend_reg.py -i "${regressors_txt}" -odmdt "${regressors_dm}" -o "${regressors_z}"
+python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/demean_detrend_reg.py -i "${nuisance_out}" -odmdt "${regressors_dm}" -o "${regressors_z}"
 
 # -7- (Same as Aradia's step 5c)
 echo "***** 7: Plotting Regressors *****"
 reg_png="${plots_dir}/${fBaseName}_regressors_z.png"
 python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regressor_plots.py -i "${regressors_z}" -glob yes -o "${reg_png}"
 
-# -8- 
+# -8- Regression, Scrubbing, Bandpass Filtering
 echo "***** 8: Regression, Scrubbing, Bandpass Filtering *****"
-# Extract TR from JSON
 TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."
 
 cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
+python3 -c "import nilearn; print(nilearn.__version__)"
 python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
     -i "${detrended_trim}" \
     -r "${regressors_z}" \
@@ -268,8 +291,12 @@ python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_inte
     -TR "${TR}" \
     -o "${cleaned_bold}"
 
+if [ -f "${cleaned_bold}" ]; then
+    echo "Cleaned BOLD file created successfully: ${cleaned_bold}"
+else
+    echo "Error: Cleaned BOLD file was not created."
+    exit 1
+fi
 
 echo "***** Finalizing Outputs *****"
-
-
 echo "Pipeline complete. Outputs in ${out_dir}"

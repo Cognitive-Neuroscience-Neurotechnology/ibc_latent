@@ -52,28 +52,28 @@ else:
     axes[0].grid(True)
 
 # plot original motion parameters (3 rotations and 3 translations)
-print("Plotting motion parameters.")
+#print("Plotting motion parameters.")
 axes[1].plot(df.index, df.iloc[:, 3:9])
 axes[1].set_title('Z-Scored Data (Motion parameters)')
 axes[1].legend(df.columns[3:9], loc='upper right')
 axes[1].grid(True)
 
 # plot motion parameters t-1
-print("Plotting motion parameters t-1.")
+#print("Plotting motion parameters t-1.")
 axes[2].plot(df.index, df.iloc[:, 9:15])
 axes[2].set_title('Z-Scored Data (Motion parameters t-1)')
 axes[2].legend(df.columns[9:15], loc='upper right')
 axes[2].grid(True)
 
 # plot motion parameters squared
-print("Plotting motion parameters squared.")
+#print("Plotting motion parameters squared.")
 axes[3].plot(df.index, df.iloc[:, 15:21])
 axes[3].set_title('Z-Scored Data (Motion parameters squared)')
 axes[3].legend(df.columns[15:21], loc='upper right')
 axes[3].grid(True)
 
 # plot motion parameters t-1 squared
-print("Plotting motion parameters t-1 squared.")
+#print("Plotting motion parameters t-1 squared.")
 axes[4].plot(df.index, df.iloc[:, 21:27])
 axes[4].set_title('Z-Scored Data (Motion parameters t-1 squared)')
 axes[4].legend(df.columns[21:27], loc='upper right')

@@ -21,10 +21,32 @@ plots_dir="${out_dir}/plots"
 mkdir -p "${demean_dir}" "${regressors_dir}" "${glm_dir}" "${plots_dir}"
 medial_wall_dir="/ptmp/hmueller2/Downloads/fsLR_masks"
 
-fBaseName="sub-${subject}_ses-${session}_task-${task}_dir-${direction}"
-bold="${func_dir}/${fBaseName}_space-fsLR_den-91k_bold.dtseries.nii"
-confounds="${func_dir}/${fBaseName}_desc-confounds_timeseries.tsv"
-json="${func_dir}/${fBaseName}_space-fsLR_den-91k_bold.json"
+# === NEW: Loop over all BOLD files for this subject/session/task/direction ===
+bold_files=(${func_dir}/sub-${subject}_ses-${session}_task-${task}_dir-${direction}_*bold.dtseries.nii)
+
+if [ ${#bold_files[@]} -eq 0 ]; then
+    echo "No BOLD files found for subject $subject session $session task $task direction $direction"
+    exit 1
+fi
+# This had to be introduced because the previous code assumed only one BOLD file per run.
+for bold in "${bold_files[@]}"; do
+    base_bold=$(basename "$bold")
+    # Extract run if present
+    if [[ "$base_bold" =~ run-([0-9]+)_ ]]; then
+        run="run-${BASH_REMATCH[1]}"
+        confounds="${func_dir}/sub-${subject}_ses-${session}_task-${task}_dir-${direction}_${run}_desc-confounds_timeseries.tsv"
+        run_suffix="_${run}"
+    else
+        run=""
+        confounds="${func_dir}/sub-${subject}_ses-${session}_task-${task}_dir-${direction}_desc-confounds_timeseries.tsv"
+        run_suffix=""
+    fi
+
+    echo "Processing $base_bold with confounds $confounds"
+
+    # Use $run_suffix in all output filenames to keep them unique per run
+    fBaseName="sub-${subject}_ses-${session}_task-${task}_dir-${direction}${run_suffix}"
+    json="${func_dir}/${fBaseName}_space-fsLR_den-91k_bold.json"
 
 # -1-: Mark timepoints with FD > 0.2 as contaminated (1), others as clean (0).
 echo "***** 1: Build scrubbing mask from FD values *****"
@@ -32,10 +54,11 @@ FD_mask="${regressors_dir}/${fBaseName}_FD_scrub_mask.txt"
 FD_threshold=0.2
 # Different from Aradia. process_fd.py is not needed, as I already have fd values in confounds.
 # Fill missing values with 0 (as fmriprep does for the first row).
+n_remove=5  # or whatever number you use
 python3 <<EOF
 import pandas as pd
 conf = pd.read_csv("${confounds}", sep='\t')
-fd = conf['framewise_displacement'].fillna(0)
+fd = conf['framewise_displacement'].fillna(0).iloc[${n_remove}:].reset_index(drop=True)
 mask = (fd > ${FD_threshold}).astype(int)
 out = pd.DataFrame({'FD': fd, 'contam': mask})
 out.to_csv("${FD_mask}", sep=' ', index=False, header=False)
@@ -58,7 +81,7 @@ nib.save(nib.Cifti2Image(detrended, img.header), "${demeaned_detrended}")
 EOF
 
 detrended="${demeaned_detrended}"
-
+: '
 echo "demeaned std:"
 python3 <<EOF
 import nibabel as nib
@@ -67,7 +90,7 @@ img = nib.load("${detrended}")
 data = img.get_fdata()
 print(np.std(data, axis=-1))
 EOF
-
+'
 
 # -3- Medial wall removal (keep subcortex) using separate/mask/recombine
 echo "***** 3: Medial wall removal (keep subcortex) *****"
@@ -283,8 +306,7 @@ TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."
 
 cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
-python3 -c "import nilearn; print(nilearn.__version__)"
-python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
+/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
     -i "${detrended_trim}" \
     -r "${regressors_z}" \
     -FD "${FD_mask}" \

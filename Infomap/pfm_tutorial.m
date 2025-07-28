@@ -5,14 +5,11 @@
 %% Before you begin.
 
 % add dependencies to Matlab search path
-addpath(genpath('/home/hmueller2/??/PFM-Depression/PFM-Tutorial/Utilities'));
-
-% add github repo of MC
-addpath(genpath('/home/hmueller2/??/MSCcodebase/Utilities'))
+addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/PFM-Infomap/Utilities'));
 
 % define path to some software packages that will be needed
-InfoMapBinary = '/home/hmueller2/??/Infomap'; % path to infomap binary; code tested on version 2.0.0 
-WorkbenchBinary = '/home/hmueller2/??/workbench/bin_linux64/wb_command'; % path to workbench binary; code tested on version 1.4.2
+InfoMapBinary = '/home/hmueller2/.local/bin/infomap'; % path to infomap binary; code tested on version 2.0.0 
+WorkbenchBinary = '/home/hmueller2/workbench/bin_linux64/wb_command'; % path to workbench binary; code tested on version 1.4.2
 
 % number of 
 % workers
@@ -21,18 +18,19 @@ nWorkers = 30;
 %% Step 1: Temporal Concatenation of fMRI data from all sessions.
 
 % define subject directory and name;
-Subdir = [pwd '/WCM-ME/derivatives/sub-ME01/'];
-Subject = 'ME01';
+SubjectList = {'sub-01','sub-02','sub-04','sub-05','sub-06','sub-07','sub-08','sub-09','sub-11','sub-12','sub-13','sub-14','sub-15'};
+for s = 1:length(SubjectList)
+    Subject = SubjectList{s};
+    Subdir = ['/home/hmueller2/fmriprep_out/' Subject '/'];
+    % Place the rest of your pipeline code here, or wrap the entire script in this loop.
+    % define & create
+    % the pfm directory;
+    InfomapDir = [Subdir '/infomap/'];
+    mkdir(PfmDir);
+    mkdir(InfomapD); % Create the Infomap directory
 
-% define & create
-% the pfm directory;
-PfmDir = [Subdir '/pfm/'];
-mkdir(PfmDir);
-
-% count the number of imaging sessions;
-nSessions = length(dir([Subdir '/processed_restingstate_timecourses/ses-func*']));
-
-% preallocate;
+    % count the number of imaging sessions;
+    nSessions = length(dir([Subdir '/processed_restingstate_timecourses/ses-func*']));
 ConcatenatedData = [];
 
 % sweep through

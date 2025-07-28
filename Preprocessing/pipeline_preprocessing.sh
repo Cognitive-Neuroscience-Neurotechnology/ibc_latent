@@ -322,3 +322,4 @@ fi
 
 echo "***** Finalizing Outputs *****"
 echo "Pipeline complete. Outputs in ${out_dir}"
+done

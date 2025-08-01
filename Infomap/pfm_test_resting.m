@@ -5,7 +5,10 @@
 %% --- Before you begin.
 
 % add dependencies to Matlab search path
-addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/PFM-Infomap/Utilities'));
+addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/Infomap/Utilities'));
+
+% add github repo of MSC
+addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/MSCcodebase/Utilities'))
 
 % define path to some software packages that will be needed
 InfoMapBinary = '/home/hmueller2/.local/bin/infomap'; % path to infomap binary; code tested on version 2.0.0 
@@ -40,46 +43,58 @@ mkdir(Subdir); mkdir(half_dir);
 % define fs_lr_32k midthickness surfaces;
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
 
-MidthickSurfs{1} = [surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.L.midthickness.32k_fs_LR.surf.gii'];
-MidthickSurfs{2} = [surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.R.midthickness.32k_fs_LR.surf.gii'];
+% Loads MidthickSurfs (left and right) to compute geodesic distances on the cortical mesh
+MidthickSurfs{1} = [surface_dir '/anat/sub-01_hemi-L_midthickness.surf.gii']; % Found in fmriprep output
+MidthickSurfs{2} = [surface_dir '/anat/sub-01_hemi-R_midthickness.surf.gii']; % Found in fmriprep output
 
-left_mask=[surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.L.atlasroi.32k_fs_LR.shape.gii'];
-right_mask=[surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.R.atlasroi.32k_fs_LR.shape.gii'];
+% left_mask=[surface_dir '/anat/sub-01_hemi-L_atlasroi.shape.gii']; % Searching
+% right_mask=[surface_dir '/anat/sub-01_hemi-R_atlasroi.shape.gii']; % Searching
+
+disp('Some message'); drawnow;
 
 % ---- TO FIND!!
 
-% Concatenate the two files
-ConcatenatedData = [];
-for i = 1:length(files)
-    disp(['Loading: ' files{i}])
-    Cifti = ft_read_cifti_mod(files{i});
-    ConcatenatedData = [ConcatenatedData Cifti.data(:,:)];
+try
+    % Concatenate the two files
+    ConcatenatedData = [];
+    for i = 1:length(files)
+        disp(['Loading: ' files{i}])
+        Cifti = ft_read_cifti_mod(files{i});
+        ConcatenatedData = [ConcatenatedData Cifti.data(:,:)];
+    end
+    % make a single CIFTI containing time-series from all scans;
+    ConcatenatedCifti = Cifti;
+    ConcatenatedCifti.data = ConcatenatedData;
+catch ME
+    disp('Error during concatenation of CIFTI files:');
+    disp(ME.message);
+    return
 end
 
-% make a single CIFTI containing time-series from all scans;
-ConcatenatedCifti = Cifti;
-ConcatenatedCifti.data = ConcatenatedData;
+try
+    % Step 2: Make a distance matrix.
+    disp('Making dmat')
+    tic;
+    pfm_make_dmat_hybrid(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+    disp(['Elapsed time: ', num2str(toc), ' seconds'])
+catch ME
+    disp('Error during distance matrix creation:');
+    disp(ME.message);
+    return
+end
 
-
-
-%% Step 2: Make a distance matrix.
-
-% make the distance matrix;
-disp('Making dmat')
-tic;
-pfm_make_dmat(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
-disp(['Elapsed time: ', num2str(toc), ' seconds'])
-
-% optional: regress adjacent cortical signal from subcortex to reduce artifactual coupling 
-% (for example, between cerebellum and visual cortex, or between putamen and insular cortex)
-[ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
-
-% write out the CIFTI file;
-concat_file=[half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_fsLR.dtseries.nii'];
-disp(concat_file)
-ft_write_cifti_mod(concat_file, ConcatenatedCifti);
-
-
+try
+    % optional: regress adjacent cortical signal from subcortex
+    [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
+    % write out the CIFTI file;
+    concat_file=[half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_fsLR.dtseries.nii'];
+    disp(concat_file)
+    ft_write_cifti_mod(concat_file, ConcatenatedCifti);
+catch ME
+    disp('Error during regression or writing CIFTI:');
+    disp(ME.message);
+    return
+end
 
 %% Step 3: Apply spatial smoothing.
 

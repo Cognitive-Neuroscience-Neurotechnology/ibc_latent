@@ -21,8 +21,10 @@ nWorkers = 30;
 working_dir = '/ptmp/hmueller2/Downloads';
 Subject=getenv('Subject');
 
-tseries_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
+tseries_dir = [working_dir '/fmriprep_out/sub-' Subject / Session]; 
 
+
+% include session subdirectories!!!!
 % define and create the pfm directory;
 Subdir = [working_dir '/individual_networks/sub-' Subject]; 
 mkdir(Subdir);

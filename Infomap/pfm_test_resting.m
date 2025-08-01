@@ -22,10 +22,10 @@ nWorkers = 5;
 
 % define subject directory and name;
 Subject = '01';
-Session = 'ses-15';
+Session = '15';
 working_dir = '/ptmp/hmueller2/Downloads';
 
-tseries_dir = [working_dir '/fmriprep_out/sub-' Subject]; 
+tseries_dir = [working_dir '/fmriprep_out/sub-' Subject '/ses-' Session]; 
 
 % Only use the two specified resting-state files
 files = {

@@ -57,4 +57,26 @@ RSA                             # Representational Similarity Analysis
 ├── RSM_Visualization.ipynb     # Jupyter notebook for RSM visualization
 ├── README.md                   # Project documentation
 └── requirements.txt            # Project dependencies
+
+MSCcodebase                       # External utilities from MSCcodebase repository
+└── Utilities                     # MATLAB tools for brain data analysis
+    ├── Conte69_atlas-v2.LR.32k_fs_LR.wb  # Conte69 atlas files (32k resolution)
+    ├── Conte69_atlas.LR.164k_fs_LR       # Conte69 atlas files (164k resolution)
+    ├── Infomap_wrapper            # Community detection using Infomap
+    ├── Parcellation              # Surface parcellation tools
+    ├── read_write_cifti          # CIFTI file I/O utilities
+    ├── README.md                 # Documentation for MSCcodebase utilities
+    └── *.m                       # Various MATLAB analysis functions
 ```
+
+## MSCcodebase Utilities
+
+The `MSCcodebase/Utilities` folder contains MATLAB-based tools and utilities imported from the [MSCcodebase repository](https://github.com/MidnightScanClub/MSCcodebase) maintained by the Midnight Scan Club. These utilities provide additional functionality for:
+
+- Brain surface analysis and visualization
+- CIFTI file manipulation and processing
+- Network analysis and community detection using Infomap
+- Surface parcellation and watershed algorithms
+- Atlas-based analyses using Conte69 surfaces
+
+See `MSCcodebase/README.md` for detailed documentation on the imported utilities and their usage.

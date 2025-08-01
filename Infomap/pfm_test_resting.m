@@ -25,7 +25,7 @@ Subject = '01';
 Session = '15';
 working_dir = '/ptmp/hmueller2/Downloads';
 
-tseries_dir = [working_dir '/fmriprep_out/sub-' Subject '/ses-' Session]; 
+tseries_dir = [working_dir '/fmriprep_out/sub-' Subject '/ses-' Session '/postfmriprep/GLM']; 
 
 % Only use the two specified resting-state files
 files = {
@@ -65,6 +65,8 @@ try
     % make a single CIFTI containing time-series from all scans;
     ConcatenatedCifti = Cifti;
     ConcatenatedCifti.data = ConcatenatedData;
+    disp(size(ConcatenatedCifti.data));
+    disp(MidthickSurfs);
 catch ME
     disp('Error during concatenation of CIFTI files:');
     disp(ME.message);
@@ -75,7 +77,7 @@ try
     % Step 2: Make a distance matrix.
     disp('Making dmat')
     tic;
-    pfm_make_dmat_hybrid(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+    pfm_make_dmat(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
     disp(['Elapsed time: ', num2str(toc), ' seconds'])
 catch ME
     disp('Error during distance matrix creation:');
@@ -137,7 +139,10 @@ MinSize = 50; % in mm^2
 disp('spatial filtering.')
 pfm_spatial_filtering(Input,half_dir,Output,MidthickSurfs,MinSize,WorkbenchBinary);
 
-
+disp(['LH vertices: ' num2str(length(LH.vertices))]);
+disp(['RH vertices: ' num2str(length(RH.vertices))]);
+disp(['Total surface vertices: ' num2str(length(LH.vertices) + length(RH.vertices))]);
+disp(['Length of RefCifti.brainstructure: ' num2str(length(RefCifti.brainstructure))]);
 
 %% Step 5: Algorithmic assignment of network identities to infomap communities.
 

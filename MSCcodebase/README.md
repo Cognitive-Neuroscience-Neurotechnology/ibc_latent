@@ -8,7 +8,7 @@ The utilities were imported from the [MSCcodebase repository](https://github.com
 
 ## Import Process
 
-The MSCcodebase/Utilities folder was imported as a subtree on [DATE] to preserve the commit history from the original repository. The import was performed using the following process:
+The MSCcodebase/Utilities folder was imported as a subtree on Aug. 1, 2025 to preserve the commit history from the original repository. The import was performed using the following process:
 
 ```bash
 # Add the MSCcodebase repository as a remote

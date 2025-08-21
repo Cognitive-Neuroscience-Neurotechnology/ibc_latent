@@ -67,6 +67,7 @@ try
     ConcatenatedCifti.data = ConcatenatedData;
     disp(size(ConcatenatedCifti.data));
     disp(MidthickSurfs);
+    disp(['Number of grayordinates: ' num2str(size(ConcatenatedCifti.data,1))]);
 catch ME
     disp('Error during concatenation of CIFTI files:');
     disp(ME.message);
@@ -87,7 +88,7 @@ end
 
 try
     % optional: regress adjacent cortical signal from subcortex
-    [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
+    [ConcatenatedCifti] = pfm_xregress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
     % write out the CIFTI file;
     concat_file=[half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_fsLR.dtseries.nii'];
     disp(concat_file)

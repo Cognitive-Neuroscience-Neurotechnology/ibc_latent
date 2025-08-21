@@ -9,7 +9,7 @@
 #SBATCH --time=24:00:00
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G
-# SBATCH --mail-type=END,FAIL,TIME_LIMIT
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
 # in case of multipe subjects: 
 # SBATCH --array=0-12   # 13 subjects, index 0 to 12

@@ -25,6 +25,19 @@ RH = gifti(MidthickSurfs{2});
 lh_idx = RefCifti.brainstructure(1:length(LH.vertices))~=-1;
 rh_idx = RefCifti.brainstructure((length(LH.vertices)+1):(length(LH.vertices)+length(RH.vertices)))~=-1;
 
+% --- DEBUG: check grayordinate indexing ---
+disp(['Total grayordinates in Cifti: ' num2str(size(RefCifti.brainstructure,1))]);
+
+cortical_indices = find(RefCifti.brainstructure > 0 & RefCifti.brainstructure < 3);
+subcortical_indices = find(RefCifti.brainstructure > 2);
+
+disp(['Cortical indices: ' num2str(length(cortical_indices))]);
+disp(['Subcortical indices: ' num2str(length(subcortical_indices))]);
+
+disp(['Max cortical index: ' num2str(max(cortical_indices))]);
+disp(['Max subcortical index: ' num2str(max(subcortical_indices))]);
+% ------------------------------------------
+
 % preallocate "reference verts"
 LH_verts=1:length(LH.vertices);
 RH_verts=1:length(RH.vertices);

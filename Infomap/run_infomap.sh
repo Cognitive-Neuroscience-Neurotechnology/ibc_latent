@@ -15,6 +15,7 @@
 # SBATCH --array=0-12   # 13 subjects, index 0 to 12
 # SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
 # CONTAINER=/home/rglz/containers/gfae.sif
+
 # subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 subject="01"
 type="resting" # or "concatenated tasks"
@@ -23,3 +24,4 @@ type="resting" # or "concatenated tasks"
 echo "Starting processing for subject $subject and type $type."
 
 apptainer exec /ptmp/containers/matlab-r2024b.sif matlab -nodisplay -nosplash -r "cd('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_test_resting; exit"
+# apptainer exec /ptmp/containers/matlab-r2024b.sif matlab -nodisplay -nosplash -r "cd('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_tutorial; exit"

@@ -44,13 +44,13 @@ mkdir(Subdir); mkdir(half_dir);
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
 
 % Loads MidthickSurfs (left and right) to compute geodesic distances on the cortical mesh
-MidthickSurfs{1} = [surface_dir '/anat/sub-01_hemi-L_midthickness.surf.gii']; % Found in fmriprep output
-MidthickSurfs{2} = [surface_dir '/anat/sub-01_hemi-R_midthickness.surf.gii']; % Found in fmriprep output
+MidthickSurfs{1} = [surface_dir '/anat/sub-01_hemi-L_midthickness.32k_fs_LR.surf.gii']; % Found in fmriprep output
+MidthickSurfs{2} = [surface_dir '/anat/sub-01_hemi-R_midthickness.32k_fs_LR.surf.gii']; % Found in fmriprep output
 
 % left_mask=[surface_dir '/anat/sub-01_hemi-L_atlasroi.shape.gii']; % Searching
 % right_mask=[surface_dir '/anat/sub-01_hemi-R_atlasroi.shape.gii']; % Searching
 
-disp('Some message'); drawnow;
+disp('Loading MidthickSurfs completed.'); drawnow;
 
 % ---- TO FIND!!
 
@@ -78,7 +78,7 @@ try
     % Step 2: Make a distance matrix.
     disp('Making dmat')
     tic;
-    pfm_make_dmat(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+    pfm_make_dmat_96k(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
     disp(['Elapsed time: ', num2str(toc), ' seconds'])
 catch ME
     disp('Error during distance matrix creation:');

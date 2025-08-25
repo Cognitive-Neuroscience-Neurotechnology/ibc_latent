@@ -17,16 +17,13 @@ end
 
 RefCifti.data=[]; % remove data, not needed
 
-% ----- FIXED NOT TO HAVE HARDCODED 96K 
-nGray = size(RefCifti.brainstructure,1);
-
 % load midthickness surfaces 
 LH = gifti(MidthickSurfs{1});
 RH = gifti(MidthickSurfs{2});
 
-% dynamically compute LH/RH indices so they don't exceed array size
-lh_idx = find(RefCifti.brainstructure(1:length(LH.vertices)) > 0 & RefCifti.brainstructure(1:length(LH.vertices)) < 3);
-rh_idx = find(RefCifti.brainstructure(length(LH.vertices)+1:length(LH.vertices)+length(RH.vertices)) > 0 & RefCifti.brainstructure(length(LH.vertices)+1:length(LH.vertices)+length(RH.vertices)) < 3);
+% find cortical vertices on surface cortex (not medial wall)
+lh_idx = RefCifti.brainstructure(1:length(LH.vertices))~=-1;
+rh_idx = RefCifti.brainstructure((length(LH.vertices)+1):(length(LH.vertices)+length(RH.vertices)))~=-1;
 
 % --- DEBUG: check grayordinate indexing ---
 disp(['Total grayordinates in Cifti: ' num2str(size(RefCifti.brainstructure,1))]);
@@ -39,45 +36,39 @@ disp(['Subcortical indices: ' num2str(length(subcortical_indices))]);
 
 disp(['Max cortical index: ' num2str(max(cortical_indices))]);
 disp(['Max subcortical index: ' num2str(max(subcortical_indices))]);
-% ------------------------------------------ NEWW
+% ------------------------------------------
 
-% split cortical grayordinates into LH and RH
-cortical_indices = find(RefCifti.brainstructure > 0 & RefCifti.brainstructure < 3);
+% preallocate "reference verts"
+LH_verts=1:length(LH.vertices);
+RH_verts=1:length(RH.vertices);
 
-% LH vertices in CIFTI grayordinates
-lh_cifti = cortical_indices(cortical_indices <= length(LH.vertices));
-lh_map = 1:length(lh_cifti); % indices relative to LH.vertices
+% cortical vertices only
+LH_verts=LH_verts(lh_idx);
+RH_verts=RH_verts(rh_idx);
 
-% RH vertices in CIFTI grayordinates
-rh_cifti = cortical_indices(cortical_indices > length(LH.vertices)) - length(LH.vertices);
-rh_map = 1:length(rh_cifti); % indices relative to RH.vertices
-
-% ------------------------------------------ 
-
-% LH geodesic distances
-lh_mask = lh_cifti; % LH vertices in full LH surface
-lh_map = ismember(1:length(LH.vertices), lh_mask);
-lh_map = find(lh_map); % row indices for temp.cdata
-
-LH_verts = lh_mask; % vertices to iterate over
+% sweep through vertices
 parfor i = 1:length(LH_verts)
+    
+    % calculate geodesic distances from vertex i
     system([WorkbenchBinary ' -surface-geodesic-distance ' MidthickSurfs{1} ' ' num2str(LH_verts(i)-1) ' ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     temp = gifti([OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     system(['rm ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
-    lh(:,i) = temp.cdata(lh_map); % safe indexing
+    lh(:,i) = temp.cdata(lh_idx); % log distances
+        
 end
 
-% RH geodesic distances
-rh_mask = rh_cifti; % RH vertices in full RH surface
-rh_map = ismember(1:length(RH.vertices), rh_mask);
-rh_map = find(rh_map); % row indices for temp.cdata
+% convert to uint8
+lh = uint8(lh);
 
-RH_verts = rh_mask;
+% sweep through vertices
 parfor i = 1:length(RH_verts)
+    
+    % calculate geodesic distances from vertex i
     system([WorkbenchBinary ' -surface-geodesic-distance ' MidthickSurfs{2} ' ' num2str(RH_verts(i)-1) ' ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     temp = gifti([OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
     system(['rm ' OutDir '/tmp/temp_' num2str(i) '.shape.gii']);
-    rh(:,i) = temp.cdata(rh_map); % safe indexing
+    rh(:,i) = temp.cdata(rh_idx); % log distances
+    
 end
 
 % delete 
@@ -100,22 +91,19 @@ save([OutDir '/DistanceMatrixCortexOnly'],'D','-v7.3');
 
 % extract coordinates for all cortical vertices 
 coords_surf=[LH.vertices; RH.vertices]; % combine hemipsheres 
-
-% map cortical vertices directly without truncating to coords_surf length
 surf_indices_incifti = RefCifti.brainstructure > 0 & RefCifti.brainstructure < 3;
-coords_surf = coords_surf;  % already matches cortical vertices
-
+surf_indices_incifti = surf_indices_incifti(1:size(coords_surf,1));
+coords_surf = coords_surf(surf_indices_incifti,:);
 coords_subcort = RefCifti.pos(RefCifti.brainstructure>2,:);
-coords = [coords_surf; coords_subcort]; % combine 
+coords = [coords_surf;coords_subcort]; % combine 
 
 % compute euclidean distance 
 % between all vertices & voxels 
 D2 = uint8(pdist2(coords,coords));
 
 % combine distance matrices; geodesic & euclidean  
-nCortical = size(D,1);
-D = [D ; D2(nCortical+1:nGray,1:nCortical)]; % vertcat
-D = [D  D2(1:nCortical,nCortical+1:nGray)]; % horzcat
+D = [D ; D2(size(D,1)+1:end,1:size(D,2))]; % vertcat
+D = [D  D2(1:size(D,1),size(D,2)+1:end)]; % horzcat 
 clear D2;
 
 % save distance matrix;

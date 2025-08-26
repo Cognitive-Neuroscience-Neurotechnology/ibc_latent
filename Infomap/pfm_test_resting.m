@@ -12,7 +12,8 @@ addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/MSCcodebase/Utilities'))
 
 % define path to some software packages that will be needed
 InfoMapBinary = '/home/hmueller2/.local/bin/infomap'; % path to infomap binary; code tested on version 2.0.0 
-WorkbenchBinary = '/home/hmueller2/workbench/bin_linux64/wb_command'; % path to workbench binary; code tested on version 1.4.2
+% WorkbenchBinary = '/home/hmueller2/workbench/bin_linux64/wb_command'; % path to workbench binary; code tested on version 1.4.2
+WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % used in order to use wb_command in apptainer container
 
 % number of 
 % workers

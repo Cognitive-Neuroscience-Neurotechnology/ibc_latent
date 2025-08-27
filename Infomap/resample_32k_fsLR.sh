@@ -1,5 +1,5 @@
 #!/bin/bash
-# filepath: /home/hmueller2/ibc_code/ibc_latent/Infomap/resample_surfaces_to_fsLR32k.sh
+# filepath: /home/hmueller2/ibc_code/ibc_latent/Infomap/resample_32k_fsLR.sh
 
 # GOAL: Resample native surfaces to fsLR 32k using wb_command
 # Creation of midthickness.32k_fs_LR.surf.gii files

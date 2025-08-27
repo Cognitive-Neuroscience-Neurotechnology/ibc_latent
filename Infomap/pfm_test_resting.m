@@ -15,11 +15,9 @@ InfoMapBinary = '/home/hmueller2/.local/bin/infomap'; % path to infomap binary; 
 % WorkbenchBinary = '/home/hmueller2/workbench/bin_linux64/wb_command'; % path to workbench binary; code tested on version 1.4.2
 WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % used in order to use wb_command in apptainer container
 
-% number of 
-% workers
 nWorkers = 5;
 
-%% Step 1: Temporal Concatenation of fMRI data from all sessions.
+%% Step 1: Temporal Concatenation of specific subject and session.
 
 % define subject directory and name;
 Subject = '01';
@@ -34,12 +32,10 @@ files = {
     [tseries_dir '/sub-01_ses-15_task-RestingState_dir-pa_cleaned.dtseries.nii']
 };
 
-% Output directories
+% Output directories (per subject one subdirectory & make resting state subdir)
 Subdir = [working_dir '/individual_networks/sub-' Subject];
 half_dir = [Subdir '/resting_state'];
 mkdir(Subdir); mkdir(half_dir);
-
-% ---- TO FIND!!
 
 % define fs_lr_32k midthickness surfaces;
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
@@ -52,8 +48,6 @@ MidthickSurfs{2} = [surface_dir '/anat/sub-01_hemi-R_midthickness.32k_fs_LR.surf
 % right_mask=[surface_dir '/anat/sub-01_hemi-R_atlasroi.shape.gii']; % Searching
 
 disp('Loading MidthickSurfs completed.'); drawnow;
-
-% ---- TO FIND!!
 
 try
     % Concatenate the two files
@@ -89,7 +83,7 @@ end
 
 try
     % optional: regress adjacent cortical signal from subcortex
-    [ConcatenatedCifti] = pfm_xregress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
+    [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
     % write out the CIFTI file;
     concat_file=[half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_fsLR.dtseries.nii'];
     disp(concat_file)

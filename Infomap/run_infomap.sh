@@ -31,5 +31,4 @@ apptainer exec \
     --bind /home/hmueller2/infomap-2.8.0/infomap:/usr/local/bin/infomap \
     /ptmp/containers/matlab-romy-r2024b-2024-11-08-1b59d97e0135.sif \
     bash -c "export LD_LIBRARY_PATH=/mnt/workbench/libs_linux64:/mnt/workbench/libs_linux64_software_opengl:\$LD_LIBRARY_PATH; \
-            matlab -nodisplay -nosplash -r \"disp('MATLAB test'); exit\"; \
-            matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); Subject='$Subject'; pfm_test_resting; exit\""
+             matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); Subject='$Subject'; pfm_test_resting; exit\""

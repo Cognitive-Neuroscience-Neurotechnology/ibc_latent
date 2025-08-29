@@ -108,8 +108,9 @@ coords_surf = coords_surf;  % already matches cortical vertices
 coords_subcort = RefCifti.pos(RefCifti.brainstructure>2,:);
 coords = [coords_surf; coords_subcort]; % combine 
 
-% compute euclidean distance 
-% between all vertices & voxels 
+disp(['Size of D: ' mat2str(size(D))]);
+disp(['Size of D2 block: ' mat2str(size(D2(1:nCortical,nCortical+1:nGray)))]);
+% compute euclidean distance between all vertices & voxels 
 D2 = uint8(pdist2(coords,coords));
 
 % combine distance matrices; geodesic & euclidean  

@@ -66,8 +66,10 @@ catch ME
     return
 end
 
+
+%% Step 2: Make a distance matrix.
+
 try
-    % Step 2: Make a distance matrix.
     disp('Making dmat')
     tic;
     pfm_make_dmat_96k(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
@@ -90,6 +92,7 @@ catch ME
     disp(ME.message);
     return
 end
+
 
 %% Step 3: Apply spatial smoothing.
 

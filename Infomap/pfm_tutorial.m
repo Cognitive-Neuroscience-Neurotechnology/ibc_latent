@@ -12,7 +12,8 @@ InfoMapBinary = '/usr/local/bin/infomap';
 WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % Used in order to use wb_command in apptainer container
 nWorkers = 16;
 
-% Get subject from SLURM script/environment. E.g. Subject='01'
+% ---------------------------------
+Subject = '01';
 
 working_dir = '/ptmp/hmueller2/Downloads';
 
@@ -36,15 +37,28 @@ for i = 1:length(session_names)
     files = dir([GLMdir 'sub-' Subject '_' Session '_task-*_dir-*_cleaned.dtseries.nii']);
     for f = 1:length(files)
         current_file = fullfile(GLMdir, files(f).name);
-        disp(['Loading: ' current_file])
+        %disp(['Loading: ' current_file])
         Cifti = ft_read_cifti_mod(current_file);
-        ConcatenatedData = [ConcatenatedData Cifti.data(:,:)];
+        %disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
+        % Transpose so shape is (timepoints, grayordinates)
+        data_t = Cifti.data';
+        %disp(['Transposed size: ' mat2str(size(data_t))]);
+        if isempty(ConcatenatedData)
+            ConcatenatedData = data_t;
+        else
+            if size(data_t,2) ~= size(ConcatenatedData,2)
+                error(['Grayordinate mismatch in file: ' current_file]);
+            end
+            ConcatenatedData = [ConcatenatedData; data_t];
+        end
     end
 end
 
 % Use the last loaded Cifti as template
 ConcatenatedCifti = Cifti;
 ConcatenatedCifti.data = ConcatenatedData;
+disp(['ConcatenatedData shape: ' mat2str(size(ConcatenatedData))]);
+
 
 % Output directories
 Subdir = [working_dir '/individual_networks/sub-' Subject];
@@ -64,7 +78,7 @@ MidthickSurfs{2} = [surface_dir '/anat/sub-' Subject '_hemi-R_midthickness.32k_f
 %% ---- Step 2: Make a distance matrix.
 disp('Making dmat')
 tic;
-pfm_make_dmat(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+pfm_make_dmat_96k(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
 elapsed_minutes = toc / 60;
 disp(['Elapsed time: ', num2str(elapsed_minutes, '%.2f'), ' minutes'])
 
@@ -168,4 +182,4 @@ xlim([0 20]); xticks(0:5:20);
 set(gca,'fontname','arial','fontsize',10,'TickLength',[0 0],'TickLabelInterpreter','none');
 xlabel('% of Cortical Surface');
 print(gcf,[PfmDir '/FunctionalNetworkSizes'],'-dpdf');
-%} 
+%}

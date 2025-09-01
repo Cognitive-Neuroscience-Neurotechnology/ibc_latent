@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=infomap_01
+#SBATCH --job-name=s_infomap_01
 #SBATCH --output=/ptmp/hmueller2/infomap_logs/output/infomap_RS_%A_%a.out
 #SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/infomap_RS_%A_%a.err
 #SBATCH --nodes=1
@@ -24,11 +24,11 @@ export LD_LIBRARY_PATH=/home/hmueller2/workbench/libs_linux64:/home/hmueller2/wo
 
 echo "---- Starting processing for subject $Subject and type $Type. ----"
 
-# Use pfm_tutorial instead of pfm_test_resting to run the full pipeline
+# Use pfm_tutorial to run the full pipeline
 apptainer exec \
     --bind /home/hmueller2/workbench:/mnt/workbench \
     --bind /home/hmueller2/workbench/run_wb_command.sh:/mnt/workbench/run_wb_command.sh \
     --bind /home/hmueller2/infomap-2.8.0/infomap:/usr/local/bin/infomap \
     /ptmp/containers/matlab-romy-r2024b-2024-11-08-1b59d97e0135.sif \
     bash -c "export LD_LIBRARY_PATH=/mnt/workbench/libs_linux64:/mnt/workbench/libs_linux64_software_opengl:\$LD_LIBRARY_PATH; \
-             matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_tutorial; exit\""
+             matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_tutorial_short; exit\""

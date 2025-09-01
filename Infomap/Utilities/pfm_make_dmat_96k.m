@@ -92,14 +92,20 @@ save([OutDir '/DistanceMatrixCortexOnly'],'D','-v7.3');
 % extract coordinates for all cortical vertices 
 coords_surf=[LH.vertices; RH.vertices]; % combine hemipsheres 
 surf_indices_incifti = RefCifti.brainstructure > 0 & RefCifti.brainstructure < 3;
-surf_indices_incifti = surf_indices_incifti(1:size(coords_surf,1));
+surf_indices_incifti = surf_indices_incifti(1:size(coords_surf,1)); % new: ensure correct length
 coords_surf = coords_surf(surf_indices_incifti,:);
 coords_subcort = RefCifti.pos(RefCifti.brainstructure>2,:);
 coords = [coords_surf;coords_subcort]; % combine 
 
-% compute euclidean distance 
-% between all vertices & voxels 
+% compute euclidean distance between all vertices & voxels 
 D2 = uint8(pdist2(coords,coords));
+
+% Debugging information
+disp(['size(D): ' mat2str(size(D))]);
+disp(['size(D2): ' mat2str(size(D2))]);
+if exist('Input', 'var')
+    disp(['size(Input.data): ' mat2str(size(Input.data))]);
+end
 
 % combine distance matrices; geodesic & euclidean  
 D = [D ; D2(size(D,1)+1:end,1:size(D,2))]; % vertcat

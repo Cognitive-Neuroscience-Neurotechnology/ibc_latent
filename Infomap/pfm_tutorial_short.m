@@ -29,7 +29,6 @@ disp(['Loaded concatenated CIFTI. Shape: ' mat2str(size(ConcatenatedCifti.data))
 
 % Distance matrix
 DistanceMatrix = [half_dir '/DistanceMatrix.mat'];
-disp(['Loaded distance matrix. Shape: ' num2str(size(load(DistanceMatrix)))]);
 
 % Surface files
 surface_dir = ['/ptmp/hmueller2/Downloads/fmriprep_out/sub-' Subject];
@@ -37,6 +36,11 @@ MidthickSurfs{1} = [surface_dir '/anat/sub-' Subject '_hemi-L_midthickness.32k_f
 MidthickSurfs{2} = [surface_dir '/anat/sub-' Subject '_hemi-R_midthickness.32k_fs_LR.surf.gii'];
 
 % ---- Continue with Rest of Step 2 and onward ----
+% Transpose input data if incorrect shape
+if size(ConcatenatedCifti.data,1) ~= 91282 && size(ConcatenatedCifti.data,2) == 91282
+    ConcatenatedCifti.data = ConcatenatedCifti.data'; % transpose to (91282, timepoints)
+end
+
 % Optional: regress adjacent cortical signal from subcortex to reduce artifactual coupling 
 [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti, DistanceMatrix, 20);
 
@@ -46,6 +50,7 @@ disp(concat_file)
 ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 
 %% ---- Step 3: Apply spatial smoothing.
+disp('---- Step 3: Apply spatial smoothing. ----');
 % Define a range of gaussian smoothing kernels (in sigma)
 KernelSizes = [0.85 1.7 2.55];
 

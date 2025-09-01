@@ -28,7 +28,6 @@ d = D(SubcortVoxels,1:nCorticalVertices);
 
 % find all voxels adjacent to cortex;
 idx = find(min(d,[],2) <= Distance);
-disp(['idx: ' mat2str(idx)]);
 clear d % clear intermediate file;
 
 % preallocate;

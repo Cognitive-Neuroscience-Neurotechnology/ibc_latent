@@ -21,8 +21,7 @@ working_dir = '/ptmp/hmueller2/Downloads';
 %% ---- Step 1: Temporal Concatenation of fMRI data from all sessions.
 % left_mask=[surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.L.atlasroi.32k_fs_LR.shape.gii'];
 % right_mask=[surface_dir '/freesurfer/MNINonLinear/fsaverage_LR32k/freesurfer.R.atlasroi.32k_fs_LR.shape.gii'];
-
-disp(['Processing subject: ' Subject]);
+disp(['---- Step 1: Temporal Concatenation for subject: ' Subject ' ----']);
 tseries_dir = [working_dir '/fmriprep_out'];
 surface_dir = [tseries_dir '/sub-' Subject];
 
@@ -37,9 +36,9 @@ for i = 1:length(session_names)
     files = dir([GLMdir 'sub-' Subject '_' Session '_task-*_dir-*_cleaned.dtseries.nii']);
     for f = 1:length(files)
         current_file = fullfile(GLMdir, files(f).name);
-        disp(['Loading: ' current_file])
+        %disp(['Loading: ' current_file])
         Cifti = ft_read_cifti_mod(current_file);
-        disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
+        %disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
         % Ensure shape is (timepoints, grayordinates)
         if size(Cifti.data,2) == 91282
             data_t = Cifti.data; % already correct
@@ -71,11 +70,6 @@ Subdir = [working_dir '/individual_networks/sub-' Subject];
 half_dir = [Subdir '/whole_dataset'];
 mkdir(Subdir); mkdir(half_dir);
 
-% Output directories
-Subdir = [working_dir '/individual_networks/sub-' Subject];
-half_dir = [Subdir '/whole_dataset'];
-mkdir(Subdir); mkdir(half_dir);
-
 % Surface files
 MidthickSurfs{1} = [surface_dir '/anat/sub-' Subject '_hemi-L_midthickness.32k_fs_LR.surf.gii'];
 MidthickSurfs{2} = [surface_dir '/anat/sub-' Subject '_hemi-R_midthickness.32k_fs_LR.surf.gii'];
@@ -87,13 +81,14 @@ ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 % ---- 
 
 %% ---- Step 2: Make a distance matrix.
-disp('Making dmat')
+disp('---- Step 2: Making a distance matrix ----');
 tic;
 pfm_make_dmat_96k(concat_file,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
 elapsed_minutes = toc / 60;
 disp(['Elapsed time: ', num2str(elapsed_minutes, '%.2f'), ' minutes'])
 
 % Optional: regress adjacent cortical signal from subcortex to reduce artifactual coupling 
+disp('Regressing adjacent cortical signal...');
 [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
 
 % Write out the concatenated CIFTI file
@@ -103,6 +98,7 @@ ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 
 
 %% ---- Step 3: Apply spatial smoothing.
+disp('---- Step 3: Apply spatial smoothing. ----');
 % Define a range of gaussian smoothing kernels (in sigma)
 KernelSizes = [0.85 1.7 2.55];
 
@@ -127,7 +123,7 @@ NumberReps = 50; % number of times infomap is run;
 BadVertices = []; % optional, but you could include regions to ignore, if you know there is bad signal there.
 Structures = {'CORTEX_LEFT','CEREBELLUM_LEFT','ACCUMBENS_LEFT','CAUDATE_LEFT','PALLIDUM_LEFT','PUTAMEN_LEFT','THALAMUS_LEFT','HIPPOCAMPUS_LEFT','AMYGDALA_LEFT','ACCUMBENS_LEFT','CORTEX_RIGHT','CEREBELLUM_RIGHT','ACCUMBENS_RIGHT','CAUDATE_RIGHT','PALLIDUM_RIGHT','PUTAMEN_RIGHT','THALAMUS_RIGHT','HIPPOCAMPUS_RIGHT','AMYGDALA_RIGHT','ACCUMBENS_RIGHT'};
 
-disp('Starting infomap.')
+disp('---- Step 4: Starting infomap.')
 tic;
 pfm_infomap(ConcatenatedCifti,DistanceMatrix,half_dir,GraphDensities,NumberReps,DistanceCutoff,BadVertices,Structures,nWorkers,InfoMapBinary);
 elapsed_minutes = toc / 60;
@@ -147,6 +143,7 @@ pfm_spatial_filtering(Input,half_dir,Output,MidthickSurfs,MinSize,WorkbenchBinar
 
 
 %% ---- Step 5: Algorithmic assignment of network identities to infomap communities.
+disp('---- Step 5: Algorithmic assignment of network identities to infomap communities. ----');
 load('priors.mat'); % FOR THIS WE WILL LATER NEED TO ADAPT WITH THE NETWORKS WE WANT
 Ic = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+SpatialFiltering.dtseries.nii']);
 Output = 'Bipartite_PhysicalCommunities+AlgorithmicLabeling';

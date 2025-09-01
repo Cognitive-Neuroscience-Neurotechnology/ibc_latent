@@ -1,4 +1,4 @@
-function pfm_make_dmat(RefCifti,MidthickSurfs,OutDir,nWorkers,WorkbenchBinary)
+function pfm_make_dmat_96k(RefCifti,MidthickSurfs,OutDir,nWorkers,WorkbenchBinary)
 % cjl2007@med.cornell.edu; 
 
 % start parpool;
@@ -9,8 +9,7 @@ try % make hidden directory
 catch
 end
 
-% load
-% reference CIFTI
+% load reference CIFTI
 if ischar(RefCifti)
     RefCifti = ft_read_cifti_mod(RefCifti);
 end
@@ -25,18 +24,16 @@ RH = gifti(MidthickSurfs{2});
 lh_idx = RefCifti.brainstructure(1:length(LH.vertices))~=-1;
 rh_idx = RefCifti.brainstructure((length(LH.vertices)+1):(length(LH.vertices)+length(RH.vertices)))~=-1;
 
-% --- DEBUG: check grayordinate indexing ---
-disp(['Total grayordinates in Cifti: ' num2str(size(RefCifti.brainstructure,1))]);
+% --- Only use valid grayordinates (exclude medial wall/unassigned) ---
+valid_indices = find(RefCifti.brainstructure > 0);
+
+disp(['Total grayordinates in Cifti: ' num2str(length(valid_indices))]);
 
 cortical_indices = find(RefCifti.brainstructure > 0 & RefCifti.brainstructure < 3);
 subcortical_indices = find(RefCifti.brainstructure > 2);
 
 disp(['Cortical indices: ' num2str(length(cortical_indices))]);
 disp(['Subcortical indices: ' num2str(length(subcortical_indices))]);
-
-disp(['Max cortical index: ' num2str(max(cortical_indices))]);
-disp(['Max subcortical index: ' num2str(max(subcortical_indices))]);
-% ------------------------------------------
 
 % preallocate "reference verts"
 LH_verts=1:length(LH.vertices);
@@ -46,7 +43,7 @@ RH_verts=1:length(RH.vertices);
 LH_verts=LH_verts(lh_idx);
 RH_verts=RH_verts(rh_idx);
 
-% sweep through vertices
+% sweep through vertices in left hemisphere
 parfor i = 1:length(LH_verts)
     
     % calculate geodesic distances from vertex i
@@ -60,7 +57,7 @@ end
 % convert to uint8
 lh = uint8(lh);
 
-% sweep through vertices
+% sweep through vertices in right hemisphere
 parfor i = 1:length(RH_verts)
     
     % calculate geodesic distances from vertex i
@@ -84,10 +81,10 @@ rh = uint8(rh);
 % piece together results (999 = inter-hemispheric)
 top = [lh ones(length(lh),length(rh))*999]; % lh & dummy rh
 bottom = [ones(length(rh),length(lh))*999 rh]; % dummy lh & rh
-D = uint8([top;bottom]); % combine hemispheres; cortical surface only so far 
+D_cortex = uint8([top;bottom]); % combine hemispheres; cortical surface only so far 
 
 % save distance matrix;
-save([OutDir '/DistanceMatrixCortexOnly'],'D','-v7.3');
+save([OutDir '/DistanceMatrixCortexOnly'],'D_cortex','-v7.3');
 
 % extract coordinates for all cortical vertices 
 coords_surf=[LH.vertices; RH.vertices]; % combine hemipsheres 
@@ -101,16 +98,17 @@ coords = [coords_surf;coords_subcort]; % combine
 D2 = uint8(pdist2(coords,coords));
 
 % Debugging information
-disp(['size(D): ' mat2str(size(D))]);
+disp(['size(D_cortex): ' mat2str(size(D_cortex))]);
 disp(['size(D2): ' mat2str(size(D2))]);
 if exist('Input', 'var')
     disp(['size(Input.data): ' mat2str(size(Input.data))]);
 end
 
 % combine distance matrices; geodesic & euclidean  
-D = [D ; D2(size(D,1)+1:end,1:size(D,2))]; % vertcat
-D = [D  D2(1:size(D,1),size(D,2)+1:end)]; % horzcat 
-clear D2;
+nGray = length(valid_indices);
+D = zeros(nGray, nGray, 'uint8');
+D(1:size(D_cortex,1), 1:size(D_cortex,2)) = D_cortex;
+D(:,:) = max(D(:,:), D2); % or use D2 for subcortex if needed
 
 % save distance matrix;
 save([OutDir '/DistanceMatrix'],'D','-v7.3');

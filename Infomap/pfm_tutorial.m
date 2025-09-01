@@ -37,12 +37,18 @@ for i = 1:length(session_names)
     files = dir([GLMdir 'sub-' Subject '_' Session '_task-*_dir-*_cleaned.dtseries.nii']);
     for f = 1:length(files)
         current_file = fullfile(GLMdir, files(f).name);
-        %disp(['Loading: ' current_file])
+        disp(['Loading: ' current_file])
         Cifti = ft_read_cifti_mod(current_file);
-        %disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
-        % Transpose so shape is (timepoints, grayordinates)
-        data_t = Cifti.data';
-        %disp(['Transposed size: ' mat2str(size(data_t))]);
+        disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
+        % Ensure shape is (timepoints, grayordinates)
+        if size(Cifti.data,2) == 91282
+            data_t = Cifti.data; % already correct
+        elseif size(Cifti.data,1) == 91282
+            data_t = Cifti.data'; % transpose if needed
+        else
+            error(['Unexpected Cifti.data shape in file: ' current_file]);
+        end
+        disp(['Final shape for concatenation: ' mat2str(size(data_t))]);
         if isempty(ConcatenatedData)
             ConcatenatedData = data_t;
         else
@@ -59,7 +65,6 @@ ConcatenatedCifti = Cifti;
 ConcatenatedCifti.data = ConcatenatedData;
 disp(['ConcatenatedData shape: ' mat2str(size(ConcatenatedData))]);
 disp(['Number of grayordinates in CIFTI: ' num2str(size(ConcatenatedData,2))]);
-
 
 % Output directories
 Subdir = [working_dir '/individual_networks/sub-' Subject];
@@ -84,7 +89,7 @@ ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 %% ---- Step 2: Make a distance matrix.
 disp('Making dmat')
 tic;
-pfm_make_dmat_96k(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+pfm_make_dmat_96k(concat_file,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
 elapsed_minutes = toc / 60;
 disp(['Elapsed time: ', num2str(elapsed_minutes, '%.2f'), ' minutes'])
 

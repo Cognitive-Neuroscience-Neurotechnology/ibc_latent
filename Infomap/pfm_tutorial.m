@@ -10,7 +10,7 @@ addpath(genpath('/home/hmueller2/ibc_code/ibc_latent/MSCcodebase/Utilities'))
 
 InfoMapBinary = '/usr/local/bin/infomap';
 WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % Used in order to use wb_command in apptainer container
-nWorkers = 16;
+nWorkers = 8;
 
 % ---------------------------------
 Subject = '01';
@@ -58,6 +58,7 @@ end
 ConcatenatedCifti = Cifti;
 ConcatenatedCifti.data = ConcatenatedData;
 disp(['ConcatenatedData shape: ' mat2str(size(ConcatenatedData))]);
+disp(['Number of grayordinates in CIFTI: ' num2str(size(ConcatenatedData,2))]);
 
 
 % Output directories
@@ -74,6 +75,11 @@ mkdir(Subdir); mkdir(half_dir);
 MidthickSurfs{1} = [surface_dir '/anat/sub-' Subject '_hemi-L_midthickness.32k_fs_LR.surf.gii'];
 MidthickSurfs{2} = [surface_dir '/anat/sub-' Subject '_hemi-R_midthickness.32k_fs_LR.surf.gii'];
 
+% ---- Save inbetween (later overwriten to get rid of coupling)
+concat_file = [half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_but_coupled_fsLR.dtseries.nii'];
+disp(['Writing concatenated CIFTI: ' concat_file]);
+ft_write_cifti_mod(concat_file, ConcatenatedCifti);
+% ---- 
 
 %% ---- Step 2: Make a distance matrix.
 disp('Making dmat')

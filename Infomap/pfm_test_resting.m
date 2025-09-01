@@ -13,8 +13,7 @@ WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % Used in order to use wb_
 nWorkers = 16;
 
 working_dir = '/ptmp/hmueller2/Downloads';
-% ---- DEBUG -----
-disp('pfm_test_resting started');
+
 
 %% Step 1: Temporal Concatenation of specific subject and session.
 
@@ -24,6 +23,12 @@ Session = '15';
 
 tseries_dir = [working_dir '/fmriprep_out/sub-' Subject '/ses-' Session '/postfmriprep/GLM']; 
 
+% Only use the two specified resting-state files
+files = {
+    [tseries_dir '/sub-01_ses-15_task-RestingState_dir-ap_cleaned.dtseries.nii']
+    [tseries_dir '/sub-01_ses-15_task-RestingState_dir-pa_cleaned.dtseries.nii']
+};
+
 % Output directories (per subject one subdirectory & make resting state subdir)
 Subdir = [working_dir '/individual_networks/sub-' Subject];
 half_dir = [Subdir '/resting_state'];
@@ -32,9 +37,70 @@ mkdir(Subdir); mkdir(half_dir);
 % define fs_lr_32k midthickness surfaces;
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
 
-% Paths to files already created
-smoothed_file = [half_dir '/sub-01_ses-15_resting_concatenated_cleaned_smoothed_0.85_fsLR.dtseries.nii'];
-DistanceMatrix = [half_dir '/DistanceMatrix.mat'];
+% Loads MidthickSurfs (left and right) to compute geodesic distances on the cortical mesh
+MidthickSurfs{1} = [surface_dir '/anat/sub-01_hemi-L_midthickness.32k_fs_LR.surf.gii']; % Found in fmriprep output
+MidthickSurfs{2} = [surface_dir '/anat/sub-01_hemi-R_midthickness.32k_fs_LR.surf.gii']; % Found in fmriprep output
+
+% left_mask=[surface_dir '/anat/sub-01_hemi-L_atlasroi.shape.gii']; % Searching
+% right_mask=[surface_dir '/anat/sub-01_hemi-R_atlasroi.shape.gii']; % Searching
+
+disp('Loading MidthickSurfs completed.'); drawnow;
+
+try
+    % Concatenate the two files
+    ConcatenatedData = [];
+    for i = 1:length(files)
+        disp(['Loading: ' files{i}])
+        Cifti = ft_read_cifti_mod(files{i});
+        ConcatenatedData = [ConcatenatedData Cifti.data(:,:)];
+    end
+    % make a single CIFTI containing time-series from all scans;
+    ConcatenatedCifti = Cifti;
+    ConcatenatedCifti.data = ConcatenatedData;
+    disp(size(ConcatenatedCifti.data));
+    disp(MidthickSurfs);
+    disp(['Number of grayordinates: ' num2str(size(ConcatenatedCifti.data,1))]);
+catch ME
+    disp('Error during concatenation of CIFTI files:');
+    disp(ME.message);
+    return
+end
+
+
+%% Step 2: Make a distance matrix.
+
+try
+    disp('Making dmat')
+    tic;
+    pfm_make_dmat_96k(ConcatenatedCifti,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
+    disp(['Elapsed time: ', num2str(toc), ' seconds'])
+catch ME
+    disp('Error during distance matrix creation:');
+    disp(ME.message);
+    return
+end
+
+try
+    % optional: regress adjacent cortical signal from subcortex
+    [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
+    % write out the CIFTI file;
+    concat_file=[half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_fsLR.dtseries.nii'];
+    disp(concat_file)
+    ft_write_cifti_mod(concat_file, ConcatenatedCifti);
+catch ME
+    disp('Error during regression or writing CIFTI:');
+    disp(ME.message);
+    return
+end
+
+
+%% Step 3: Apply spatial smoothing.
+
+% define a range of gaussian smoothing kernels (in sigma)
+k = 0.85;
+smoothed_file = [half_dir '/sub-01_ses-15_resting_concatenated_cleaned_smoothed_' num2str(k) '_fsLR.dtseries.nii'];
+system([WorkbenchBinary ' -cifti-smoothing ' concat_file ' ' num2str(k) ' ' num2str(k) ' COLUMN ' smoothed_file ...
+    ' -left-surface ' MidthickSurfs{1} ' -right-surface ' MidthickSurfs{2} ' -merged-volume']);
 
 %% Step 4: Run infomap.
 % load your concatenated resting-state dataset, pick whatever level of spatial smoothing you want

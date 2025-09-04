@@ -12,10 +12,13 @@ InfoMapBinary = '/usr/local/bin/infomap';
 WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % Used in order to use wb_command in apptainer container
 nWorkers = 8;
 
-% ---------------------------------
-Subject = '01';
-
 working_dir = '/ptmp/hmueller2/Downloads';
+
+% ---------------------------------
+
+Subject = '08';
+
+% ---------------------------------
 
 
 %% ---- Step 1: Temporal Concatenation of fMRI data from all sessions.
@@ -47,7 +50,7 @@ for i = 1:length(session_names)
         else
             error(['Unexpected Cifti.data shape in file: ' current_file]);
         end
-        disp(['Final shape for concatenation: ' mat2str(size(data_t))]);
+        %disp(['Final shape for concatenation: ' mat2str(size(data_t))]);
         if isempty(ConcatenatedData)
             ConcatenatedData = data_t;
         else
@@ -86,6 +89,11 @@ tic;
 pfm_make_dmat_96k(concat_file,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
 elapsed_minutes = toc / 60;
 disp(['Elapsed time: ', num2str(elapsed_minutes, '%.2f'), ' minutes'])
+
+% Transpose input data if incorrect shape
+if size(ConcatenatedCifti.data,1) ~= 91282 && size(ConcatenatedCifti.data,2) == 91282
+    ConcatenatedCifti.data = ConcatenatedCifti.data'; % transpose to (91282, timepoints)
+end
 
 % Optional: regress adjacent cortical signal from subcortex to reduce artifactual coupling 
 disp('Regressing adjacent cortical signal...');
@@ -154,18 +162,26 @@ disp('Identifying networks.')
 pfm_identify_networks(ConcatenatedCifti,Ic,MidthickSurfs,Column,Priors,Output,half_dir,WorkbenchBinary);
 
 
-%{
+
 %%---- Step 6: Review algorithmic network assignments, optionally adjust labels manually if needed.
-
+% disp('---- Step 6: Review manual network assignments. ----');
 % OPTIONAL: update network assignments according to manual decisions;
-XLS = [half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling_NetworkLabels+ManualDecisions.xls']; 
-Output = 'Bipartite_PhysicalCommunities+FinalLabeling';
-pfm_parse_manual_decisions(Ic,Column,MidthickSurfs,Priors,XLS,Output,half_dir,WorkbenchBinary);
+% XLS = [half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling_NetworkLabels+ManualDecisions.xls']; 
+% Output = 'Bipartite_PhysicalCommunities+FinalLabeling';
+% pfm_parse_manual_decisions(Ic,Column,MidthickSurfs,Priors,XLS,Output,half_dir,WorkbenchBinary);
 
 
-%% ---- Step 7: Calculate size of each functional brain network
-FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+FinalLabeling.dlabel.nii']);
-VA = ft_read_cifti_mod([Subdir '/fs_LR/fsaverage_LR32k/' subjects{s} '.midthickness_va.32k_fs_LR.dscalar.nii']);
+
+%% ---- Step 7: Calculate size of each functional brain network.
+disp('---- Step 7: Calculate size of brain networks. ----');
+
+% Output from Step 6:
+% FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+FinalLabeling.dlabel.nii']);
+
+% Output from Step 5 (if Step 6 is skipped):
+FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii']);
+
+VA = ft_read_cifti_mod([working_dir '/fmriprep_out/sub-' Subject '/anat/sub-' Subject '.midthickness_va.32k_fs_LR.dscalar.nii']);
 Structures = {'CORTEX_LEFT','CORTEX_RIGHT'}; % in this case, cortex only.
 
 % calculate the size of each functional brain network
@@ -190,4 +206,5 @@ xlim([0 20]); xticks(0:5:20);
 set(gca,'fontname','arial','fontsize',10,'TickLength',[0 0],'TickLabelInterpreter','none');
 xlabel('% of Cortical Surface');
 print(gcf,[PfmDir '/FunctionalNetworkSizes'],'-dpdf');
-%}
+
+disp(['---- ALL IS DONE FOR SUBJECT ' Subject ' ----']);

@@ -105,18 +105,24 @@ disp('Identifying networks.')
 pfm_identify_networks(ConcatenatedCifti,Ic,MidthickSurfs,Column,Priors,Output,half_dir,WorkbenchBinary);
 
 
-%{
+
 %%---- Step 6: Review algorithmic network assignments, optionally adjust labels manually if needed.
 
 % OPTIONAL: update network assignments according to manual decisions;
-XLS = [half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling_NetworkLabels+ManualDecisions.xls']; 
-Output = 'Bipartite_PhysicalCommunities+FinalLabeling';
-pfm_parse_manual_decisions(Ic,Column,MidthickSurfs,Priors,XLS,Output,half_dir,WorkbenchBinary);
+% XLS = [half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling_NetworkLabels+ManualDecisions.xls']; 
+% Output = 'Bipartite_PhysicalCommunities+FinalLabeling';
+% pfm_parse_manual_decisions(Ic,Column,MidthickSurfs,Priors,XLS,Output,half_dir,WorkbenchBinary);
 
 
 %% ---- Step 7: Calculate size of each functional brain network
-FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+FinalLabeling.dlabel.nii']);
-VA = ft_read_cifti_mod([Subdir '/fs_LR/fsaverage_LR32k/' subjects{s} '.midthickness_va.32k_fs_LR.dscalar.nii']);
+
+% Output from Step 6:
+% FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+FinalLabeling.dlabel.nii']);
+
+% Output from Step 5 (if Step 6 is skipped):
+FunctionalNetworks = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii']);
+
+VA = ft_read_cifti_mod([working_dir '/fmriprep_out/sub-' Subject '/anat/sub-' Subject '.midthickness_va.32k_fs_LR.dscalar.nii']);
 Structures = {'CORTEX_LEFT','CORTEX_RIGHT'}; % in this case, cortex only.
 
 % calculate the size of each functional brain network

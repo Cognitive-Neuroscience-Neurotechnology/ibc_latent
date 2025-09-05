@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=08_infom
+#SBATCH --job-name=r09_infom
 #SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%A_%x.out
 #SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%A_%x.err
 #SBATCH --nodes=1
@@ -16,8 +16,8 @@
 # SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
 # subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
-Subject="08"
-Type="concatenated tasks" # "resting" # or "concatenated tasks"
+Subject="09"
+Type="resting" # "resting" # or "concatenated tasks"
 
 # make sure wb_command can find its libraries
 export LD_LIBRARY_PATH=/home/hmueller2/workbench/libs_linux64:/home/hmueller2/workbench/libs_linux64_software_opengl:$LD_LIBRARY_PATH
@@ -31,4 +31,4 @@ apptainer exec \
     --bind /home/hmueller2/infomap-2.8.0/infomap:/usr/local/bin/infomap \
     /ptmp/containers/matlab-romy-r2024b-2024-11-08-1b59d97e0135.sif \
     bash -c "export LD_LIBRARY_PATH=/mnt/workbench/libs_linux64:/mnt/workbench/libs_linux64_software_opengl:\$LD_LIBRARY_PATH; \
-             matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_tutorial; exit\""
+             matlab -nodisplay -nosplash -r \"addpath('/home/hmueller2/ibc_code/ibc_latent/Infomap'); pfm_test_resting; exit\""

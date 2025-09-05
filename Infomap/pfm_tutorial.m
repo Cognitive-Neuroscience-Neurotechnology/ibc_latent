@@ -16,7 +16,7 @@ working_dir = '/ptmp/hmueller2/Downloads';
 
 % ---------------------------------
 
-Subject = '08';
+Subject = '15';
 
 % ---------------------------------
 
@@ -40,6 +40,11 @@ for i = 1:length(session_names)
     for f = 1:length(files)
         current_file = fullfile(GLMdir, files(f).name);
         %disp(['Loading: ' current_file])
+        % Skip resting state files
+        if contains(current_file, 'task-RestingState')
+            disp(['Skipping resting state file named: ' current_file]);
+            continue;
+        end
         Cifti = ft_read_cifti_mod(current_file);
         %disp(['size(Cifti.data): ' mat2str(size(Cifti.data))]);
         % Ensure shape is (timepoints, grayordinates)
@@ -123,7 +128,7 @@ end
 
 %% ---- Step 4: Run infomap.
 % Load your concatenated smoothed_file. CHOOSE the smoothing kernel you want to use.
-ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_0.85_fsLR.dtseries.nii']);
+ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_2.55_fsLR.dtseries.nii']);
 DistanceMatrix = [half_dir '/DistanceMatrix.mat']; % can be path to file
 DistanceCutoff = 10; % in mm; usually between 10 to 30 mm works well.
 GraphDensities = flip([0.0001 0.0002 0.0005 0.001 0.002 0.005 0.01 0.02 0.05]); % 

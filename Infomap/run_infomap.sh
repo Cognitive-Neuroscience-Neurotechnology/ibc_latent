@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=r09_infom
+#SBATCH --job-name=r11_infom
 #SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%A_%x.out
 #SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%A_%x.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=300:00:00
+#SBATCH --time=30:00:00
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
@@ -16,7 +16,7 @@
 # SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
 # subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
-Subject="09"
+Subject="11"
 Type="resting" # "resting" # or "concatenated tasks"
 
 # make sure wb_command can find its libraries

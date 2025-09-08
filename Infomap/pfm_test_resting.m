@@ -16,9 +16,9 @@ working_dir = '/ptmp/hmueller2/Downloads';
 
 % ---------------------------------
 
-Subject = '09';
-Session_1 = '12'; 
-Session_2 = '13'; 
+Subject = '11';
+Session_1 = '11'; 
+Session_2 = '12'; 
 
 % ---------------------------------
 
@@ -122,7 +122,9 @@ end
 
 %% ---- Step 4: Run infomap.
 % Load your concatenated smoothed_file. CHOOSE the smoothing kernel you want to use.
-ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_2.55_fsLR.dtseries.nii']);
+Kernel = 2.55; % choose one of the kernels from above
+disp(['Using smoothing kernel: ' num2str(Kernel)]);
+ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_' num2str(Kernel) '_fsLR.dtseries.nii']);
 DistanceMatrix = [half_dir '/DistanceMatrix.mat']; % can be path to file
 DistanceCutoff = 10; % in mm; usually between 10 to 30 mm works well.
 GraphDensities = flip([0.0001 0.0002 0.0005 0.001 0.002 0.005 0.01 0.02 0.05]); % 
@@ -203,6 +205,6 @@ yticks(1:length(uCi)); ylim([0 21]);
 xlim([0 20]); xticks(0:5:20);
 set(gca,'fontname','arial','fontsize',10,'TickLength',[0 0],'TickLabelInterpreter','none');
 xlabel('% of Cortical Surface');
-print(gcf,[PfmDir '/FunctionalNetworkSizes'],'-dpdf');
+print(gcf,[half_dir '/FunctionalNetworkSizes'],'-dpdf');
 
 disp(['---- ALL IS DONE FOR SUBJECT ' Subject ' ----']);

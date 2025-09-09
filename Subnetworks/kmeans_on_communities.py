@@ -15,6 +15,8 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import re
 from scipy.stats import spearmanr
+import nibabel as nib
+import subprocess
 
 parser = argparse.ArgumentParser(description='Cluster FPN communities using k-means')
 
@@ -39,16 +41,56 @@ os.makedirs(subnetworks_dir, exist_ok=True)
 filename = os.path.join(half_dir, f'sub-{subject}_all-tasks_concatenated_cleaned_fsLR.dtseries.nii')
 
 # parcellate RSNs
-parc_filename = os.path.join(half_dir, f'{subject}_individual_nets_concat.LR.32k.ptseries.nii')
+# parc_filename = os.path.join(half_dir, f'sub-{subject}_individual_nets_concat.LR.32k.ptseries.nii') #this will be created
 networks_file = os.path.join(half_dir, 'Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii')
-RR.cifti_parcellate(filename, networks_file, parc_filename)
+print("Loading dtseries and atlas as arrays...")
 
-# concatenate parcellated sessions
-all_data_concat = RR.load_data(parc_filename)
-print("all_data_concat shape:", all_data_concat.shape) # should be 21 columns
+# Load dtseries and atlas as nibabel images
+dtseries_img = nib.load(filename)
+atlas_img = nib.load(networks_file)
+
+# Get data arrays
+dtseries_data = dtseries_img.get_fdata()  # shape: (timepoints, 91282)
+atlas_data = atlas_img.get_fdata().squeeze()[:64984]  # shape: (64984,)
+print("atlas_data shape after restricting to cortex:", atlas_data.shape)
+
+# Restrict dtseries to cortex vertices (first 64984)
+dtseries_cortex = dtseries_data[:, :64984]
+print("dtseries_cortex shape:", dtseries_cortex.shape)
+# Now parcellate
+print("Parcellating using numpy arrays...")
+all_data_concat = RR.cifti_parcellate(dtseries_cortex, atlas_data)
+print("all_data_concat shape:", all_data_concat.shape) # 30 i guess
 
 all_data_concat = np.delete(all_data_concat, [8, -1], axis=1)
-print("Removed the FPN and Noise. New shape:", all_data_concat.shape) # should be 19 columns
+print("Removed the FPN and Noise. New shape:", all_data_concat.shape) # should be 28 columns i guess
+
+# Save parcellated data as before
+save_path = os.path.join(half_dir, f'sub-{subject}_individual_nets_concat.LR.32k.ptseries.nii')
+dscalar_template, _ = RR.wb_label_to_roi(networks_file, half_dir, 'Frontoparietal')
+
+# Paths for input dtseries, atlas, and output ptseries
+dtseries_path = filename
+atlas_path = networks_file
+ptseries_path = os.path.join(half_dir, f'sub-{subject}_individual_nets_concat.ptseries.nii')
+
+# Run Workbench parcellation if ptseries file does not exist
+if not os.path.exists(ptseries_path):
+    print(f"Running wb_command -cifti-parcellate for subject {subject} ...")
+    cmd = [
+        "wb_command",
+        "-cifti-parcellate",
+        dtseries_path,
+        atlas_path,
+        "COLUMN",
+        ptseries_path
+    ]
+    subprocess.run(cmd, check=True)
+else:
+    print(f"ptseries file already exists for subject {subject}: {ptseries_path}")
+
+# Now save parcellated data using the ptseries template
+RR.nib_save(ptseries_path, all_data_concat, ptseries_path)
 
 # concatenate original dtseries file for the subnetwork tseries
 dtseries_concat=RR.load_data(filename)
@@ -101,6 +143,8 @@ K-means
 """
 
 # matrix is 19 LSNs x ~10 SNs
+# This means corr_matrix rows correspond to LSNs (large-scale networks) and columns to SNs (subnetworks/communities).
+# The shape comes from removing FPN and Noise columns (so 19 LSNs remain), and the number of SNs depends on the subject's detected communities (~10).
 corr_matrix_SNs = corr_matrix.T  
 distance_matrix = 1 - corr_matrix_SNs
 

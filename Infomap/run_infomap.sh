@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=r11_infom
+#SBATCH --job-name=r07_infom
 #SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%A_%x.out
 #SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%A_%x.err
 #SBATCH --nodes=1
@@ -16,11 +16,12 @@
 # SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
 # subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
-Subject="11"
+Subject="07"
 Type="resting" # "resting" # or "concatenated tasks"
 
 # make sure wb_command can find its libraries
 export LD_LIBRARY_PATH=/home/hmueller2/workbench/libs_linux64:/home/hmueller2/workbench/libs_linux64_software_opengl:$LD_LIBRARY_PATH
+export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
 echo "---- Starting processing for subject $Subject and type $Type. ----"
 

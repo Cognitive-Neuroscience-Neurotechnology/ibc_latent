@@ -16,7 +16,7 @@ working_dir = '/ptmp/hmueller2/Downloads';
 
 % ---------------------------------
 
-Subject = '11';
+Subject = '07';
 Session_1 = '11'; 
 Session_2 = '12'; 
 

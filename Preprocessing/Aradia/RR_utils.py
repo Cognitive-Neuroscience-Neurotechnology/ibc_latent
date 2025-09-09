@@ -2796,56 +2796,87 @@ def cifti_separate(img, map_to_use:int=1):
     brain_models = img.header.get_axis(1)  # Assume we know this
     return surf_data_from_cifti(data, brain_models, "CIFTI_STRUCTURE_CORTEX_LEFT"), surf_data_from_cifti(data, brain_models, "CIFTI_STRUCTURE_CORTEX_RIGHT")
 
-def cifti_parcellate(data_to_parc:str|np.ndarray, atlas:str, output_file=None, interleaved=True, map_to_use:int=1):
-
+def cifti_parcellate(data_to_parc, atlas, output_file=None, interleaved=True, map_to_use=1):
     """
     Parcellate a cifti file: either as dtseries using -cifti-parcellate or when passing np.ndarray as Left and Right hemispheres separately.
 
     Args:
-        data_to_parc (str|np.ndarray): data to parcellate
-        atlas (str): atlas file
+        data_to_parc (str|np.ndarray): data to parcellate (filename or array)
+        atlas (str|np.ndarray): atlas file (filename or array)
         output_file (str): output file - only use when data_to_parc is a str (default: None) 
+        interleaved (bool): whether to interleave hemispheres (default: True)
+        map_to_use (int): map to use (default: 1)
 
     Returns:
         np.ndarray: parcellated data or output file name
     """
 
-    if isinstance(data_to_parc, str):
-        layer_analysis.dtseries_parcellate(data_to_parc, atlas, output_file)
-        return output_file
-    
-    img, atlas_data=load_data(atlas, return_img=True)
-    left, right=cifti_separate(img, map_to_use=map_to_use)
-    left = left.flatten()
-    right = right.flatten()
+    # --- File-based parcellation ---
+    if isinstance(data_to_parc, str) and isinstance(atlas, str):
+        # Requires layer_analysis or external command
+        try:
+            import layer_analysis
+            layer_analysis.dtseries_parcellate(data_to_parc, atlas, output_file)
+            return output_file
+        except ImportError:
+            raise ImportError("layer_analysis module required for file-based parcellation.")
 
-    # get networks
+    # --- Array-based parcellation ---
+    # Accepts: data_to_parc (np.ndarray), atlas (np.ndarray or filename)
+    # If atlas is a filename, load as array
+    if isinstance(atlas, str):
+        img, atlas_data = load_data(atlas, return_img=True)
+        left, right = cifti_separate(img, map_to_use=map_to_use)
+        left = left.flatten()
+        right = right.flatten()
+    elif isinstance(atlas, np.ndarray):
+        # Assume atlas is concatenated left+right cortex labels
+        # Split based on standard fsLR 32k vertex counts
+        if atlas.shape[0] == 64984:
+            left = atlas[:32492]
+            right = atlas[32492:]
+        else:
+            raise ValueError("Atlas array must be 64984 vertices (fsLR 32k left+right).")
+        left = left.flatten()
+        right = right.flatten()
+    else:
+        raise ValueError("atlas must be a filename or numpy array.")
+
+    # Check input data shape
+    if not isinstance(data_to_parc, np.ndarray):
+        raise ValueError("data_to_parc must be a numpy array for array-based parcellation.")
+
+    assert data_to_parc.shape[1] == left.shape[0] + right.shape[0], (
+        f"Data to parcellate must have the same number of vertices as the atlas, "
+        f"but have {data_to_parc.shape[1]} vertices and the atlas has {left.shape[0] + right.shape[0]} vertices."
+    )
+
+    left_data = data_to_parc[:, :left.shape[0]]
+    right_data = data_to_parc[:, left.shape[0]:]
+
+    # Get unique network labels (excluding zero)
     unique_values_L = np.unique(left)
-    unique_values_L = unique_values_L[unique_values_L != 0] 
-
+    unique_values_L = unique_values_L[unique_values_L != 0]
     unique_values_R = np.unique(right)
     unique_values_R = unique_values_R[unique_values_R != 0]
 
-    assert data_to_parc.shape[1]==left.shape[0]+right.shape[0], f"Data to parcellate must have the same number of vertices as the atlas, but have {data_to_parc.shape[1]} vertices and the atlas has {left.shape[0]+right.shape[0]} vertices."
-
-    left_data=data_to_parc[:, :left.shape[0]]
-    right_data=data_to_parc[:, left.shape[0]:]
-
+    # Parcellate left hemisphere
     parc_data_L = np.zeros((data_to_parc.shape[0], len(unique_values_L)))
-    parc_data_R = np.zeros((data_to_parc.shape[0], len(unique_values_R)))
-
     for i, val in enumerate(unique_values_L):
-        L_indices = np.where(left == val)[0]  # extract column indices
+        L_indices = np.where(left == val)[0]
         parc_data_L[:, i] = np.mean(left_data[:, L_indices], axis=1)
 
+    # Parcellate right hemisphere
+    parc_data_R = np.zeros((data_to_parc.shape[0], len(unique_values_R)))
     for i, val in enumerate(unique_values_R):
-        R_indices = np.where(right == val)[0]  # extract column indices
+        R_indices = np.where(right == val)[0]
         parc_data_R[:, i] = np.mean(right_data[:, R_indices], axis=1)
 
     print(f"Left parcellated data shape: {parc_data_L.shape}")
     print(f"Right parcellated data shape: {parc_data_R.shape}")
 
-    all_data=concat_R_L(parc_data_L, parc_data_R, interleaved=interleaved)
+    # Combine hemispheres
+    all_data = concat_R_L(parc_data_L, parc_data_R, interleaved=interleaved)
     print(f'Left and Right combined data shape: {all_data.shape}')
 
     return all_data

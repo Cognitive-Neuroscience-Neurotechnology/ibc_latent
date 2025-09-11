@@ -5,7 +5,7 @@
 #SBATCH --error=/ptmp/hmueller2/subnetworks_infomap_logs/errors/%A_%x.err
 #SBATCH --exclusive=user
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-2   # 8 subjects, index 0 to 7
+#SBATCH --array=0-7   # 8 subjects, index 0 to 7
 #SBATCH --time=24:00:00
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G

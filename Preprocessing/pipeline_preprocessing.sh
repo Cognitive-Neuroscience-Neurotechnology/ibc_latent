@@ -300,18 +300,27 @@ echo "***** 7: Plotting Regressors *****"
 reg_png="${plots_dir}/${fBaseName}_regressors_z.png"
 python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regressor_plots.py -i "${regressors_z}" -glob yes -o "${reg_png}"
 
-# -8- Regression, Scrubbing, Bandpass Filtering
-echo "***** 8: Regression, Scrubbing, Bandpass Filtering *****"
+# -8- Regression, Scrubbing (RestingState only), Bandpass Filtering
+echo "***** 8: Regression, Scrubbing (RestingState only), Bandpass Filtering *****"
 TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."
 
-cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
-/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
-    -i "${detrended_trim}" \
-    -r "${regressors_z}" \
-    -FD "${FD_mask}" \
-    -TR "${TR}" \
-    -o "${cleaned_bold}"
+if [[ "$task" == "RestingState" ]]; then
+    cleaned_bold="${glm_dir}/${fBaseName}_cleaned_scrubbed.dtseries.nii"
+    /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
+        -i "${detrended_trim}" \
+        -r "${regressors_z}" \
+        -FD "${FD_mask}" \
+        -TR "${TR}" \
+        -o "${cleaned_bold}"
+else
+    cleaned_bold="${glm_dir}/${fBaseName}_cleaned_noscrub.dtseries.nii"
+    /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
+        -i "${detrended_trim}" \
+        -r "${regressors_z}" \
+        -TR "${TR}" \
+        -o "${cleaned_bold}"
+fi
 
 if [ -f "${cleaned_bold}" ]; then
     echo "Cleaned BOLD file created successfully: ${cleaned_bold}"

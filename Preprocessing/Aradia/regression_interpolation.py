@@ -16,9 +16,9 @@ from nilearn import image as nimg
 from nilearn import signal
 import pandas as pd
 import nibabel as nib
-from nilearn._utils import stringify_path
+# from nilearn._utils import stringify_path
 from scipy import linalg
-
+import os
 
 # import input arguments
 # Create the parser

@@ -15,7 +15,7 @@ for subject_folder in glob.glob(os.path.join(base_dir, "sub-*")):
     subject_id = os.path.basename(subject_folder).replace("sub-", "")
     total_duration = 0.0
 
-    # Find all func/ folders within this subject directory
+    # Find all func/ folders within this subject directory (func = unscrubbed)
     for root, dirs, files in os.walk(subject_folder):
         if os.path.basename(root) == "func":
             for file in files:

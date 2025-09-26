@@ -3,6 +3,10 @@ import pandas as pd
 import glob
 import nibabel as nib
 
+# What the following script does: 
+# 1) For each subject, it calculates the total duration of all tasks from the event files in the func/ folders.
+# 2) It counts the total number of frames in all cleaned .dtseries.nii
+
 # Paths
 base_dir = "/ptmp/hmueller2/Downloads/ibc_preprocessed"
 glm_base = "/ptmp/hmueller2/Downloads/fmriprep_out"

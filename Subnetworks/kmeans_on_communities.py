@@ -62,7 +62,7 @@ print("Parcellating using numpy arrays...")
 all_data_concat = RR.cifti_parcellate(dtseries_cortex, atlas_data)
 print("all_data_concat shape:", all_data_concat.shape) # 30 i guess
 
-all_data_concat = np.delete(all_data_concat, [8, -1], axis=1)
+all_data_concat = np.delete(all_data_concat, [8, -1], axis=1) # delete FPN (8) and Noise (last)
 print("Removed the FPN and Noise. New shape:", all_data_concat.shape) # should be 28 columns i guess
 
 # Save parcellated data as before

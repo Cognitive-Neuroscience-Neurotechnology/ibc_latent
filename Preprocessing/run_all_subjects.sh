@@ -6,26 +6,25 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
-## SBATCH --array=0-12   # 13 subjects, index 0 to 12
+#SBATCH --array=0-5   # 6 subjects, index 0 to 5
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
-SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
+SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects_resting.txt
 CONTAINER=/home/rglz/containers/gfae.sif
 
-subject="04"
-# subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
+# subject="09"
+subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
 sessions=($(ls -d /ptmp/hmueller2/Downloads/fmriprep_out/sub-${subject}/ses-* 2>/dev/null | xargs -n1 basename | sed 's/^ses-//'))
 directions=("ap" "pa")
 
 echo "Starting processing for subject $subject with ${#sessions[@]} sessions."
 echo "Sessions: (${sessions[@]})"
-echo "Tasks: (${tasks[@]})"
 
 for sess in "${sessions[@]}"; do
   if [ -z "$sess" ]; then

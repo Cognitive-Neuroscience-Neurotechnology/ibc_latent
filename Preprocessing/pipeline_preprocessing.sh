@@ -4,6 +4,7 @@
 # Example: ./pipeline_preprocessing.sh 01 15 RestingState pa
 
 set -e # Exit on error
+set -u # Treat unset variables as error
 
 subject=$1
 session=$2
@@ -30,8 +31,9 @@ if [ ${#bold_files[@]} -eq 0 ]; then
 fi
 # This had to be introduced because the previous code assumed only one BOLD file per run.
 for bold in "${bold_files[@]}"; do
+    unset FD_mask || true
     base_bold=$(basename "$bold")
-    # Extract run if present
+    # Try to extract run
     if [[ "$base_bold" =~ run-([0-9]+)_ ]]; then
         run="run-${BASH_REMATCH[1]}"
         confounds="${func_dir}/sub-${subject}_ses-${session}_task-${task}_dir-${direction}_${run}_desc-confounds_timeseries.tsv"
@@ -42,20 +44,30 @@ for bold in "${bold_files[@]}"; do
         run_suffix=""
     fi
 
+    # If confounds file with run does not exist, try without run
+    if [ ! -f "${confounds}" ]; then
+        confounds_alt="${func_dir}/sub-${subject}_ses-${session}_task-${task}_dir-${direction}_desc-confounds_timeseries.tsv"
+        if [ -f "${confounds_alt}" ]; then
+            confounds="${confounds_alt}"
+            run_suffix=""
+        else
+            echo "Confounds file not found: ${confounds} or ${confounds_alt}"
+            continue
+        fi
+    fi
+
     echo "Processing $base_bold with confounds $confounds"
 
     # Use $run_suffix in all output filenames to keep them unique per run
     fBaseName="sub-${subject}_ses-${session}_task-${task}_dir-${direction}${run_suffix}"
     json="${func_dir}/${fBaseName}_space-fsLR_den-91k_bold.json"
 
-# -1-: Mark timepoints with FD > 0.2 as contaminated (1), others as clean (0).
-echo "***** 1: Build scrubbing mask from FD values *****"
-FD_mask="${regressors_dir}/${fBaseName}_FD_scrub_mask.txt"
-FD_threshold=0.2
-# Different from Aradia. process_fd.py is not needed, as I already have fd values in confounds.
-# Fill missing values with 0 (as fmriprep does for the first row).
-n_remove=5  # or whatever number you use
-python3 <<EOF
+    n_remove=5
+    FD_mask="${regressors_dir}/${fBaseName}_FD_scrub_mask.txt"
+    if [[ "$task" == "RestingState" ]]; then
+      echo "***** 1: Build scrubbing mask from FD values *****"
+      FD_threshold=0.2
+      python3 <<EOF
 import pandas as pd
 conf = pd.read_csv("${confounds}", sep='\t')
 fd = conf['framewise_displacement'].fillna(0).iloc[${n_remove}:].reset_index(drop=True)
@@ -63,18 +75,17 @@ mask = (fd > ${FD_threshold}).astype(int)
 out = pd.DataFrame({'FD': fd, 'contam': mask})
 out.to_csv("${FD_mask}", sep=' ', index=False, header=False)
 EOF
+    fi
 
-# -2-: Detrend and demean with workbench
-echo "***** 2: Demeaning and Detrending BOLD *****"
-demeaned_detrended="${demean_dir}/${fBaseName}_demean_detrend.dtseries.nii"
-python3 <<EOF
+    # -2-: Demean & detrend
+    echo "***** 2: Demeaning and Detrending BOLD *****"
+    demeaned_detrended="${demean_dir}/${fBaseName}_demean_detrend.dtseries.nii"
+    python3 <<EOF
 import nibabel as nib
 import numpy as np
 from scipy.signal import detrend
-
 img = nib.load("${bold}")
 data = img.get_fdata()
-# Demean and detrend along time axis (last axis)
 demeaned = data - data.mean(axis=-1, keepdims=True)
 detrended = detrend(demeaned, axis=-1, type='linear')
 nib.save(nib.Cifti2Image(detrended, img.header), "${demeaned_detrended}")
@@ -306,24 +317,34 @@ TR=$(jq -r '.RepetitionTime' "${json}")
 echo "The TR is $TR seconds."
 
 if [[ "$task" == "RestingState" ]]; then
-    cleaned_bold="${glm_dir}/${fBaseName}_cleaned_scrubbed.dtseries.nii"
-    /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
-        -i "${detrended_trim}" \
-        -r "${regressors_z}" \
-        -FD "${FD_mask}" \
-        -TR "${TR}" \
-        -o "${cleaned_bold}"
+  cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
+  echo "RESTING -- Scrubbing. Running command:"
+  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" -FD \"${FD_mask}\" -TR \"${TR}\" -o \"${cleaned_bold}\""
+  set -x
+  /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
+      -i "${detrended_trim}" \
+      -r "${regressors_z}" \
+      -FD "${FD_mask}" \
+      -TR "${TR}" \
+      -o "${cleaned_bold}"
+  set +x
 else
-    cleaned_bold="${glm_dir}/${fBaseName}_cleaned_noscrub.dtseries.nii"
-    /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
-        -i "${detrended_trim}" \
-        -r "${regressors_z}" \
-        -TR "${TR}" \
-        -o "${cleaned_bold}"
+  echo "TASK -- NO scrubbing. Using regression_interpolation.py with --MC_scrub."
+  cleaned_bold="${glm_dir}/${fBaseName}_cleaned_noscrub.dtseries.nii"
+  echo "Running command:"
+  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" --MC_scrub -TR \"${TR}\" -o \"${cleaned_bold}\""
+  set -x
+  /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
+      -i "${detrended_trim}" \
+      -r "${regressors_z}" \
+      --MC_scrub \
+      -TR "${TR}" \
+      -o "${cleaned_bold}"
+  set +x
 fi
 
 if [ -f "${cleaned_bold}" ]; then
-    echo "Cleaned BOLD file created successfully: ${cleaned_bold}"
+    echo "Success: Cleaned BOLD file was created: ${cleaned_bold}"
 else
     echo "Error: Cleaned BOLD file was not created."
     exit 1

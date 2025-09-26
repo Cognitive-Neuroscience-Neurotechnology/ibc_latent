@@ -16,7 +16,7 @@ working_dir = '/ptmp/hmueller2/Downloads';
 
 % ---------------------------------
 
-Subject = '07';
+Subject = '05';
 Session_1 = '11'; 
 Session_2 = '12'; 
 
@@ -30,41 +30,58 @@ surface_dir=[working_dir '/fmriprep_out/sub-' Subject];
 
 % Only use the two specified resting-state files
 files = {
-    [surface_dir '/ses-' Session_1 '/postfmriprep/GLM/sub-' Subject '_ses-' Session_1 '_task-RestingState_dir-pa_cleaned.dtseries.nii']
-    [surface_dir '/ses-' Session_1 '/postfmriprep/GLM/sub-' Subject '_ses-' Session_1 '_task-RestingState_dir-ap_cleaned.dtseries.nii']
-    [surface_dir '/ses-' Session_2 '/postfmriprep/GLM/sub-' Subject '_ses-' Session_2 '_task-RestingState_dir-pa_cleaned.dtseries.nii']
-    [surface_dir '/ses-' Session_2 '/postfmriprep/GLM/sub-' Subject '_ses-' Session_2 '_task-RestingState_dir-ap_cleaned.dtseries.nii']
+    [surface_dir '/ses-' Session_1 '/postfmriprep_scrubbed/GLM/sub-' Subject '_ses-' Session_1 '_task-RestingState_dir-pa_cleaned.dtseries.nii']
+    [surface_dir '/ses-' Session_1 '/postfmriprep_scrubbed/GLM/sub-' Subject '_ses-' Session_1 '_task-RestingState_dir-ap_cleaned.dtseries.nii']
+    [surface_dir '/ses-' Session_2 '/postfmriprep_scrubbed/GLM/sub-' Subject '_ses-' Session_2 '_task-RestingState_dir-pa_cleaned.dtseries.nii']
+    [surface_dir '/ses-' Session_2 '/postfmriprep_scrubbed/GLM/sub-' Subject '_ses-' Session_2 '_task-RestingState_dir-ap_cleaned.dtseries.nii']
 };
 
-disp('Loading resting state files completed.'); drawnow;
-
 ConcatenatedData = [];
+used_files = {};
 for i = 1:length(files)
+    if ~isfile(files{i})
+        warning('Resting-state dtseries not found: %s', files{i});
+        continue;
+    end
     disp(['Loading: ' files{i}])
-    Cifti = ft_read_cifti_mod(files{i});
+    try
+        Cifti = ft_read_cifti_mod(files{i});
+    catch ME
+        warning('Failed to read CIFTI: %s\nReason: %s', files{i}, ME.message);
+        continue;
+    end
     % Ensure shape is (timepoints, grayordinates)
     if size(Cifti.data,2) == 91282
         data_t = Cifti.data;
     elseif size(Cifti.data,1) == 91282
         data_t = Cifti.data';
     else
-        error(['Unexpected Cifti.data shape in file: ' files{i}]);
+        warning('Unexpected Cifti.data shape in file: %s. Skipping.', files{i});
+        continue;
     end
     if isempty(ConcatenatedData)
         ConcatenatedData = data_t;
     else
         if size(data_t,2) ~= size(ConcatenatedData,2)
-            error(['Grayordinate mismatch in file: ' files{i}]);
+            warning('Grayordinate mismatch in file: %s. Skipping.', files{i});
+            continue;
         end
         ConcatenatedData = [ConcatenatedData; data_t];
     end
+    used_files{end+1} = files{i}; %#ok<AGROW>
 end
 
+if isempty(ConcatenatedData)
+    error('No usable input CIFTI files were found or readable. Check session paths and filenames.');
+end
+
+disp('Loading resting state files completed.'); drawnow;
 % Use the last loaded Cifti as template
 ConcatenatedCifti = Cifti;
 ConcatenatedCifti.data = ConcatenatedData;
 disp(['ConcatenatedData shape: ' mat2str(size(ConcatenatedData))]);
 disp(['Number of grayordinates in CIFTI: ' num2str(size(ConcatenatedData,2))]);
+disp(['Files used (' num2str(numel(used_files)) '):']); disp(used_files');
 
 % Output directories
 Subdir = [working_dir '/individual_networks/sub-' Subject];

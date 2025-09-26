@@ -1,22 +1,13 @@
 #!/usr/bin/env python3
-import sys
-print("DEBUG: sys.executable:", sys.executable)
-print("DEBUG: sys.path:", sys.path)
-try:
-    import nilearn
-    print("DEBUG: nilearn location:", nilearn.__file__)
-except ImportError as e:
-    print("DEBUG: nilearn import error:", e)
-    sys.exit(1)
 
-# import modules
+import sys
+import nilearn
 import argparse
 import numpy as np
 from nilearn import image as nimg
 from nilearn import signal
 import pandas as pd
 import nibabel as nib
-# from nilearn._utils import stringify_path
 from scipy import linalg
 import os
 
@@ -42,8 +33,13 @@ regressors = args.regs
 TR = args.reptime
 output_file = args.output
 MC_scrub = args.MC_scrub
+
+# Announce intended scrubbing behavior based on flags/inputs
 if MC_scrub:
-    print("Motion correction scrubbing is disabled (no scrubbing will be performed (again)).")
+    print("Motion correction scrubbing is disabled by flag (--MC_scrub).")
+elif FD_txt is None or not os.path.isfile(FD_txt):
+    print("FD file not provided or not found; scrubbing will be disabled.")
+    MC_scrub = True
 else:
     print("Motion correction scrubbing is enabled (scrubbing will be performed).")
 
@@ -75,39 +71,37 @@ else:
 # del epi
 # del np_epi
 
-#regressors
-regressor_array = np.loadtxt(regressors)
+# Load regressors and sanitize to avoid NaN/Inf issues during QR
+reg_array_raw = np.loadtxt(regressors)
+reg_df = pd.DataFrame(reg_array_raw)
+reg_df = reg_df.replace([np.inf, -np.inf], np.nan)
+n_nan_before = int(reg_df.isna().sum().sum())
+if n_nan_before:
+    print(f"DEBUG: regressors NaNs before interpolate/fill: {n_nan_before}")
+reg_df = reg_df.interpolate(axis=0, limit_direction="both").fillna(0.0)
+stds = reg_df.std(axis=0)
+keep_cols = stds > 0
+n_drop = int((~keep_cols).sum())
+if n_drop:
+    print(f"DEBUG: dropping {n_drop} constant/zero confound columns")
+regressor_array = reg_df.loc[:, keep_cols].values
 
-# load FD variables
-FD_clean = pd.read_csv(FD_txt, sep=' ', header=None)
+# Build sample_mask
+if not MC_scrub:
+    # FD provided and scrubbing enabled
+    FD_clean = pd.read_csv(FD_txt, sep=' ', header=None)
+    print(f"FD_clean shape (rows, cols): {FD_clean.shape}")
+    if FD_clean.shape[0] != n_timepoints:
+        print(f"ERROR: Number of rows in FD_clean ({FD_clean.shape[0]}) does not match number of timepoints in BOLD ({n_timepoints}).")
+        raise ValueError("Timepoint mismatch between FD_clean and BOLD data.")
+    sample_mask = np.array(FD_clean.iloc[:, 1] == 0, dtype=bool)
+else:
+    # No scrubbing: keep all timepoints
+    sample_mask = None
+    print("DEBUG: sample_mask=None (no scrubbing)")
 
-print(f"FD_clean shape (rows, cols): {FD_clean.shape}")
 print(f"np_epi_2d.shape (timepoints, features): {np_epi_2d.shape}")
 print(f"regressor_array.shape (timepoints, regressors): {regressor_array.shape}")
-
-if FD_clean.shape[0] != np_epi_2d.shape[0]:
-    print(f"ERROR: Number of rows in FD_clean ({FD_clean.shape[0]}) does not match number of timepoints in BOLD ({np_epi_2d.shape[0]}).")
-    raise ValueError("Timepoint mismatch between FD_clean and BOLD data.")
-
-print(f"FD_clean shape: {FD_clean.shape}")
-print(f"np_epi_2d.shape: {np_epi_2d.shape}")
-print(f"regressor_array.shape: {regressor_array.shape}")
-
-# the second column contains the information whether the vol was above threshold
-# nilearn wants a boolean array
-# if 1 in the second column -> above threshold -> False
-print("Creating boolean array: sample_mask")
-sample_mask = np.empty(len(FD_clean), dtype=bool)
-for i, value in enumerate(FD_clean.iloc[:, 1]):
-    if value == 1:
-        sample_mask[i] = False
-    elif value == 0:
-        sample_mask[i] = True
-print(f"sample_mask length: {len(sample_mask)}")
-
-print(f"sample_mask dtype: {sample_mask.dtype}, length: {len(sample_mask)}")
-print(f"np_epi_2d.shape: {np_epi_2d.shape}")
-print(f"Any sample_mask indices out of range? {np.any(np.where(sample_mask)[0] >= np_epi_2d.shape[0])}")
 
 # run interpolation + regression
 # not standardised bc input files should be standardised as input
@@ -133,7 +127,6 @@ def clean_no_scrub(
     Exactly like nilearn.signal.clean without motion scrubbing
     """
     # Raise warning for some parameter combinations when confounds present
-    confounds = stringify_path(confounds)
     if confounds is not None:
         signal._check_signal_parameters(detrend, standardize_confounds)
     # check if filter parameters are satisfied and return correct filter
@@ -298,7 +291,7 @@ try:
                     low_pass=0.08,
                     high_pass=0.009 ,
                     t_r=TR, 
-                    ensure_finite=False, 
+                    ensure_finite=True,            # CHANGED: be robust to non-finite in signals
                     extrapolate=True)
     else:
         print("Running cleaning without motion scrubbing...")
@@ -306,14 +299,14 @@ try:
                     runs=None, 
                     detrend=True, 
                     standardize=False, 
-                    sample_mask=sample_mask,
+                    sample_mask=sample_mask,       # None when no scrubbing
                     confounds=regressor_array,
                     standardize_confounds=False,
                     filter='butterworth', 
                     low_pass=0.08,
                     high_pass=0.009 ,
                     t_r=TR, 
-                    ensure_finite=False, 
+                    ensure_finite=True,            # CHANGED
                     extrapolate=True)
 
     

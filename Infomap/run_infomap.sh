@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=r07_infom
+#SBATCH --job-name=r05_infom
 #SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%A_%x.out
 #SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%A_%x.err
 #SBATCH --nodes=1
@@ -14,9 +14,9 @@
 # in case of multiple subjects, instead use: 
 # SBATCH --array=0-12   # 13 subjects, index 0 to 12
 # SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects.txt
-# subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
+# Subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
-Subject="07"
+Subject="05"
 Type="resting" # "resting" # or "concatenated tasks"
 
 # make sure wb_command can find its libraries

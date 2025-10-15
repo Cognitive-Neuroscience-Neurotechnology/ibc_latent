@@ -2100,23 +2100,33 @@ def similarity_workflow(matrices:list, subject_inds:list, session_inds:list, n_c
     elif z_scored==False:
         return correlation_across_combinations
 
-def file_processing(derivative_dir:str, sequenceName:str, subject_list:list, run_list=None, split_half=True, consider_runs=False):
+def file_processing(derivative_dir:str, sequenceName:str, subject_list:list, run_list=None, split_half=False, consider_runs=False):
     """
-    Process files for the similarity workflow.
+    Load per-session (and optionally per-run) parcel time series.
 
-    Args:
-        derivative_dir (str): derivative directory
-        sequenceName (str): sequence name
-        subject_list (list): list of subjects
-        run_list (list): list of runs (default: None)
-        split_half (bool): split half (default: True)
-        consider_runs (bool): consider runs (default: False)
+    Parameters
+    ----------
+    derivative_dir : str
+    sequenceName : str
+    subject_list : list
+    run_list : list|None
+    split_half : bool (default False)
+        True ONLY if you need two independent halves (e.g. reliability / identification / noise ceiling).
+        False for all standard downstream tasks (GLM contrasts, full-session connectivity, k-means, etc.).
+    consider_runs : bool
+        If True returns nested dict subject -> session -> run.
 
-    Returns:
-        dict: complete data or first and second half data
+    Returns
+    -------
+    If split_half:
+        first_half_data, second_half_data  (each: dict[subject] -> 2D ndarray)
+    Else:
+        complete_data  (dict[subject] -> dict[session] -> 2D ndarray)
 
+    Notes
+    -----
+    Split-half previously dropped middle sessions when >4. Default now disabled to avoid accidental data loss.
     """
-
     ses_pattern = re.compile(r'ses-(\d+)')
 
     if split_half==True: # in Gratton et al. they use split half with first and second half of the sessions to aggregate
@@ -2135,7 +2145,11 @@ def file_processing(derivative_dir:str, sequenceName:str, subject_list:list, run
             sub_data={}
 
         timeseries_dir=os.path.join(derivative_dir, "extracted_tseries_parc", subject)
-        session_dirs = sorted([d for d in os.listdir(timeseries_dir) if d.startswith('ses-') and os.path.isdir(os.path.join(timeseries_dir, d))])
+        # Print all directories found for debugging
+        all_dirs = os.listdir(timeseries_dir)
+        print(f"All entries in {timeseries_dir}: {all_dirs}")
+        session_dirs = sorted([d for d in all_dirs if d.startswith('ses-') and os.path.isdir(os.path.join(timeseries_dir, d))])
+        print(f"Detected session directories for {subject}: {session_dirs}")
 
         for dir in session_dirs:
             session = int(ses_pattern.search(dir).group(1)) # number of session
@@ -2180,7 +2194,54 @@ def file_processing(derivative_dir:str, sequenceName:str, subject_list:list, run
         return first_half_data, second_half_data
     elif split_half==False:
         return complete_data
-    
+
+# --- New helper for full connectivity z maps (no split-half needed) ---
+def connectivity_z_maps(timeseries:dict, fisher_z:bool=True, aggregate:str=None):
+    """
+    Compute correlation (and optional Fisher z) matrices from full-session time series.
+
+    Args
+    ----
+    timeseries : dict
+        Output of file_processing with split_half=False:
+        {subject: {session: 2D array (T x P)}}
+    fisher_z : bool
+        Apply Fisher z transform to correlation coefficients.
+    aggregate : {'concat', None}
+        If 'concat', concatenate all sessions per subject before computing a single matrix.
+
+    Returns
+    -------
+    dict
+        If aggregate is None:
+            {subject: {session: corr( P x P )}}
+        If aggregate == 'concat':
+            {subject: corr( P x P )}
+    """
+    out = {}
+    for sub, sess_dict in timeseries.items():
+        if aggregate == 'concat':
+            mats = []
+            for sess in sorted(sess_dict.keys()):
+                mats.append(sess_dict[sess])
+            merged = np.concatenate(mats, axis=0)
+            R = np.corrcoef(merged, rowvar=False)
+            if fisher_z:
+                R = r_to_z(R)
+            out[sub] = R
+        else:
+            out[sub] = {}
+            for sess, data in sess_dict.items():
+                R = np.corrcoef(data, rowvar=False)
+                if fisher_z:
+                    R = r_to_z(R)
+                out[sub][sess] = R
+    return out
+
+# Example usage (commented):
+# full_ts = file_processing(derivative_dir, sequenceName, subjects, split_half=False)
+# z_conn = connectivity_z_maps(full_ts, fisher_z=True, aggregate='concat')
+
 def calculate_FD_P(in_file:str, rot_type='degrees'):
     """
     Method to calculate Framewise Displacement (FD) calculations

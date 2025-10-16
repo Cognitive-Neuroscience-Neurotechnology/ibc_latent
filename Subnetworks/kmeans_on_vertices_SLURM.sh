@@ -5,7 +5,7 @@
 #SBATCH --error=/ptmp/hmueller2/kmeans_vertices_logs/errors/%A_%x.err
 #SBATCH --partition=compute
 #SBATCH --exclusive=user
-# #SBATCH --array=0-2   # ...existing code... (disabled for single subject run)
+# #SBATCH --array=0-7   #(disabled for single subject run)
 #SBATCH --time=24:00:00 
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4G

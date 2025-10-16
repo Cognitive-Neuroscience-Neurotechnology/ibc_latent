@@ -9,7 +9,7 @@
 #SBATCH --time=24:00:00 
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4G
-#SBATCH --mail-type=END,FAIL,TIME_LIMIT
+# #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
 # ----------
 

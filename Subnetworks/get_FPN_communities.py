@@ -7,7 +7,6 @@ import sys
 import argparse
 import os
 
-# If RR_utils is needed, adjust the path as appropriate
 sys.path.insert(1, '/home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia')
 import RR_utils as RR
 
@@ -22,27 +21,43 @@ working_dir = args.dir
 # Input/output directories and file names (matching pfm_tutorial.m)
 subdir = os.path.join(working_dir, 'individual_networks', f'sub-{subject}')
 half_dir = os.path.join(subdir, 'resting_state')
-networks_file = os.path.join(half_dir, 'Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii')
-
 output_dir = os.path.join(working_dir, 'subnetworks', 'infomap', f'sub-{subject}')
 os.makedirs(output_dir, exist_ok=True)
 
-# Load network data
-all_networks = RR.load_data(networks_file)
-print("all_networks shape:", all_networks.shape)
-print("Unique values in all_networks:", np.unique(all_networks))
+# Load InfoMap multi-map dlabel (expect shape: n_maps x n_verts)
+communities_dlabel = os.path.join(half_dir, 'Bipartite_PhysicalCommunities+AlgorithmicLabeling_InfoMapCommunities.dlabel.nii')
+data = RR.load_data(communities_dlabel)
+data = np.asarray(data)
+print('InfoMap dlabel shape:', data.shape)
 
-# Extract FPN mask
-fpn_vector = (all_networks[0] == 9).astype(int)
-print("Number of FPN vertices in output:", np.sum(fpn_vector))
-fpn_vector = fpn_vector.reshape(1, -1)
+if data.ndim != 2 or data.shape[0] < 2:
+    raise RuntimeError('Expected multi-map InfoMap dlabel.')
 
-print("number of found vertices for this network", np.count_nonzero(fpn_vector))
-print("number of communities found", np.unique(all_networks).size - 1)
+fpn_label = 9  # numeric code for FPN in these maps
+n_maps, n_verts = data.shape
+combined = np.zeros(n_verts, dtype=np.int32)
+next_id = 1
 
-# Make dscalar template (adjust RR function as needed)
-dscalar_template, _ = RR.wb_label_to_roi(networks_file, half_dir, 'Frontoparietal')
+# Build unique community IDs by scanning maps that are FPN-only (values ⊆ {0, 9})
+for i in range(n_maps):
+    row = data[i, :]
+    u = np.unique(row)
+    if set(u.tolist()).issubset({0, fpn_label}) and np.any(row == fpn_label):
+        size = int((row == fpn_label).sum())
+        combined[row == fpn_label] = next_id
+        print(f'- map {i+1}: FPN community -> ID {next_id} (size={size})')
+        next_id += 1
 
-# Write to cifti
+print('Number of FPN communities found:', next_id - 1)
+print('Combined uniques:', np.unique(combined))
+
+# Save as dscalar using a dscalar template (not a dlabel)
+# Use the base networks dlabel to make an FPN ROI dscalar for geometry/axes
+networks_dlabel = os.path.join(half_dir, 'Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii')
+roi_template, ok = RR.wb_label_to_roi(networks_dlabel, half_dir, 'Frontoparietal')
+if not ok:
+    raise RuntimeError('Failed to create dscalar ROI template from networks dlabel.')
+
 output_file = os.path.join(output_dir, 'FPN_communities.dscalar.nii')
-RR.nib_save(output_file, fpn_vector, dscalar_template)
+RR.nib_save(output_file, combined.reshape(1, -1), roi_template)
+print(f'Saved: {output_file}')

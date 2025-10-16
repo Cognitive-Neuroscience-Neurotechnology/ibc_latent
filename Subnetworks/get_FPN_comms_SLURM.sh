@@ -13,7 +13,6 @@
 
 # ----------
 
-# aradia_container=/home/rglz/containers/gfae.sif
 container=/home/rglz/containers/gfae.sif
 
 working_dir=/ptmp/hmueller2/Downloads
@@ -33,3 +32,4 @@ srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subn
 # echo "Script completed successfully."
 exit 0
 
+# run as: sbatch get_FPN_comms_SLURM.sh

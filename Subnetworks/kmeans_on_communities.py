@@ -113,7 +113,7 @@ subnetworks = RR.load_data(subnetworks_file)
 subnetworks = np.squeeze(subnetworks)  # ensure 1D if possible
 print(f"Subnetworks array shape: {subnetworks.shape}")
 unique_vals = np.unique(subnetworks[subnetworks != 0])
-print(f"Unique community labels (len={len(unique_vals)}): {unique_vals[:20]}")
+print(f"Number of communities: {len(unique_vals)})")
 communities = unique_vals
 n_communities = len(communities)
 if n_communities < 2:
@@ -121,7 +121,7 @@ if n_communities < 2:
                        f"Check you’re using the multi-community dscalar and correct map index.")
 
 corr_matrix = np.zeros((all_data_concat.shape[1], n_communities))
-print(f'Shape of correlation matrix: {corr_matrix.shape}')
+print(f'Shape of correlation matrix (networks x FPN commmunities): {corr_matrix.shape}')
 
 # Loop through communities (skip unassigned!)
 ignore_values=[]
@@ -155,7 +155,10 @@ for i, SN in enumerate(communities):
         continue
 
     # Average timeseries of this community
-    subnetwork_tseries = RR.get_network(data_for_net, mask, remove_rest=True)
+    if isinstance(data_for_net, np.memmap):
+        data_for_net = np.asarray(data_for_net)
+    mask_bool = mask.astype(bool)
+    subnetwork_tseries = RR.get_network(data_for_net, mask_bool, remove_rest=True)
     average_tseries = np.nanmean(subnetwork_tseries, axis=1)
     ids.append(SN)
 

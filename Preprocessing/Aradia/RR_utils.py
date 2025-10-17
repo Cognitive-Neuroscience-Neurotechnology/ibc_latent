@@ -1246,7 +1246,7 @@ def unmask(data_to_unmask:np.ndarray, output_filename:str, og_mask:str | np.ndar
         # loop through entries in the data
         counter=0
         for i in ids:
-            print((og_mask == i).shape)
+            #print((og_mask == i).shape)
             
             if i==ignore_values:
                 print(f"Ignoring value {i}.")
@@ -1685,15 +1685,20 @@ def kmeans_standard(n_clusters:list, data:np.ndarray, save_to_file=True, remap_t
 
     """
 
-
     inertia = [] # for elbow method
     silhouette_scores = [] # for silhouette score
-    kmeans_list=[]
+    kmeans_list_short = []
 
-    cluster_results = np.zeros((len(n_clusters), data.shape[0]))
+    # Prepare container for cluster results (rows correspond to the provided n_clusters order)
+    cluster_results = np.zeros((len(n_clusters), data.shape[0]), dtype=int)
+
+    # prepare full-indexed kmeans list so callers that index by (k-1) still work
+    ks = list(n_clusters)
+    max_k = max(ks)
+    kmeans_list_full = [None] * max_k
 
     print("Running k-means...")
-    for k in n_clusters:
+    for idx, k in enumerate(ks):
         print("Number of clusters:", k)
         # settings similar to MATLAB defaults
         kmeans = KMeans(
@@ -1708,19 +1713,23 @@ def kmeans_standard(n_clusters:list, data:np.ndarray, save_to_file=True, remap_t
         # fit the k-means algorithm
         kmeans.fit(data)
         inertia.append(kmeans.inertia_)
-        kmeans_list.append(kmeans)
+        kmeans_list_short.append(kmeans)
+        # also store into full list at index k-1 so external code that expects kmeans_list[k-1] works
+        kmeans_list_full[k-1] = kmeans
 
         # results
-        # print("Cluster Centers:", kmeans.cluster_centers_)
         print("Labels:", kmeans.labels_)
 
         if k >= 2 and k < data.shape[0]:
-            score = silhouette_score(data, kmeans.labels_)
+            try:
+                score = silhouette_score(data, kmeans.labels_)
+            except Exception:
+                score = np.nan
             silhouette_scores.append(score)
 
-        # map labels back to a np array
-        cluster_results[k-1,:] = kmeans.labels_
-        print(kmeans.n_iter_)
+        # map labels back to the preallocated results array (row index = idx)
+        cluster_results[idx, :] = kmeans.labels_
+        print(f"Number of iterations for k={k}: {kmeans.n_iter_}")
 
     # adding one to everything so that in the visualisation all of the FPN has a color
     cluster_results_plus_one = cluster_results + 1
@@ -1740,9 +1749,13 @@ def kmeans_standard(n_clusters:list, data:np.ndarray, save_to_file=True, remap_t
     # save cluster results
     # map to cifti
     if save_to_file:
+        # ensure ids is iterable for unmask; default to 0..n-1 (local indices) if not provided
+        if ids is None:
+            ids = list(range(data.shape[0]))
         unmask(cluster_results_plus_one, filename, mask_file, dtseries_template, remap_to_verts=remap_to_verts, ignore_values=ignore_values, ids=ids)
-
-    return cluster_results, inertia, silhouette_scores, kmeans_list
+    # Return cluster_results (rows in the same order as provided n_clusters), inertia, silhouette_scores,
+    # and a k-indexed kmeans list so callers can safely use kmeans_list[k-1]
+    return cluster_results, inertia, silhouette_scores, kmeans_list_full
 
 def compute_entropy(labels):
     """

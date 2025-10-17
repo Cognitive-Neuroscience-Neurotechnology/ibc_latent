@@ -26,7 +26,6 @@ subject=04
 echo "Processing subject: sub-${subject}"
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/kmeans_on_vertices.py --subject ${subject} --dir ${working_dir}
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/kmeans_on_vertices.py --subject ${subject}
 
 exit 0
-

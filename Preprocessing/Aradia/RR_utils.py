@@ -1240,34 +1240,32 @@ def unmask(data_to_unmask:np.ndarray, output_filename:str, og_mask:str | np.ndar
         og_mask=nib.load(og_mask).get_fdata()
 
     if remap_to_verts:
-        n_rows=data_to_unmask.shape[0]
-        # create zeros matrix to store remapped results
-        result=np.zeros((n_rows,og_mask.shape[1]))
-        # loop through entries in the data
-        counter=0
-        for i in ids:
-            #print((og_mask == i).shape)
-            
-            if i==ignore_values:
-                print(f"Ignoring value {i}.")
-                continue
+        n_rows = data_to_unmask.shape[0]
+        # total grayordinates length (works for (1,91282) or (64984,))
+        width = og_mask.shape[1] if og_mask.ndim == 2 else og_mask.size
+        result = np.zeros((n_rows, width), dtype=data_to_unmask.dtype)
 
-            # insert the values of all rows in data_to_unmask into mapped_matrix where the og_mask had the value i (e.g., SN)
-            result[:, og_mask.flatten() == i] = data_to_unmask[:, counter][:, np.newaxis]
-            counter+=1
-
-    else:# make sure 1d
+        # Prefer explicit ids (global vertex indices in template space). Otherwise, use nonzero mask indices.
+        if ids is None:
+            non_zero = np.flatnonzero(og_mask.ravel())
+            if data_to_unmask.shape[1] != non_zero.size:
+                raise ValueError(f"data columns ({data_to_unmask.shape[1]}) != mask nonzeros ({non_zero.size})")
+            result[:, non_zero] = data_to_unmask
+        else:
+            ids = np.asarray(ids)
+            if data_to_unmask.shape[1] != ids.size:
+                raise ValueError(f"data columns ({data_to_unmask.shape[1]}) != ids length ({ids.size})")
+            if ids.max() >= width or ids.min() < 0:
+                raise IndexError(f"ids out of bounds for width {width}: [{ids.min()}, {ids.max()}]")
+            result[:, ids] = data_to_unmask
+    else:
+        # make sure 1d
         og_mask = np.squeeze(og_mask)
         if og_mask.ndim != 1:
             raise ValueError(f"Expected 1D mask after squeezing, but got shape {og_mask.shape}")
-        
         n_rows = data_to_unmask.shape[0]
         result = np.zeros((n_rows, og_mask.size), dtype=data_to_unmask.dtype)
-
-        # where is the mask not zero
         non_zero_indices = np.flatnonzero(og_mask)
-
-        # fill non-zero locations with data
         for i, row in enumerate(data_to_unmask):
             result[i].ravel()[non_zero_indices] = row
 
@@ -1276,6 +1274,33 @@ def unmask(data_to_unmask:np.ndarray, output_filename:str, og_mask:str | np.ndar
     nib_save(output_filename, result, dtseries_template)
 
     return None
+
+# --- helper to sanity-check mask/ids/template alignment ---
+def check_mask_template_alignment(n_rows:int, mask_file:str, ids, dtseries_template:str, cortex_len:int=64984):
+    fpn_full = np.squeeze(load_data(mask_file))
+    if fpn_full.ndim != 1 and not (fpn_full.ndim == 2 and fpn_full.shape[0] == 1):
+        raise RuntimeError(f"Mask has unexpected shape: {fpn_full.shape}")
+    fpn_vec = fpn_full.ravel()
+    fpn_cortex = fpn_vec[:cortex_len].astype(bool)
+    n_fpn_mask = int(fpn_cortex.sum())
+
+    print(f"[check] mask cortex nonzeros: {n_fpn_mask}; data rows: {n_rows}")
+    if n_rows != n_fpn_mask:
+        raise AssertionError(f"features/labels rows ({n_rows}) != FPN mask nonzeros ({n_fpn_mask})")
+
+    ids = np.asarray(ids)
+    if ids.ndim != 1 or ids.size != n_fpn_mask:
+        raise AssertionError(f"ids must be 1D with size {n_fpn_mask}, got {ids.shape}")
+    if ids.min() < 0 or ids.max() >= cortex_len:
+        raise AssertionError(f"ids out of cortical range [0,{cortex_len}): min={ids.min()}, max={ids.max()}")
+    if not np.all(np.diff(ids) >= 0):
+        print("[check] note: ids not sorted; mapping still OK but consider sorting for reproducibility.")
+
+    tmpl_len = load_data(dtseries_template).shape[1]
+    if tmpl_len not in (cortex_len, 91282):
+        raise AssertionError(f"Unexpected template grayordinates: {tmpl_len}")
+
+    print("[check] alignment OK.")
 
 def load_data(filename:str, return_img=False):
 

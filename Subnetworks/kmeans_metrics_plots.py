@@ -119,7 +119,7 @@ def plot_metric(metric, data_by_k, out_dir):
     plt.legend(loc='best', frameon=False)
 
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f'group_kmeans_{metric.replace(" ", "_").lower()}.png')
+    out_path = os.path.join(out_dir, f'group_kmeans_on_{clustering_method}_{metric.replace(" ", "_").lower()}.png')
     plt.tight_layout()
     plt.savefig(out_path, dpi=150)
     plt.close()

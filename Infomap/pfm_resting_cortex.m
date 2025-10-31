@@ -21,7 +21,7 @@ disp(['---- Step 1: Temporal Concatenation for subject: ' Subject ' ----']);
 
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
 Subdir = [working_dir '/individual_networks/sub-' Subject];
-half_dir = [Subdir '/resting_state'];
+half_dir = [Subdir '/resting_state_0.85'];
 mkdir(half_dir);
 
 % Surface files
@@ -83,7 +83,18 @@ disp(['Cortex restriction complete. New shape: ' mat2str(size(ConcatenatedCifti.
 disp(['Number of cortical grayordinates: ' num2str(CORTEX_LEN)]);
 
 % Zero out non-cortex grayordinates, keep full geometry
-ConcatenatedCifti.data(:, 64985:end) = 0;
+ConcatenatedCifti.data(:, CORTEX_LEN+1:end) = 0;
+
+% Transpose so data is [grayordinates x timepoints] for regression
+if size(ConcatenatedCifti.data,1) ~= 91282 && size(ConcatenatedCifti.data,2) == 91282
+    ConcatenatedCifti.data = ConcatenatedCifti.data'; % transpose to (91282, timepoints)
+elseif size(ConcatenatedCifti.data,1) ~= 91282
+    % If still not correct, pad to 91282 rows (grayordinates)
+    nTP = size(ConcatenatedCifti.data,1);
+    tmp = zeros(91282, nTP);
+    tmp(1:CORTEX_LEN, :) = ConcatenatedCifti.data';
+    ConcatenatedCifti.data = tmp;
+end
 
 % Save cortex-only file for downstream steps
 concat_file = fullfile(half_dir, sprintf('sub-%s_all-tasks_concatenated_cleaned_fsLR_cortexOnly.dtseries.nii', Subject));
@@ -131,12 +142,12 @@ end
 
 %% ---- Step 4: Run infomap.
 % Load your concatenated smoothed_file. CHOOSE the smoothing kernel you want to use.
-Kernel = 2.55; % choose one of the kernels from above
+Kernel = 0.85; % choose one of the kernels from above
 disp(['Using smoothing kernel: ' num2str(Kernel)]);
 ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_' num2str(Kernel) '_fsLR.dtseries.nii']);
 DistanceMatrix = [half_dir '/DistanceMatrix.mat']; % can be path to file
 DistanceCutoff = 10; % in mm; usually between 10 to 30 mm works well.
-GraphDensities = flip([0.0001 0.0002 0.0005 0.001 0.002 0.005 0.01 0.02 0.05]); % 
+GraphDensities = flip([0.0001 0.0002 0.0005 0.001 0.002 0.005 0.01 0.02 0.05]); % Lynch is taking 0.001 (i.e. 0.1%)
 NumberReps = 50; % number of times infomap is run;
 BadVertices = []; % optional, but you could include regions to ignore, if you know there is bad signal there.
 Structures = {'CORTEX_LEFT','CEREBELLUM_LEFT','ACCUMBENS_LEFT','CAUDATE_LEFT','PALLIDUM_LEFT','PUTAMEN_LEFT','THALAMUS_LEFT','HIPPOCAMPUS_LEFT','AMYGDALA_LEFT','ACCUMBENS_LEFT','CORTEX_RIGHT','CEREBELLUM_RIGHT','ACCUMBENS_RIGHT','CAUDATE_RIGHT','PALLIDUM_RIGHT','PUTAMEN_RIGHT','THALAMUS_RIGHT','HIPPOCAMPUS_RIGHT','AMYGDALA_RIGHT','ACCUMBENS_RIGHT'};
@@ -165,7 +176,7 @@ disp('---- Step 5: Algorithmic assignment of network identities to infomap commu
 load('priors.mat'); % FOR THIS WE WILL LATER NEED TO ADAPT WITH THE NETWORKS WE WANT
 Ic = ft_read_cifti_mod([half_dir '/Bipartite_PhysicalCommunities+SpatialFiltering.dtseries.nii']);
 Output = 'Bipartite_PhysicalCommunities+AlgorithmicLabeling';
-Column = 6; % column 6, representing graph density 0.01% in this example.
+Column = 6; % column 6, representing graph density 0.1% in this example (see above and note it is flipped)
 
 % Run the network identification algorithm;
 disp('Identifying networks.')

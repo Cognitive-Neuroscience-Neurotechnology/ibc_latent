@@ -20,6 +20,9 @@ import re
 from scipy.stats import spearmanr
 import nibabel as nib
 import subprocess
+from nibabel.cifti2 import Cifti2Image
+from nibabel.cifti2.cifti2_axes import ScalarAxis
+import csv
 
 parser = argparse.ArgumentParser(description='Cluster FPN communities using k-means')
 
@@ -97,7 +100,8 @@ all_data_concat = ptseries_data
 
 # Remove FPN and Noise (update indices from label table if possible)
 frontoparietal_tseries = np.delete(ptseries_data, [8, -1], axis=1)
-print("Removed FPN and Noise. New shape:", frontoparietal_tseries.shape)
+print("Removed FPN and Noise.")
+print(" - New shape:", frontoparietal_tseries.shape, " - \n")
 
 # ------------------------------------
 
@@ -113,7 +117,7 @@ subnetworks = RR.load_data(subnetworks_file)
 subnetworks = np.squeeze(subnetworks)  # ensure 1D if possible
 print(f"Subnetworks array shape: {subnetworks.shape}")
 unique_vals = np.unique(subnetworks[subnetworks != 0])
-print(f"Number of communities: {len(unique_vals)})")
+print(f"Number of communities: {len(unique_vals)}")
 communities = unique_vals
 n_communities = len(communities)
 if n_communities < 2:
@@ -121,7 +125,7 @@ if n_communities < 2:
                        f"Check you’re using the multi-community dscalar and correct map index.")
 
 corr_matrix = np.zeros((all_data_concat.shape[1], n_communities))
-print(f'Shape of correlation matrix (networks x FPN commmunities): {corr_matrix.shape}')
+print(f'Shape of correlation matrix (networks x FPN communities): {corr_matrix.shape}')
 
 # Loop through communities (skip unassigned!)
 ignore_values=[]
@@ -148,10 +152,10 @@ for i, SN in enumerate(communities):
                          f"(64984 or 91282).")
 
     vox_in_net = int((mask != 0).sum())
-    print(f'Found {vox_in_net} vertices in subnetwork {SN}...')
+    print(f'Found {int(vox_in_net)} vertices in community {int(SN)}...')
     if vox_in_net == 0:
-        print(f'Subnetwork {SN} is empty. Skipping...')
-        ignore_values.append(SN)
+        print(f'Community {SN} is empty. Skipping...')
+        ignore_values.append(int(SN))  # ensure ints
         continue
 
     # Average timeseries of this community
@@ -160,7 +164,7 @@ for i, SN in enumerate(communities):
     mask_bool = mask.astype(bool)
     subnetwork_tseries = RR.get_network(data_for_net, mask_bool, remove_rest=True)
     average_tseries = np.nanmean(subnetwork_tseries, axis=1)
-    ids.append(SN)
+    ids.append(int(SN))
 
     # Correlate with LSN ptseries (use ptseries_data you computed via Workbench)
     corr_matrix_temp, _ = spearmanr(all_data_concat.T, average_tseries, axis=1)
@@ -191,13 +195,13 @@ distance_matrix = 1 - corr_matrix_SNs
 scaler = StandardScaler()
 distance_matrix = scaler.fit_transform(distance_matrix)
 
-output_file=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans.dtseries.nii')
+output_file=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans.dscalar.nii')
 n_clusters=range(1,corr_matrix_SNs.shape[0]+1) # made robust, bc different numbers of SNs present
 
 cluster_results, inertia, silhouette_scores, kmeans_list = RR.kmeans_standard(
     n_clusters, 
     distance_matrix, 
-    save_to_file=True, remap_to_verts=True, filename=output_file, mask_file=subnetworks_file, dtseries_template=filename,
+    save_to_file=False, remap_to_verts=False, filename=output_file, mask_file=subnetworks_file, dtseries_template=filename,
     ignore_values=ignore_values,
     ids=ids
 )
@@ -207,6 +211,10 @@ RR.elbow_plot(n_clusters, inertia, elbow_file)
 
 silhouette_file=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans_silhouette_plot.png')
 RR.silhouette_plot(silhouette_scores, silhouette_file)
+
+# COLLECT metrics per k for CSV
+entropy_list, bic_list, smallest_list = [], [], []
+k_values = list(n_clusters)
 
 for k in n_clusters:
     print('')
@@ -221,7 +229,68 @@ for k in n_clusters:
     print("BIC:", bic)
     print("Smallest Cluster Size:", smallest_size)
 
+    entropy_list.append(float(entropy))
+    bic_list.append(float(bic))
+    smallest_list.append(int(smallest_size))
+
+# Prepare inertia and silhouette series aligned to k
+def series_for_k(seq_or_map, ks):
+    # Accept list/np.array (index by k-1) or dict (index by k)
+    if isinstance(seq_or_map, dict):
+        vals = [seq_or_map.get(k, np.nan) for k in ks]
+    else:
+        seq = list(seq_or_map)
+        # pad/trim to match ks length
+        if len(seq) < len(ks):
+            seq = seq + [np.nan] * (len(ks) - len(seq))
+        elif len(seq) > len(ks):
+            seq = seq[:len(ks)]
+        vals = seq
+    return [float(v) if v is not None and not np.isnan(v) else '' for v in vals]
+
+inertia_series = series_for_k(inertia, k_values)
+silhouette_series = series_for_k(silhouette_scores, k_values)
+
+# WRITE CSV
+csv_path = os.path.join(subnetworks_dir, f'sub-{subject}_clustering_of_infomap_metrics.csv')
+with open(csv_path, 'w', newline='') as f:
+    writer = csv.writer(f)
+    header = ['metric'] + [f'k={k}' for k in k_values]
+    writer.writerow(header)
+    writer.writerow(['Entropy'] + entropy_list)
+    writer.writerow(['BIC'] + bic_list)
+    writer.writerow(['Smallest Cluster Size'] + smallest_list)
+    writer.writerow(['Inertia'] + inertia_series)
+    writer.writerow(['Silhouette Score'] + silhouette_series)
+print(f"Saved metrics CSV: {csv_path}")
+
+# ADD: remap labels to all vertices and save as dscalar
+print("Writing per-vertex cluster assignments to dscalar...")
+subnetworks = np.squeeze(subnetworks).astype(int)  # community id per vertex (0=bg), shape ~ (91282,)
+all_maps = []
+map_names = []
+for k in n_clusters:
+    labels = cluster_results[k-1, :].astype(int)  # len = n_communities
+    vertex_labels = np.zeros_like(subnetworks, dtype=np.int32)
+    for j, comm_id in enumerate(ids):
+        mask = (subnetworks == comm_id)
+        if mask.any():
+            vertex_labels[mask] = labels[j] + 1  # keep 0 as background
+    all_maps.append(vertex_labels.astype(np.float32))
+    map_names.append(f'k={k}')
+stacked = np.stack(all_maps, axis=0)  # (num_k, 91282)
+
+bm_axis = dtseries_img.header.get_axis(1)  # reuse BrainModel geometry
+sc_axis = ScalarAxis(map_names)
+nib.save(Cifti2Image(stacked, (sc_axis, bm_axis)), output_file)
+print(f"Saved dscalar: {output_file}")
 
 label_table = os.path.join(working_dir, 'subnetworks', 'label_table_infomap_kmeans.txt')
 out_dlabel=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans.dlabel.nii')
 RR.write_dlabel(input_cifti=output_file, label_table=label_table, out_dlabel=out_dlabel)
+
+# Inspect
+dt_img = nib.load(output_file)
+dt = dt_img.get_fdata()
+print("Per-map nonzero counts:", [int(np.count_nonzero(dt[i])) for i in range(dt.shape[0])])
+print("Unique values in all maps (truncated):", np.unique(dt)[:20])

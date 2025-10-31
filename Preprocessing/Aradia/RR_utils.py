@@ -1141,7 +1141,7 @@ def get_network(data:np.ndarray | str, mask:str | np.ndarray, remove_rest=False)
         np.array: masked data array
 
     """
-    print("Getting network for mask", mask)
+    #print("Getting network for mask", mask)
 
     if type(data) is str:
         img = nib.load(data)
@@ -1166,7 +1166,7 @@ def get_network(data:np.ndarray | str, mask:str | np.ndarray, remove_rest=False)
         img_masked_data = img_masked_data[:, non_zero_columns]
 
 
-    print("Masked data shape:", img_masked_data.shape)
+    #print("Masked data shape:", img_masked_data.shape)
     return img_masked_data
 
 def nib_save(filename:str, data:np.ndarray, template:str):

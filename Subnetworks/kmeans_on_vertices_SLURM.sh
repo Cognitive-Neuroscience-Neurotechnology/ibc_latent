@@ -1,12 +1,12 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=kmeans_ver
-#SBATCH --output=/ptmp/hmueller2/kmeans_vertices_logs/output/%A_%x.out
-#SBATCH --error=/ptmp/hmueller2/kmeans_vertices_logs/errors/%A_%x.err
-#SBATCH --partition=compute
+#SBATCH --output=/ptmp/hmueller2/kmeans_vertices_logs/output/%A_%x_%a_%u.out
+#SBATCH --error=/ptmp/hmueller2/kmeans_vertices_logs/errors/%A_%x_%a_%u.err
+#SBATCH --partition=thin
 #SBATCH --exclusive=user
-#SBATCH --array=0-7   #(disable for single subject run)
-#SBATCH --time=24:00:00 
+#SBATCH --array=0-7
+#SBATCH --time=1:00:00 
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT

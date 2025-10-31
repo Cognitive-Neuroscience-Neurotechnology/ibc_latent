@@ -1,15 +1,15 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=kmeans_com
-#SBATCH --output=/ptmp/hmueller2/kmeans_comms_logs/output/%A_%x.out
-#SBATCH --error=/ptmp/hmueller2/kmeans_comms_logs/errors/%A_%x.err
+#SBATCH --output=/ptmp/hmueller2/kmeans_comms_logs/output/%A_%x_%a_%u.out
+#SBATCH --error=/ptmp/hmueller2/kmeans_comms_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=thin
 #SBATCH --exclusive=user
 #SBATCH --array=0-7
-#SBATCH --time=24:00:00 
+#SBATCH --time=1:00:00 
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=4G
-# #SBATCH --mail-type=END,FAIL,TIME_LIMIT
+#SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
 # ----------
 
@@ -22,7 +22,7 @@ line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 subject=$(echo "$line" | awk '{print $1}')
 
 # Single-subject override (was previously read via SLURM_ARRAY_TASK_ID and sed)
-# subject=06
+#subject=06
 echo "Processing subject: sub-${subject}"
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"

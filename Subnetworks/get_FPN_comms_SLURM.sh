@@ -5,9 +5,9 @@
 #SBATCH --error=/ptmp/hmueller2/subnetworks_infomap_logs/errors/%A_%x.err
 #SBATCH --exclusive=user
 #SBATCH --cpus-per-task=8
-#SBATCH --array=0-7   # 8 subjects, index 0 to 7
+#SBATCH --array=0-3   # 8 subjects, index 0 to 7
 #SBATCH --time=24:00:00
-#SBATCH --partition=compute
+#SBATCH --partition=thin
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
@@ -18,7 +18,7 @@ container=/home/rglz/containers/gfae.sif
 working_dir=/ptmp/hmueller2/Downloads
 
 # Read subject, session and run from config file
-config_file=/ptmp/hmueller2/Downloads/subjects_resting.txt
+config_file=/ptmp/hmueller2/Downloads/subjects_new.txt
 line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 subject=$(echo "$line" | awk '{print $1}')
 

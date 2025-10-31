@@ -21,8 +21,7 @@ import argparse
 import os
 import re
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+import csv
 
 
 # TO USE THE ONE THAT IS SMOOTHED??
@@ -58,10 +57,10 @@ session_dirs = RR.get_sessions_dirs(timeseries_dir)
 """
 01. Load data, concatenate & z-score
 """
-print("----- 01. Load / concatenate data -----")
-
 # Option A: Concatenate all sessions (with split half option)
 '''
+print("----- 01. Concatenate data -----")
+
 # Concatenate runs
 for session in session_dirs:
     print(f'--- Session: {session} ---')
@@ -107,6 +106,8 @@ n_vertices=all_data_concat.shape[1]
 # ---- INPUT DATA ----
 
 # Option B: Load pre-concatenated data
+print("----- 01. Load concatenated data -----")
+
 full_concat = os.path.join(
     working_dir, "individual_networks", f"sub-{subject}", "resting_state",
     f"sub-{subject}_all-tasks_concatenated_cleaned_fsLR.dtseries.nii")
@@ -146,13 +147,14 @@ print("Z-scoring FPN timeseries (over time)...")
 Z_tv = RR.z_score_np(FPN_data)  # shape: (T, N_fpn)
 print("Z-scored FPN shape:", Z_tv.shape)
 
-# DiNicola method: cluster on raw timecourses
+# DiNicola method: cluster on raw timecourses (RAWTIME → now just "kmeans on vertices")
 X = Z_tv.T  # shape: (N_fpn, T)
 
 n_clusters = list(range(2, 11))  # 2..10 inclusive
 dtseries_template = full_concat
-half_label = 'all'
-output_filename = os.path.join(output_dir, f"sub-{subject}_{half_label}_FPN_kmeans_RAWTIME.dtseries.nii")
+
+# NEW filenames (no split-half label)
+output_filename = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dtseries.nii")
 print(f"dtseries template: {dtseries_template}")
 print(f"output dtseries:   {output_filename}")
 
@@ -171,81 +173,65 @@ cluster_results_raw, inertia_raw, silhouette_scores_raw, kmeans_list_raw = RR.km
 RR.check_mask_template_alignment(X.shape[0], FPN_file, fpn_indices, dtseries_template)
 
 """
-03. Kmeans clustering (on Functional Connectivity of all vertices within FPN with each other)
+03. Plots and metrics
 """
-print("----- 03. Kmeans clustering (on Functional Connectivity of all FPN vertices) -----")
-
-# Build within-FPN FC features via PCA basis on Z_tv (time x vertices)
-m = 20  # number of components for low-dim FC representation
-pca = PCA(n_components=min(m, Z_tv.shape[0]-1, Z_tv.shape[1]), svd_solver='randomized', random_state=0)
-comp_ts = pca.fit_transform(Z_tv)  # (T, m_eff)
-# z-score component timecourses over time
-comp_ts = (comp_ts - np.mean(comp_ts, axis=0, keepdims=True))
-comp_std = np.std(comp_ts, axis=0, ddof=1, keepdims=True); comp_std[comp_std == 0] = 1e-8
-comp_ts = comp_ts / comp_std
-
-# Correlate each vertex timeseries with each component timecourse → features (N_fpn × m_eff)
-Zc = Z_tv - np.mean(Z_tv, axis=0, keepdims=True)
-Zstd = np.std(Zc, axis=0, ddof=1, keepdims=True); Zstd[Zstd == 0] = 1e-8
-Zc = Zc / Zstd
-Tlen = Zc.shape[0]
-features = (Zc.T @ comp_ts) / (Tlen - 1)
-features = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
-
-# Standardize features for k-means
-features = StandardScaler().fit_transform(features)
-
-# 5) k-means on FC features (k=2..10), remap labels back to vertices
-n_clusters = list(range(2, 11))  # 2..10 inclusive
-dtseries_template = full_concat  # OK to write into 91k template; ROI is cortical
-half_label = 'all'
-output_filename = os.path.join(output_dir, f"sub-{subject}_{half_label}_FPN_kmeans_FCwithin.dtseries.nii")
-print(f"dtseries template: {dtseries_template}")
-print(f"output dtseries:   {output_filename}")
-
-cluster_results_fc, inertia_fc, silhouette_scores_fc, kmeans_list_fc = RR.kmeans_standard(
-    n_clusters,
-    features,                 # cluster on FC features
-    save_to_file=True,
-    remap_to_verts=True,      # remap labels back to FPN vertices
-    filename=output_filename,
-    mask_file=FPN_file,       # ROI defines which vertices receive labels
-    dtseries_template=dtseries_template,
-    ids=fpn_indices           # IMPORTANT: place labels at correct vertices
-)
-
-# Sanity check for FCwithin
-RR.check_mask_template_alignment(features.shape[0], FPN_file, fpn_indices, dtseries_template)
-
-"""
-04. Plots and metrics
-"""
-# RAWTIME plots
-elbow_path_raw = os.path.join(output_dir, f"sub-{subject}_{half_label}_RAWTIME_elbow.png")
+# RAWTIME plots (renamed to kmeans_on_vertices)
+elbow_path_raw = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices_elbow.png")
 RR.elbow_plot(n_clusters, inertia_raw, elbow_path_raw)
 
-sil_path_raw = os.path.join(output_dir, f"sub-{subject}_{half_label}_RAWTIME_silhouette.png")
+sil_path_raw = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices_silhouette.png")
 RR.silhouette_plot(silhouette_scores_raw, sil_path_raw)
 
-print("\n=== RAWTIME metrics ===")
+print("\n=== kmeans_on_vertices metrics ===")
+# COLLECT metrics per k for CSV (kmeans on vertices)
+entropy_list_raw, bic_list_raw, smallest_list_raw = [], [], []
+k_values = list(n_clusters)
 for i, k in enumerate(n_clusters):
     labels = cluster_results_raw[i, :]
     entropy = RR.compute_entropy(labels)
-    bic = RR.compute_bic(kmeans_list_raw[k-1], X)  # use raw feature matrix X
+    # Robust BIC: handle missing model objects
+    kmeans_model = kmeans_list_raw[i] if i < len(kmeans_list_raw) else None
+    if kmeans_model is None:
+        bic = np.nan
+    else:
+        try:
+            bic = RR.compute_bic(kmeans_model, X)
+        except Exception as e:
+            print(f"[warn] BIC failed for k={k}: {e}")
+            bic = np.nan
     smallest_size = RR.smallest_cluster_size(labels)
-    print(f"k={k}: Entropy={entropy:.4f}  BIC={bic:.2f}  Smallest={smallest_size}")
+    print(f"k={k}: Entropy={entropy:.4f}  BIC={bic}  Smallest={smallest_size}")
+    entropy_list_raw.append(float(entropy))
+    bic_list_raw.append(float(bic) if np.isfinite(bic) else np.nan)
+    smallest_list_raw.append(int(smallest_size))
 
-# FCwithin plots
-elbow_path_fc = os.path.join(output_dir, f"sub-{subject}_{half_label}_FCwithin_elbow.png")
-RR.elbow_plot(n_clusters, inertia_fc, elbow_path_fc)
+# Helper to align sequences to k-values
+def series_for_k(seq_or_map, ks):
+    # Accept list/np.array (index by position) or dict (index by k)
+    if isinstance(seq_or_map, dict):
+        vals = [seq_or_map.get(k, np.nan) for k in ks]
+    else:
+        seq = list(seq_or_map)
+        if len(seq) < len(ks):
+            seq = seq + [np.nan] * (len(ks) - len(seq))
+        elif len(seq) > len(ks):
+            seq = seq[:len(ks)]
+        vals = seq
+    return [float(v) if v is not None and not (isinstance(v, float) and np.isnan(v)) else '' for v in vals]
 
-sil_path_fc = os.path.join(output_dir, f"sub-{subject}_{half_label}_FCwithin_silhouette.png")
-RR.silhouette_plot(silhouette_scores_fc, sil_path_fc)
+# Prepare inertia and silhouette series aligned to k
+inertia_series_raw = series_for_k(inertia_raw, k_values)
+silhouette_series_raw = series_for_k(silhouette_scores_raw, k_values)
 
-print("\n=== FCwithin metrics ===")
-for i, k in enumerate(n_clusters):
-    labels = cluster_results_fc[i, :]
-    entropy = RR.compute_entropy(labels)
-    bic = RR.compute_bic(kmeans_list_fc[k-1], features)  # use FC feature matrix
-    smallest_size = RR.smallest_cluster_size(labels)
-    print(f"k={k}: Entropy={entropy:.4f}  BIC={bic:.2f}  Smallest={smallest_size}")
+# WRITE CSV (kmeans on vertices) - renamed per your request
+csv_path_raw = os.path.join(output_dir, f"sub-{subject}_clustering_of_kmeans_metrics.csv")
+with open(csv_path_raw, 'w', newline='') as f:
+    writer = csv.writer(f)
+    header = ['metric'] + [f'k={k}' for k in k_values]
+    writer.writerow(header)
+    writer.writerow(['Entropy'] + entropy_list_raw)
+    writer.writerow(['BIC'] + [v if v != '' else '' for v in bic_list_raw])
+    writer.writerow(['Smallest Cluster Size'] + smallest_list_raw)
+    writer.writerow(['Inertia'] + inertia_series_raw)
+    writer.writerow(['Silhouette Score'] + silhouette_series_raw)
+print(f"Saved metrics CSV: {csv_path_raw}")

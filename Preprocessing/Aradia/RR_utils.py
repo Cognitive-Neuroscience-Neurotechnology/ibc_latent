@@ -3559,3 +3559,27 @@ def get_label_table_from_cifti(cifti, filename, map=1):
 
     subprocess.run(['wb_command', '-cifti-label-export-table',
                         cifti, str(map), filename])
+
+def write_clusters_to_dscalar(cluster_results, filename, mask_indices, template_path, k_values):
+    """
+    cluster_results: array (len(k_values), N_fpn) of 1..k integer labels per vertex (0 for background optional)
+    mask_indices: indices (within the template grayordinates) of the FPN vertices (len N_fpn)
+    template_path: path to a CIFTI2 dtseries/dscalar to copy BrainModel axis from
+    filename: output .dscalar.nii
+    """
+    import nibabel as nib
+    img_t = nib.load(template_path)
+    ax1 = img_t.header.get_axis(1)  # BrainModel axis
+    n_gray = ax1.size
+    K = cluster_results.shape[0]
+    data = np.zeros((K, n_gray), dtype=np.float32)
+    data[:, mask_indices] = cluster_results.astype(np.float32)
+
+    # Scalar axis with names "k=2", "k=3", ...
+    from nibabel.cifti2.axes import ScalarAxis
+    ax0 = ScalarAxis([f"k={k}" for k in k_values])
+
+    out_img = nib.Cifti2Image(data, header=nib.cifti2.Cifti2Header.from_axes([ax0, ax1]))
+    out_img.nifti_header.set_intent('NIFTI_INTENT_CONNECTIVITY_DENSE_SCALARS')
+    nib.save(out_img, filename)
+    print(f"Saved dscalar: {filename}")

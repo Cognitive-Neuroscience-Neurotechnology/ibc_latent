@@ -24,14 +24,40 @@ import numpy as np
 import csv
 from sklearn.metrics import silhouette_score
 # Try real spherecluster; fall back to sklearn KMeans on unit vectors (fast) if unavailable
+# Try real spherecluster; add a shim for sklearn>=1.2 if needed, else fallback.
+_SphereKMeans = None
+_HAS_SPHERECLUSTER = False
 try:
     from spherecluster import SphericalKMeans as _SphereKMeans
     _HAS_SPHERECLUSTER = True
-except Exception:
-    from sklearn.cluster import KMeans as _KMeans
-    _SphereKMeans = None
-    _HAS_SPHERECLUSTER = False
-    print("[warn] spherecluster not available; using sklearn KMeans on L2-normalized data (approximate).")
+    print("[info] Using spherecluster as-is.")
+except Exception as e1:
+    # Shim sklearn.cluster.k_means_ -> sklearn.cluster._kmeans for newer scikit-learn
+    try:
+        import sys, types
+        import sklearn.cluster._kmeans as _sk_kmeans
+        shim = types.ModuleType("sklearn.cluster.k_means_")
+        # Map old names used by spherecluster to new ones
+        # spherecluster imports one or more of these:
+        shim._k_init = getattr(_sk_kmeans, "_k_init")
+        shim._labels_inertia = getattr(_sk_kmeans, "_labels_inertia")
+        # Provide legacy alias if spherecluster looks for _init_centroids
+        def _init_centroids(X, n_clusters, init, random_state, x_squared_norms=None, init_size=None):
+            return _sk_kmeans._k_init(X, n_clusters, init, random_state, x_squared_norms=x_squared_norms)
+        shim._init_centroids = _init_centroids
+        # Optional tolerance helper (may not exist in newer sklearn)
+        if hasattr(_sk_kmeans, "_tolerance"):
+            shim._tolerance = _sk_kmeans._tolerance
+        sys.modules["sklearn.cluster.k_means_"] = shim
+
+        from spherecluster import SphericalKMeans as _SphereKMeans
+        _HAS_SPHERECLUSTER = True
+        print("[info] Enabled spherecluster via sklearn compatibility shim.")
+    except Exception as e2:
+        from sklearn.cluster import KMeans as _KMeans
+        _SphereKMeans = None
+        _HAS_SPHERECLUSTER = False
+        print(f"[warn] spherecluster not available; fallback to sklearn KMeans on L2-normalized data. Reason: {e1} / {e2}")
 
 
 parser = argparse.ArgumentParser(description='a script to run k-means on the FPN')

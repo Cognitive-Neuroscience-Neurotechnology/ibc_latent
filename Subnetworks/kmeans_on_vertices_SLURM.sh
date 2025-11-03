@@ -3,7 +3,7 @@
 #SBATCH --job-name=kmeans_ver
 #SBATCH --output=/ptmp/hmueller2/kmeans_vertices_logs/output/%A_%x_%a_%u.out
 #SBATCH --error=/ptmp/hmueller2/kmeans_vertices_logs/errors/%A_%x_%a_%u.err
-#SBATCH --partition=thin
+#SBATCH --partition=compute 
 #SBATCH --exclusive=user
 #SBATCH --array=0-7
 #SBATCH --time=1:00:00 

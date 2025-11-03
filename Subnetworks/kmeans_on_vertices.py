@@ -22,22 +22,23 @@ import os
 import re
 import numpy as np
 import csv
-
-
-# TO USE THE ONE THAT IS SMOOTHED??
-## TO USE FC OR RAW TIMESERIES??
-### To use concatenated tasks or just resting state?
+from sklearn.metrics import silhouette_score
+# Try real spherecluster; fall back to sklearn KMeans on unit vectors (fast) if unavailable
+try:
+    from spherecluster import SphericalKMeans as _SphereKMeans
+    _HAS_SPHERECLUSTER = True
+except Exception:
+    from sklearn.cluster import KMeans as _KMeans
+    _SphereKMeans = None
+    _HAS_SPHERECLUSTER = False
+    print("[warn] spherecluster not available; using sklearn KMeans on L2-normalized data (approximate).")
 
 
 parser = argparse.ArgumentParser(description='a script to run k-means on the FPN')
 parser.add_argument('--subject', help='do not include sub- prefix', default='06')
-#parser.add_argument('--seq', help='sequenceName, e.g., task-rest_acq-lowresmb.')
-#parser.add_argument('--half', help='Half of dataset to run across (odd or even).')
 args = parser.parse_args()
 
-#sequenceName = args.seq
 subject = args.subject
-#half = args.half
 
 """
 00. Set up directories
@@ -51,58 +52,10 @@ output_dir = os.path.join(working_dir, "subnetworks", "kmeans", f'sub-{subject}'
 os.makedirs(output_dir, exist_ok=True)
 
 session_dirs = RR.get_sessions_dirs(timeseries_dir)
-#half_sessions = [] # see if i need this
-#files_subjects=[]
 
 """
 01. Load data, concatenate & z-score
 """
-# Option A: Concatenate all sessions (with split half option)
-'''
-print("----- 01. Concatenate data -----")
-
-# Concatenate runs
-for session in session_dirs:
-    print(f'--- Session: {session} ---')
-
-    current_dir = os.path.join(timeseries_dir, session, 'postfmriprep', 'GLM')
-    print("Current directory:", current_dir)
-
-    pattern = re.compile(rf'sub-{subject}_{session}_task-.*_dir-.*_cleaned_noscrub\.dtseries\.nii')
-    run_list = RR.whicth_runs(current_dir, pattern)
-
-    # Construct filename
-    files_per_session = []
-    for run in run_list:
-        # run is now the full filename (since run number is not in the filename)
-        filenamebase = f'sub-{subject}_{session}_task-{sequenceName}_dir-{run}_cleaned_noscrub.dtseries.nii'
-        file = os.path.join(current_dir, filenamebase)
-        files_per_session.append(file)
-    
-    # Concatenate
-    print("Concatenating runs...")
-    output_filename = os.path.join(current_dir, f'sub-{subject}_{session}_task-{sequenceName}_concat.LR.32k.dtseries.nii')
-    files_subjects.append(output_filename)
-    # If you still want split half, need to implement that in concat_WB, so outcomment the next line
-    # RR.concat_WB(files_per_session, output_filename, return_data=False)
-
-    # Extract even or odd for split-half
-    session_number = int(session.split('ses-')[1])  
-    if half == 'odd' and session_number % 2 != 0:
-        half_sessions.append(session_number)
-    elif half == 'even' and session_number % 2 == 0:
-        half_sessions.append(session_number)
-
-print("Half sessions:", half_sessions)
-
-print("Concatenating sessions...")
-files_to_concat=RR.collect_files_to_concat(files_subjects, half_sessions) # need to implement loop with halves
-all_data_concat=RR.concat_files(files_to_concat)
-# filename=os.path.join(network_dir, f'{half}_half', f'sub-{subject}'+ f'_{half}' + f'_{sequenceName}_concatenated_smoothed0.85_masked_32k_fsLR.dtseries.nii')
-# all_data_concat = RR.load_data(filename)
-n_vertices=all_data_concat.shape[1]
-'''
-
 # ---- INPUT DATA ----
 
 # Option B: Load pre-concatenated data
@@ -119,7 +72,7 @@ n_vertices = all_data_concat.shape[1]
 dtseries_cortex = all_data_concat[:, :64984]
 print("Restricted dtseries to cortex:", dtseries_cortex.shape)
 
-# 3) Load FPN ROI and restrict to 64k, then extract FPN vertices
+# 2) Load FPN ROI and restrict to 64k, then extract FPN vertices
 FPN_file = os.path.join(network_dir, 'resting_state', 'Frontoparietal_roi.dscalar.nii')
 fpn_mask = RR.load_data(FPN_file)  # expects shape (1, 91282) or (91282,)
 fpn_mask = np.squeeze(fpn_mask)
@@ -143,31 +96,90 @@ assert fpn_indices.shape[0] == n_fpn, f"ids length {fpn_indices.shape[0]} != N_f
 # Extract FPN timeseries (T x N_fpn)
 FPN_data = dtseries_cortex[:, fpn_mask_bool]
 
+# Z-score FPN timeseries over time
 print("Z-scoring FPN timeseries (over time)...")
 Z_tv = RR.z_score_np(FPN_data)  # shape: (T, N_fpn)
 print("Z-scored FPN shape:", Z_tv.shape)
 
-# DiNicola method: cluster on raw timecourses (RAWTIME → now just "kmeans on vertices")
+# DiNicola method: cluster on raw timecourses
 X = Z_tv.T  # shape: (N_fpn, T)
 
+# L2-normalize each vertex timecourse (row) → spherical k-means (cosine-equivalent)
+row_norms = np.linalg.norm(X, axis=1, keepdims=True)
+row_norms[row_norms == 0] = 1.0
+X = X / row_norms
+print("Applied L2 normalization to vertex timecourses (spherical k-means).")
+
+
+"""
+02. Run k-means clustering on vertices within FPN
+"""
 n_clusters = list(range(2, 11))  # 2..10 inclusive
 dtseries_template = full_concat
 
-# NEW filenames (no split-half label)
 output_filename = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dtseries.nii")
 print(f"dtseries template: {dtseries_template}")
 print(f"output dtseries:   {output_filename}")
 
-cluster_results_raw, inertia_raw, silhouette_scores_raw, kmeans_list_raw = RR.kmeans_standard(
-    n_clusters,
-    X,                       # cluster on raw timecourses
-    save_to_file=True,
-    remap_to_verts=True,
-    filename=output_filename,
-    mask_file=FPN_file,
-    dtseries_template=dtseries_template,
-    ids=fpn_indices
-)
+# Write label maps to a CIFTI dscalar using RR_utils
+output_dscalar = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dscalar.nii")
+try:
+    RR.write_clusters_to_dscalar(cluster_results_raw, output_dscalar, fpn_indices, dtseries_template, n_clusters)
+except Exception as e:
+    print(f"[warn] Failed to write dscalar via RR_utils: {e}")
+
+# --- True spherical k-means (cosine objective) or fast fallback ---
+cluster_results_raw = np.zeros((len(n_clusters), X.shape[0]), dtype=int)
+inertia_raw, silhouette_scores_raw, kmeans_list_raw = [], [], []
+
+for i, k in enumerate(n_clusters):
+    if _HAS_SPHERECLUSTER:
+        skm = _SphereKMeans(
+            n_clusters=k,
+            n_init=20,
+            max_iter=300,
+            init="k-means++",
+            random_state=0,
+            verbose=False,
+        )
+        labels_zero_based = skm.fit_predict(X)  # X shape: (N_fpn, T), rows L2-normalized
+        model = skm
+        inertia_val = float(skm.inertia_)  # cosine objective
+    else:
+        # Fast approximate fallback: Euclidean KMeans on unit vectors
+        km = _KMeans(n_clusters=k, n_init=20, max_iter=300, random_state=0, verbose=0)
+        labels_zero_based = km.fit_predict(X)
+        model = km
+        inertia_val = float(km.inertia_)
+
+    labels_one_based = labels_zero_based + 1
+    cluster_results_raw[i, :] = labels_one_based
+    kmeans_list_raw.append(model)
+    inertia_raw.append(inertia_val)
+
+    try:
+        # Use cosine silhouette for consistency
+        silhouette_scores_raw.append(float(silhouette_score(X, labels_zero_based, metric="cosine")))
+    except Exception:
+        silhouette_scores_raw.append(np.nan)
+
+# Write label maps to a CIFTI dscalar regardless of RR_utils
+output_dscalar = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dscalar.nii")
+try:
+    write_clusters_to_dscalar(cluster_results_raw, output_dscalar, fpn_indices, dtseries_template, n_clusters)
+except Exception as e:
+    print(f"[warn] Failed to write dscalar via nibabel: {e}")
+    # Optional: try RR if present
+    if hasattr(RR, "labels_to_dtseries"):
+        RR.labels_to_dtseries(
+            cluster_results_raw,
+            filename=output_dscalar,
+            mask_file=FPN_file,
+            dtseries_template=dtseries_template,
+            ids=fpn_indices,
+        )
+    else:
+        print("[info] No writer available; skipping CIFTI save.")
 
 # Sanity check for RAWTIME
 RR.check_mask_template_alignment(X.shape[0], FPN_file, fpn_indices, dtseries_template)

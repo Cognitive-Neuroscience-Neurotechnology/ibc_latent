@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=infomap_subnetworks
+#SBATCH --job-name=cluster_plots
 #SBATCH --output=/ptmp/hmueller2/spider_infomap_logs/output/%A_%x_%a_%u.out
 #SBATCH --error=/ptmp/hmueller2/spider_infomap_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=compute
@@ -24,3 +24,5 @@ export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/spider_plots_infomap_kmeans.py --subject ${subject}
 
 exit 0
+
+# run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/spider_plots_infomap_kmeans_SLURM.sh

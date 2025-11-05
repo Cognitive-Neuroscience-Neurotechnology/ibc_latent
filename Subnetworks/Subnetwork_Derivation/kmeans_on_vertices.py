@@ -89,7 +89,7 @@ print("----- 01. Load concatenated data -----")
 
 full_concat = os.path.join(
     working_dir, "individual_networks", f"sub-{subject}", "resting_state",
-    f"sub-{subject}_all-tasks_concatenated_cleaned_fsLR.dtseries.nii")
+    f"sub-{subject}_all-tasks_concatenated_cleaned_smoothed_2.55_fsLR.dtseries.nii")       # use smootthed 
 print(f"Loading prebuilt concatenated dtseries:\n  {full_concat}")
 all_data_concat = RR.load_data(full_concat)  # shape: (time, grayordinates)
 n_vertices = all_data_concat.shape[1]

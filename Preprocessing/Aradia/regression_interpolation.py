@@ -22,6 +22,12 @@ parser.add_argument('-FD', '--input2', type=str, help='FD txt file.')
 parser.add_argument('-TR', '--reptime', type=float, help='Repetition Time.')
 parser.add_argument('-o', '--output', type=str, help='Output file')
 parser.add_argument('--MC_scrub', action='store_true', help='disable motion correction scrubbing (if this flag is given, no scrub is performed).')
+parser.add_argument('--low-pass', dest='low_pass', type=float, default=None,
+                    help='Low-pass cutoff in Hz. Default 0.08 (resting). Use --no-low-pass to disable.')
+parser.add_argument('--high-pass', dest='high_pass', type=float, default=None,
+                    help='High-pass cutoff in Hz. Default 0.009.')
+parser.add_argument('--no-low-pass', action='store_true',
+                    help='Disable low-pass filtering.')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -33,6 +39,14 @@ regressors = args.regs
 TR = args.reptime
 output_file = args.output
 MC_scrub = args.MC_scrub
+
+# Resolve filter settings with sensible defaults
+if args.no_low_pass:
+    low_pass = None
+else:
+    low_pass = args.low_pass if args.low_pass is not None else 0.08
+high_pass = args.high_pass if args.high_pass is not None else 0.009
+print(f"Filtering configuration -> high_pass={high_pass} Hz, low_pass={low_pass if low_pass is not None else 'None'}")
 
 # Announce intended scrubbing behavior based on flags/inputs
 if MC_scrub:
@@ -288,8 +302,8 @@ try:
                     confounds=regressor_array,
                     standardize_confounds=False,
                     filter='butterworth', 
-                    low_pass=0.08,
-                    high_pass=0.009 ,
+                    low_pass=low_pass,
+                    high_pass=high_pass,
                     t_r=TR, 
                     ensure_finite=True,            # CHANGED: be robust to non-finite in signals
                     extrapolate=True)
@@ -303,8 +317,8 @@ try:
                     confounds=regressor_array,
                     standardize_confounds=False,
                     filter='butterworth', 
-                    low_pass=0.08,
-                    high_pass=0.009 ,
+                    low_pass=low_pass,
+                    high_pass=high_pass,
                     t_r=TR, 
                     ensure_finite=True,            # CHANGED
                     extrapolate=True)

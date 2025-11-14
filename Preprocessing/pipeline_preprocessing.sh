@@ -329,16 +329,18 @@ if [[ "$task" == "RestingState" ]]; then
       -o "${cleaned_bold}"
   set +x
 else
-  echo "TASK -- NO scrubbing. Using regression_interpolation.py with --MC_scrub."
+  echo "TASK -- NO scrubbing. Using regression_interpolation.py with --MC_scrub and high-pass only (0.008 Hz)."
   cleaned_bold="${glm_dir}/${fBaseName}_cleaned_noscrub.dtseries.nii"
   echo "Running command:"
-  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" --MC_scrub -TR \"${TR}\" -o \"${cleaned_bold}\""
+  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" --MC_scrub -TR \"${TR}\" --no-low-pass --high-pass 0.008 -o \"${cleaned_bold}\""
   set -x
   /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
       -i "${detrended_trim}" \
       -r "${regressors_z}" \
       --MC_scrub \
       -TR "${TR}" \
+      --no-low-pass \
+      --high-pass 0.008 \
       -o "${cleaned_bold}"
   set +x
 fi

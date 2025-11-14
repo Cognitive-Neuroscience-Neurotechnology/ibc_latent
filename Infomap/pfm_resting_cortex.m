@@ -142,7 +142,7 @@ end
 
 %% ---- Step 4: Run infomap.
 % Load your concatenated smoothed_file. CHOOSE the smoothing kernel you want to use.
-Kernel = 0.85; % choose one of the kernels from above
+Kernel = 2.55; % choose one of the kernels from above
 disp(['Using smoothing kernel: ' num2str(Kernel)]);
 ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_' num2str(Kernel) '_fsLR.dtseries.nii']);
 DistanceMatrix = [half_dir '/DistanceMatrix.mat']; % can be path to file

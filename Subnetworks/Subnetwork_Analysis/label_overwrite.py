@@ -12,12 +12,24 @@ import nibabel as nib
 sys.path.insert(1, '/home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia')
 import RR_utils as RR
 
-approach = "infomap" # choose "kmeans" or "infomap"
+approach = "kmeans" # choose "kmeans" or "infomap"
 
 def main(subject: str, write_dscalar: bool = True):
     subject = subject.zfill(2)
     working_dir = '/ptmp/hmueller2/Downloads'
     sub_str = f"sub-{subject}"
+
+    # Helper: ensure exactly one _relabeled suffix
+    def make_relabeled(base_name: str, kind: str) -> str:
+        for ext in ('.dtseries.nii', '.dscalar.nii', '.dlabel.nii'):
+            if base_name.endswith(ext):
+                stem = base_name[:-len(ext)]
+                break
+        else:
+            stem = os.path.splitext(base_name)[0]
+        if stem.endswith('_relabeled'):
+            stem = stem[:-10]  # remove existing suffix
+        return f"{stem}_relabeled.{kind}.nii"
 
     # Inputs - determine which approach to use
     kmeans_dir = os.path.join(working_dir, "subnetworks", "kmeans", sub_str)
@@ -136,22 +148,58 @@ def main(subject: str, write_dscalar: bool = True):
                 raise RuntimeError(f"Unexpected shape: {data.shape}")
             # If original was 91k, we need to write back full-length
             if labels_k2.shape[0] == 91282:
-                full = labels_all[1, :].astype(int).copy()
+                full = labels_all[k2_index, :].astype(int).copy()
                 full[:64984] = relabeled_cortex
-                data[1, :] = full
+                data[k2_index, :] = full
             else:
-                data[1, :labels_k2_cortex.shape[0]] = relabeled_cortex
+                data[k2_index, :labels_k2_cortex.shape[0]] = relabeled_cortex
             
-            # Determine output filename based on input type
+            # Determine output filename based on input type (avoid double _relabeled)
             base_name = os.path.basename(input_file)
-            out_name = base_name.replace('.dtseries.nii', '_relabeled.dtseries.nii')
-            out_name = out_name.replace('.dscalar.nii', '_relabeled.dscalar.nii')
-            out_name = out_name.replace('.dlabel.nii', '_relabeled.dlabel.nii')
+            if base_name.endswith('.dtseries.nii'):
+                kind = 'dtseries'
+            elif base_name.endswith('.dscalar.nii'):
+                kind = 'dscalar'
+            elif base_name.endswith('.dlabel.nii'):
+                kind = 'dlabel'
+            else:
+                kind = 'dscalar'
+            out_name = make_relabeled(base_name, kind)
             out_path = os.path.join(output_dir, out_name)
             
             out_img = nib.Cifti2Image(data, header=img.header, nifti_header=img.nifti_header)
             nib.save(out_img, out_path)
             print(f"[info] Wrote relabeled file: {out_path}")
+
+            # Also write a dlabel version
+            try:
+                from nibabel.cifti2.cifti2_axes import LabelAxis
+                brain_axis = img.header.get_axis(1)  # reuse brain models
+                # Build full-length relabeled vector (matching original vertex length)
+                if labels_k2.shape[0] == 91282:
+                    relabeled_full = full  # already assembled above
+                else:
+                    relabeled_full = data[k2_index, :].astype(int)
+                label_data = relabeled_full.reshape(1, -1).astype(np.int32)
+
+                # Define label table (RGBA floats 0-1)
+                label_dict = {
+                    0: ("Background", (0.0, 0.0, 0.0, 0.0)),
+                    1: ("DMN_like", (0.0, 0.5, 0.5, 1.0)),  # teal
+                    2: ("DAN_like", (0.0, 0.0, 0.5, 1.0)),  # dark blue
+                }
+                # Correct LabelAxis construction: needs a list of map names
+                from nibabel.cifti2.cifti2_axes import LabelAxis
+                label_axis = LabelAxis(['Subnetworks'], label_dict)
+                dlabel_header = nib.cifti2.Cifti2Header.from_axes((label_axis, brain_axis))
+                dlabel_img = nib.Cifti2Image(label_data, header=dlabel_header, nifti_header=img.nifti_header)
+
+                dlabel_name = make_relabeled(os.path.basename(input_file), 'dlabel')
+                dlabel_path = os.path.join(output_dir, dlabel_name)
+                nib.save(dlabel_img, dlabel_path)
+                print(f"[info] Wrote relabeled dlabel file: {dlabel_path}")
+            except Exception as e:
+                print(f"[warn] Failed to write dlabel file: {e}")
         except Exception as e:
             print(f"[warn] Failed to write relabeled file: {e}")
             # Always save the relabeled cortex vector as numpy for downstream overrides

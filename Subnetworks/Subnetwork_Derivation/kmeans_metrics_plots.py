@@ -1,3 +1,9 @@
+'''
+This script collects k-means clustering metrics from multiple subjects,
+plots them, and saves the plots to an output directory. It assumes that
+the metrics CSV files are stored in a specific directory structure.
+'''
+
 import os
 import re
 import csv

@@ -9,8 +9,8 @@
 #SBATCH --time=48:00:00
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G
+#SBATCH --array=0-7   # 8 subjects 
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
-#SBATCH --array=0-5   # 6 subjects, index 0 to 5
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 

@@ -1,6 +1,16 @@
 #!/bin/bash
 # filepath: /home/hmueller2/ibc_code/ibc_latent/Infomap/resample_32k_fsLR.sh
 
+'''
+This script resamples native cortical surfaces to the fsLR 32k surface space.
+INPUT:
+- Native surface files (e.g., midthickness surfaces) in GIFTI format
+- Registration spheres for fsLR alignment
+- Template fsLR 32k spheres from HCP
+OUTPUT:
+- Resampled surfaces in fsLR 32k space in GIFTI format (e.g. "sub-01_hemi-R_midthickness.32k_fs_LR.surf.gii)
+'''
+
 # GOAL: Resample native surfaces to fsLR 32k using wb_command
 # Creation of midthickness.32k_fs_LR.surf.gii files
 

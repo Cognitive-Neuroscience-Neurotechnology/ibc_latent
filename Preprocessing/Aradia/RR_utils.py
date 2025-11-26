@@ -2980,6 +2980,60 @@ def cifti_parcellate(data_to_parc, atlas, output_file=None, interleaved=True, ma
 
     return all_data
 
+
+def spider_plot_hannah(output_dir:str, subject:str, num_columns:int, corr_matrices:dict, labels:dict, network_names:list, filename_base:str='kmeans', network_of_interest:str='FPN', minimal=False):
+    """
+    Creates a spider plot for the subnetworks.
+    """
+    angles = np.linspace(0, 2 * np.pi, num_columns, endpoint=False).tolist()
+    sub_dict = corr_matrices
+
+    # Map by label key ('1','2',...) instead of label_name to match corr_matrices keys
+    sub_key_to_color = {label_key: rgba for label_key, (label_name, rgba) in labels.items()}
+
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    fig.subplots_adjust(left=0.15, right=0.85, bottom=0.2, top=0.9)
+    fig2, ax2 = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+
+    for sub_key, correlations in sub_dict.items():
+        if correlations is None:
+            continue
+        positive_correlations = [v if v > 0 else 0 for v in correlations]
+        negative_correlations = [v if v < 0 else 0 for v in correlations]
+        if not positive_correlations:
+            continue
+
+        corr_pos = np.concatenate((positive_correlations, [positive_correlations[0]]))
+        corr_neg = np.concatenate((negative_correlations, [negative_correlations[0]]))
+        jittered_angles = angles  # (optional: keep as-is; remove add_jitter dependency)
+        angles_closed = np.append(jittered_angles, jittered_angles[0])
+
+        color = sub_key_to_color.get(sub_key, (0.0, 0.0, 0.0, 1.0))
+        rgba_line = (*color[:3], 0.8)
+        rgba_fill = (*color[:3], 0.25)
+
+        ax.plot(angles_closed, corr_pos, label=sub_key, color=rgba_line, linewidth=2)
+        ax.fill(angles_closed, corr_pos, color=rgba_fill)
+        ax2.plot(angles_closed, corr_neg, label=sub_key, color=rgba_line, linewidth=2)
+        ax2.fill(angles_closed, corr_neg, color=rgba_fill)
+
+    ax.set_xticks(angles)
+    ax.set_xticklabels(network_names if not minimal else [])
+    max_correlation = max((max(c) for c in sub_dict.values() if c is not None), default=0)
+    ax.set_ylim(0, max_correlation * 1.1)
+    ax.set_yticks(np.linspace(0, max_correlation, 5))
+    ax.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(0, max_correlation, 5)])
+
+    ax2.set_xticks(angles)
+    ax2.set_xticklabels(network_names if not minimal else [])
+    ax2.set_ylim(0, -1)
+    ax2.set_yticks(np.linspace(-1, 0, 5))
+    ax2.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(-1, 0, 5)])
+
+    save_plot(fig, os.path.join(output_dir, f'{subject}_{network_of_interest}_{filename_base}_spider_plot.png'))
+    save_plot(fig2, os.path.join(output_dir, f'{subject}_{network_of_interest}_{filename_base}_spider_plot_neg.png'))
+
+
 def spider_plot_non_interactive(output_dir:str, subject:str, num_columns:int, corr_matrices:dict, labels:dict, network_names:list, filename_base:str='kmeans', network_of_interest:str='FPN', minimal=False):
     """
     Creates a spider plot for the subnetworks, not using plotly.

@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=fmriprep
-#SBATCH --output=/ptmp/hmueller2/fmriprep_logs/fmriprep_%j.out
+#SBATCH --output=/ptmp/hmueller2/fmriprep_logs/%x_run-%A_sub-%a.out
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=0-150:00:00
-#SBATCH --array=0-11
+#SBATCH --array=0-7
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
@@ -17,8 +17,8 @@ BIDS_DIR=/ptmp/hmueller2/Downloads/ibc_raw
 OUTPUT_DIR=/ptmp/hmueller2/Downloads/fmriprep_out
 WORK_DIR=/ptmp/hmueller2/Downloads/fmriprep_work
 FS_LICENSE=/ptmp/hmueller2/Downloads/license.txt
-TF_CACHE="/ptmp/hmueller2/templateflow"
-CONFIG_FILE=/ptmp/hmueller2/Downloads/config.txt
+TF_CACHE=/ptmp/hmueller2/templateflow
+CONFIG_FILE=/ptmp/hmueller2/Downloads/subjects_resting.txt
 
 # Fix unexpanded ${HOME} in APPTAINER_BIND
 unset APPTAINER_BIND
@@ -40,10 +40,11 @@ apptainer exec \
     fmriprep /data /out participant \
       --participant-label $SUBJECT \
       --fs-license-file /opt/freesurfer/license.txt \
-      --output-spaces fsaverage fsLR \
+      --output-spaces fsLR \
       --cifti-output \
-      --use-syn-sdc \
       --nthreads 8 \
       --omp-nthreads 8 \
       --mem_mb 32000 \
       --work-dir /work"
+
+# run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Preprocessing/run_fmriprep.sh

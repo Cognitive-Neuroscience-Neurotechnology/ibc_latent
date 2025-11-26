@@ -2,6 +2,7 @@
 
 # Usage: ./pipeline_preprocessing.sh <subject> <session> <task> <direction>
 # Example: ./pipeline_preprocessing.sh 01 15 RestingState pa
+# But let's use the SLURM script "run_all_subjects.sh"
 
 set -e # Exit on error
 set -u # Treat unset variables as error
@@ -318,31 +319,29 @@ echo "The TR is $TR seconds."
 
 if [[ "$task" == "RestingState" ]]; then
   cleaned_bold="${glm_dir}/${fBaseName}_cleaned.dtseries.nii"
-  echo "RESTING -- Scrubbing. Running command:"
-  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" -FD \"${FD_mask}\" -TR \"${TR}\" -o \"${cleaned_bold}\""
+  echo "RESTING -- Scrubbing and bandpass (0.009-0.08 Hz). Running command:"
+  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" -FD \"${FD_mask}\" -TR \"${TR}\" --high-pass 0.009 --low-pass 0.08 -o \"${cleaned_bold}\""
   set -x
   /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
       -i "${detrended_trim}" \
       -r "${regressors_z}" \
       -FD "${FD_mask}" \
       -TR "${TR}" \
+      --high-pass 0.009 \
+      --low-pass 0.08 \
       -o "${cleaned_bold}"
   set +x
 else
-  echo "TASK -- NO scrubbing. Using regression_interpolation.py with --MC_scrub and high-pass only (0.008 Hz)."
+  echo "TASK -- Nuisance regression ONLY (no filtering - will be done in GLM)."
   cleaned_bold="${glm_dir}/${fBaseName}_cleaned_noscrub.dtseries.nii"
-  echo "Running command:"
-  echo "/opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py -i \"${detrended_trim}\" -r \"${regressors_z}\" --MC_scrub -TR \"${TR}\" --no-low-pass --high-pass 0.008 -o \"${cleaned_bold}\""
-  set -x
   /opt/conda/bin/python3 /home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia/regression_interpolation.py \
       -i "${detrended_trim}" \
       -r "${regressors_z}" \
       --MC_scrub \
       -TR "${TR}" \
       --no-low-pass \
-      --high-pass 0.008 \
+      --high-pass 0.0 \
       -o "${cleaned_bold}"
-  set +x
 fi
 
 if [ -f "${cleaned_bold}" ]; then

@@ -1,8 +1,8 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=cluster_plots
-#SBATCH --output=/ptmp/hmueller2/spider_infomap_logs/output/%A_%x_%a_%u.out
-#SBATCH --error=/ptmp/hmueller2/spider_infomap_logs/errors/%A_%x_%a_%u.err
+#SBATCH --job-name=spider_kmeans
+#SBATCH --output=/ptmp/hmueller2/spider_logs/output/%A_%x_%a_%u.out
+#SBATCH --error=/ptmp/hmueller2/spider_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=compute
 #SBATCH --exclusive=user
 #SBATCH --array=0-7   # Adjust to number of subjects in subjects_resting.txt
@@ -21,7 +21,8 @@ echo "Processing subject: sub-${subject}"
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/spider_plots_infomap_kmeans.py --subject ${subject}
+#srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/spider_plots_infomap.py --subject ${subject}
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/spider_plots_kmeans.py --subject ${subject}
 
 exit 0
 

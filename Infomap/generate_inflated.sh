@@ -2,6 +2,8 @@
 #!/bin/bash
 # filepath: /home/hmueller2/ibc_code/ibc_latent/Infomap/generate_inflated.sh
 
+# I DIDNT USE THIS!!
+
 # make executable: chmod +x /home/hmueller2/ibc_code/ibc_latent/Infomap/generate_inflated.sh
 # run: /home/hmueller2/ibc_code/ibc_latent/Infomap/generate_inflated.sh
 
@@ -9,7 +11,7 @@
 BASE_DIR="/ptmp/hmueller2/Downloads/fmriprep_out"
 
 # Loop over subjects 01 to 15
-for i in 01 04 05 06 07 08 09 11 12 13 14 15; do
+for i in 04 06 07 09 11 13 14 15; do
     SUBJ="sub-${i}"
     ANAT_DIR="${BASE_DIR}/${SUBJ}/anat"
     L_SURF="${ANAT_DIR}/${SUBJ}_hemi-L_midthickness.32k_fs_LR.surf.gii"

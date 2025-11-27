@@ -2,8 +2,11 @@
 set -euo pipefail
 
 # --------------------- USER SETTINGS ---------------------
+sub="$1"
 
 APPROACH="infomap"   # Options: "infomap", "kmeans"
+SURFACE="very_inflated"  # Options: "inflated", "very_inflated"
+SCENE_NAME="CortexOnly"   # "CortexOnly" for cortex.scene -- "WhiteScene" for template.scene
 
 # Adjust these if needed
 WORKING_DIR="/ptmp/hmueller2/Downloads"
@@ -17,17 +20,13 @@ WB_VIEW="/home/hmueller2/workbench/bin_linux64/wb_view"
 # Add library path for workbench
 export LD_LIBRARY_PATH="/home/hmueller2/workbench/libs_linux64:${LD_LIBRARY_PATH:-}"
 
-sub="$1"
-SCENE_NAME="CortexOnly"   # "CortexOnly" for cortex.scene -- "WhiteScene" for template.scene
-
 # --------------------- INPUT FILES (from your message) ---------------------
-SURF_L="${MASKS_DIR}/fs_LR.32k.L.very_inflated.surf.gii"
-SURF_R="${MASKS_DIR}/fs_LR.32k.R.very_inflated.surf.gii"
+SURF_L="${MASKS_DIR}/fs_LR.32k.L.${SURFACE}.surf.gii"
+SURF_R="${MASKS_DIR}/fs_LR.32k.R.${SURFACE}.surf.gii"
 ROI_L="${MASKS_DIR}/L.atlasroi.32k_fs_LR.shape.gii"
 ROI_R="${MASKS_DIR}/R.atlasroi.32k_fs_LR.shape.gii"
 
 anat_infomap="${APPROACH_DIR}/sub-${sub}/${sub}_FPN_infomap_communities_kmeans_relabeled.dscalar.nii"
-anat_dlabel="${APPROACH_DIR}/sub-${sub}/${sub}_FPN_infomap_communities_kmeans_relabeled.dlabel.nii"
 
 # --------------------- OUTPUT FILES ---------------------
 mkdir -p "${OUT_DIR}"
@@ -63,20 +62,16 @@ fi
 # --------------------- STEP 1: Extract left & right cortex METRIC files ---------------------
 # The dscalar typically contains cortex left/right maps. Separate them into .func.gii files.
 echo "-> Separating CIFTI into left/right metric files..."
-${WB_COMMAND} -cifti-separate "${anat_infomap}" COLUMN 1\
+# Extract only the second map (index 1, which is k=2)
+${WB_COMMAND} -cifti-merge ${OUT_PREFIX}_k2_only.dscalar.nii \
+    -cifti ${anat_infomap} -column 2
+
+# Then separate it normally (no COLUMN parameter needed)
+${WB_COMMAND} -cifti-separate ${OUT_PREFIX}_k2_only.dscalar.nii COLUMN \
     -metric CORTEX_LEFT "${LEFT_METRIC}" \
     -metric CORTEX_RIGHT "${RIGHT_METRIC}"
 echo "Left metric:  ${LEFT_METRIC}"
 echo "Right metric: ${RIGHT_METRIC}"
-
-# --------------------- STEP 1: Extract left & right cortex LABEL files ---------------------
-#echo "-> Separating CIFTI dlabel into left/right label files..."
-#${WB_COMMAND} -cifti-separate "${anat_infomap}" COLUMN 2 \
-#    -label CORTEX_LEFT "${LEFT_LABEL}" \
-#    -label CORTEX_RIGHT "${RIGHT_LABEL}"
-
-#echo "Left label:  ${LEFT_METRIC}"
-#echo "Right label: ${RIGHT_METRIC}"
 
 # --------------------- STEP 2: (Optional) Create a new dscalar that uses our metrics as maps ----------
 # This is useful if your template.scene references a dscalar file. We will create a minimal dscalar

@@ -3018,17 +3018,19 @@ def spider_plot_hannah(output_dir:str, subject:str, num_columns:int, corr_matric
         ax2.fill(angles_closed, corr_neg, color=rgba_fill)
 
     ax.set_xticks(angles)
-    ax.set_xticklabels(network_names if not minimal else [])
+    ax.set_xticklabels(network_names if not minimal else [], fontsize=10)  # Increased from default
+    ax.tick_params(axis='x', pad=10)  # Move network names further out
     max_correlation = max((max(c) for c in sub_dict.values() if c is not None), default=0)
     ax.set_ylim(0, max_correlation * 1.1)
     ax.set_yticks(np.linspace(0, max_correlation, 5))
-    ax.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(0, max_correlation, 5)])
+    ax.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(0, max_correlation, 5)], fontsize=10)  # Increased from default
 
     ax2.set_xticks(angles)
-    ax2.set_xticklabels(network_names if not minimal else [])
+    ax2.set_xticklabels(network_names if not minimal else [], fontsize=10)  # Increased from default
+    ax2.tick_params(axis='x', pad=10)  # Move network names further out
     ax2.set_ylim(0, -1)
     ax2.set_yticks(np.linspace(-1, 0, 5))
-    ax2.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(-1, 0, 5)])
+    ax2.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(-1, 0, 5)], fontsize=10)  # Increased from default
 
     save_plot(fig, os.path.join(output_dir, f'{subject}_{network_of_interest}_{filename_base}_spider_plot.png'))
     save_plot(fig2, os.path.join(output_dir, f'{subject}_{network_of_interest}_{filename_base}_spider_plot_neg.png'))
@@ -3098,26 +3100,26 @@ def spider_plot_non_interactive(output_dir:str, subject:str, num_columns:int, co
     ax.set_xticks(angles)
 
     if minimal == False:
-        ax.set_xticklabels(network_names, fontsize=7, ha='center', va='center', rotation=45)  # rotate and set alignment   
-        ax.tick_params(pad=10)
+        ax.set_xticklabels(network_names, fontsize=10, ha='center', va='center', rotation=45)
+        ax.tick_params(axis='x', pad=20)
     if minimal==True:
         ax.set_xticklabels([])
     max_correlation = max(max(correlations) for correlations in sub_dict.values())
     ax.set_ylim(0, max_correlation * 1.1) # add buffer
     ax.set_yticks(np.linspace(0, max_correlation, 5))
-    ax.tick_params(axis='y', labelsize=6, colors='grey')
-    ax.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(0, max_correlation, 5)])
+    ax.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(0, max_correlation, 5)], fontsize=10)
 
     ax2.set_xticks(angles)
 
     if minimal==False:
-        ax2.set_xticklabels(network_names, fontsize=8)  # rotate and set alignment
+        ax2.set_xticklabels(network_names, fontsize=10)
+        ax2.tick_params(axis='x', pad=20)
     if minimal==True:
         ax2.set_xticklabels([])
 
     ax2.set_ylim(0, -1)  # invert radial axis so neg correlations extend outwards
     ax2.set_yticks(np.linspace(-1, 0, 10))
-    ax2.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(-1, 0, 10)])
+    ax2.set_yticklabels([f"{tick:.2f}" for tick in np.linspace(-1, 0, 10)], fontsize=10)
 
     
     # add legend to distinguish between different sub-keys ('A', 'B', etc.)

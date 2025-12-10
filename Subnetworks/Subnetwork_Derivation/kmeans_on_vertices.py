@@ -89,7 +89,7 @@ print("----- 01. Load concatenated data -----")
 
 full_concat = os.path.join(
     working_dir, "individual_networks", f"sub-{subject}", "resting_state",
-    f"sub-{subject}_all-tasks_concatenated_cleaned_smoothed_2.55_fsLR.dtseries.nii")       # use smootthed 
+    f"sub-{subject}_all-tasks_concatenated_cleaned_smoothed_2.55_fsLR.dtseries.nii")
 print(f"Loading prebuilt concatenated dtseries:\n  {full_concat}")
 all_data_concat = RR.load_data(full_concat)  # shape: (time, grayordinates)
 n_vertices = all_data_concat.shape[1]
@@ -147,13 +147,6 @@ output_filename = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dt
 print(f"dtseries template: {dtseries_template}")
 print(f"output dtseries:   {output_filename}")
 
-# Write label maps to a CIFTI dscalar using RR_utils
-output_dscalar = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dscalar.nii")
-try:
-    RR.write_clusters_to_dscalar(cluster_results_raw, output_dscalar, fpn_indices, dtseries_template, n_clusters)
-except Exception as e:
-    print(f"[warn] Failed to write dscalar via RR_utils: {e}")
-
 # --- True spherical k-means (cosine objective) or fast fallback ---
 cluster_results_raw = np.zeros((len(n_clusters), X.shape[0]), dtype=int)
 inertia_raw, silhouette_scores_raw, kmeans_list_raw = [], [], []
@@ -168,11 +161,10 @@ for i, k in enumerate(n_clusters):
             random_state=0,
             verbose=False,
         )
-        labels_zero_based = skm.fit_predict(X)  # X shape: (N_fpn, T), rows L2-normalized
+        labels_zero_based = skm.fit_predict(X)
         model = skm
-        inertia_val = float(skm.inertia_)  # cosine objective
+        inertia_val = float(skm.inertia_)
     else:
-        # Fast approximate fallback: Euclidean KMeans on unit vectors
         km = _KMeans(n_clusters=k, n_init=20, max_iter=300, random_state=0, verbose=0)
         labels_zero_based = km.fit_predict(X)
         model = km
@@ -184,30 +176,24 @@ for i, k in enumerate(n_clusters):
     inertia_raw.append(inertia_val)
 
     try:
-        # Use cosine silhouette for consistency
         silhouette_scores_raw.append(float(silhouette_score(X, labels_zero_based, metric="cosine")))
     except Exception:
         silhouette_scores_raw.append(np.nan)
 
-# Write label maps to a CIFTI dscalar regardless of RR_utils
-output_dscalar = os.path.join(output_dir, f"sub-{subject}_kmeans_on_vertices.dscalar.nii")
-try:
-    write_clusters_to_dscalar(cluster_results_raw, output_dscalar, fpn_indices, dtseries_template, n_clusters)
-except Exception as e:
-    print(f"[warn] Failed to write dscalar via nibabel: {e}")
-    # Optional: try RR if present
-    if hasattr(RR, "labels_to_dtseries"):
-        RR.labels_to_dtseries(
-            cluster_results_raw,
-            filename=output_dscalar,
-            mask_file=FPN_file,
-            dtseries_template=dtseries_template,
-            ids=fpn_indices,
-        )
-    else:
-        print("[info] No writer available; skipping CIFTI save.")
+# Save as dtseries using RR.nib_save
+# Create full brain array (n_clusters × 91282 grayordinates)
+all_k_full = np.zeros((len(n_clusters), 91282), dtype=np.float32)
+for i, k in enumerate(n_clusters):
+    # Place 1-based labels at FPN cortex indices
+    all_k_full[i, fpn_indices] = cluster_results_raw[i, :]
 
-# Sanity check for RAWTIME
+try:
+    RR.nib_save(output_filename, all_k_full, dtseries_template)
+    print(f"Saved dtseries: {output_filename}")
+except Exception as e:
+    print(f"[warn] Failed to save dtseries: {e}")
+
+# Sanity check
 RR.check_mask_template_alignment(X.shape[0], FPN_file, fpn_indices, dtseries_template)
 
 """

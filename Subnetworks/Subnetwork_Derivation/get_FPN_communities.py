@@ -51,6 +51,18 @@ for i in range(n_maps):
 print('Number of FPN communities found:', next_id - 1)
 print('Combined uniques:', np.unique(combined))
 
+# FORCE SUBCORTEX TO ZERO (cortex-only clustering)
+CORTEX_SIZE = 64984
+if combined.shape[0] > CORTEX_SIZE:
+    n_subcortex_labeled = (combined[CORTEX_SIZE:] > 0).sum()
+    if n_subcortex_labeled > 0:
+        print(f"Zeroing {n_subcortex_labeled} subcortical vertices (keeping cortex-only)")
+        combined[CORTEX_SIZE:] = 0  # Force all subcortex to background
+    
+    print(f"Final combined stats:")
+    print(f"  Cortex (0:{CORTEX_SIZE}): {(combined[:CORTEX_SIZE] > 0).sum()} labeled vertices")
+    print(f"  Subcortex ({CORTEX_SIZE}:{combined.shape[0]}): {(combined[CORTEX_SIZE:] > 0).sum()} labeled vertices (should be 0)")
+
 # Save as dscalar using a dscalar template (not a dlabel)
 # Use the base networks dlabel to make an FPN ROI dscalar for geometry/axes
 networks_dlabel = os.path.join(half_dir, 'Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii')

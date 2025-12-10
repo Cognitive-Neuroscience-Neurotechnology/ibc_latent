@@ -9,6 +9,7 @@ import re
 import csv
 from glob import glob
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # ----- CLUSTERING METHOD -----
@@ -16,7 +17,7 @@ clustering_method = "kmeans"  # either "infomap" or "kmeans"
 
 # ---- SET YOUR PATHS HERE ----
 base_dir = "/ptmp/hmueller2/Downloads"  # parent of subnetworks/
-out_dir = os.path.join(base_dir, "subnetworks", clustering_method)  # or set to any output folder you want
+out_dir = os.path.join(base_dir, "subnetworks", clustering_method)
 
 METRICS = [
     'Entropy',
@@ -68,7 +69,7 @@ def parse_metrics_csv(csv_path):
 
 def collect_all_metrics(base_dir):
     # Look under: base_dir/subnetworks/<clustering_method>/sub-*/<csv>
-    pattern = os.path.join(base_dir, 'subnetworks', clustering_method, 'sub-*', f'sub-*_clustering_of_{clustering_method}_metrics.csv')
+    pattern = os.path.join(out_dir, 'sub-*', f'sub-*_clustering_of_{clustering_method}_metrics.csv')
     files = sorted(glob(pattern))
     return files
 
@@ -86,22 +87,81 @@ def aggregate(files):
                 metrics_agg[metric].setdefault(k, []).append(val)
     return metrics_agg, subjects
 
-def compute_mean_min_max(values):
+def compute_mean_min_max_std(values):
     arr = np.array(values, dtype=float)
     finite = np.isfinite(arr)
     if not finite.any():
-        return np.nan, np.nan, np.nan
+        return np.nan, np.nan, np.nan, np.nan
     arr = arr[finite]
-    return float(np.nanmean(arr)), float(np.nanmin(arr)), float(np.nanmax(arr))
+    return float(np.nanmean(arr)), float(np.nanstd(arr)), float(np.nanmin(arr)), float(np.nanmax(arr))
+
+def save_aggregated_csv(metrics_agg, out_dir):
+    """Save aggregated metrics (mean, std, min, max) to CSV files"""
+    
+    # Get all k values
+    all_ks = set()
+    for metric_data in metrics_agg.values():
+        all_ks.update(metric_data.keys())
+    ks_sorted = sorted(all_ks)
+    
+    # Create summary dataframe for all metrics
+    summary_data = []
+    for metric in METRICS:
+        data_by_k = metrics_agg.get(metric, {})
+        for k in ks_sorted:
+            if k in data_by_k:
+                mean_v, std_v, min_v, max_v = compute_mean_min_max_std(data_by_k[k])
+                summary_data.append({
+                    'Metric': metric,
+                    'k': k,
+                    'Mean': mean_v,
+                    'Std': std_v,
+                    'Min': min_v,
+                    'Max': max_v,
+                    'N_subjects': len([v for v in data_by_k[k] if np.isfinite(v)])
+                })
+    
+    summary_df = pd.DataFrame(summary_data)
+    
+    # Save wide-format summary (one row per metric, columns for k values)
+    wide_data = []
+    for metric in METRICS:
+        row = {'Metric': metric}
+        data_by_k = metrics_agg.get(metric, {})
+        for k in ks_sorted:
+            if k in data_by_k:
+                mean_v, std_v, _, _ = compute_mean_min_max_std(data_by_k[k])
+                row[f'k={k}_mean'] = mean_v
+                row[f'k={k}_std'] = std_v
+        wide_data.append(row)
+    
+    wide_df = pd.DataFrame(wide_data)
+    
+    # Save both formats
+    os.makedirs(out_dir, exist_ok=True)
+    
+    summary_path = os.path.join(out_dir, f'group_{clustering_method}_metrics_summary.csv')
+    summary_df.to_csv(summary_path, index=False)
+    print(f"Saved summary (long format): {summary_path}")
+    
+    wide_path = os.path.join(out_dir, f'group_{clustering_method}_metrics_wide.csv')
+    wide_df.to_csv(wide_path, index=False)
+    print(f"Saved summary (wide format): {wide_path}")
+    
+    return summary_df, wide_df
 
 def plot_metric(metric, data_by_k, out_dir):
     ks_sorted = sorted(data_by_k.keys())
-    means, mins, maxs, xs = [], [], [], []
+    
+    # Filter to only include k=2 to k=10
+    ks_sorted = [k for k in ks_sorted if 2 <= k <= 10]
+    means, stds, mins, maxs, xs = [], [], [], [], []
     for k in ks_sorted:
-        mean_v, min_v, max_v = compute_mean_min_max(data_by_k[k])
+        mean_v, std_v, min_v, max_v = compute_mean_min_max_std(data_by_k[k])
         if np.isfinite(mean_v):
             xs.append(k)
             means.append(mean_v)
+            stds.append(std_v)
             mins.append(min_v)
             maxs.append(max_v)
 
@@ -111,25 +171,35 @@ def plot_metric(metric, data_by_k, out_dir):
 
     xs = np.array(xs, dtype=int)
     means = np.array(means, dtype=float)
+    stds = np.array(stds, dtype=float)
     mins = np.array(mins, dtype=float)
     maxs = np.array(maxs, dtype=float)
 
-    plt.figure(figsize=(6, 4))
-    plt.plot(xs, means, '-o', color='C0', label='Mean')
-    plt.fill_between(xs, mins, maxs, color='C0', alpha=0.2, label='Range (min–max)')
-    plt.xlabel('k')
-    plt.ylabel(metric)
-    plt.title(f'{metric} across subjects')
+    # Choose color based on clustering method
+    plot_color = 'firebrick' if clustering_method == "infomap" else 'indigo' # else 'C0'
+
+    plt.figure(figsize=(8, 5))
+    
+    # Plot mean with error bars (std)
+    plt.errorbar(xs, means, yerr=stds, fmt='-o', color=plot_color, 
+                 capsize=5, capthick=2, label='Mean ± SD')
+    
+    # Add min/max range as shaded area
+    plt.fill_between(xs, mins, maxs, color=plot_color, alpha=0.15, label='Range (min–max)')
+    
+    plt.xlabel('Number of clusters (k)', fontsize=11)
+    plt.ylabel(metric, fontsize=11)
+    plt.title(f'{metric} across subjects ({clustering_method})', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.xticks(xs)
-    plt.legend(loc='best', frameon=False)
+    plt.legend(loc='best', frameon=True)
 
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f'group_kmeans_on_{clustering_method}_{metric.replace(" ", "_").lower()}.png')
     plt.tight_layout()
-    plt.savefig(out_path, dpi=150)
+    plt.savefig(out_path, dpi=400)
     plt.close()
-    print(f"Saved: {out_path}")
+    print(f"Saved plot: {out_path}")
 
 def main():
     files = collect_all_metrics(base_dir)
@@ -139,9 +209,27 @@ def main():
 
     print(f"Found {len(files)} metrics files.")
     metrics_agg, subjects = aggregate(files)
-
+    
+    print(f"\nSubjects included: {', '.join(subjects)}")
+    
+    # Save aggregated metrics to CSV
+    print("\n=== Saving aggregated metrics ===")
+    summary_df, wide_df = save_aggregated_csv(metrics_agg, out_dir)
+    
+    # Print summary statistics
+    print("\n=== Summary Statistics ===")
+    for metric in METRICS:
+        print(f"\n{metric}:")
+        metric_data = summary_df[summary_df['Metric'] == metric]
+        if not metric_data.empty:
+            print(metric_data[['k', 'Mean', 'Std', 'Min', 'Max']].to_string(index=False))
+    
+    # Generate plots
+    print("\n=== Generating plots ===")
     for metric in METRICS:
         plot_metric(metric, metrics_agg.get(metric, {}), out_dir)
+    
+    print("\n=== Complete ===")
 
 if __name__ == '__main__':
     main()

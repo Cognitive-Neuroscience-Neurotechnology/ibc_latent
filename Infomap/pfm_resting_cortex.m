@@ -21,15 +21,16 @@ disp(['---- Step 1: Temporal Concatenation for subject: ' Subject ' ----']);
 
 surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
 Subdir = [working_dir '/individual_networks/sub-' Subject];
-half_dir = [Subdir '/resting_state_0.85'];
+mkdir(Subdir)
+half_dir = [Subdir '/resting_state'];
 mkdir(half_dir);
 
 % Surface files
 MidthickSurfs{1} = [surface_dir '/anat/sub-' Subject '_hemi-L_midthickness.32k_fs_LR.surf.gii'];
 MidthickSurfs{2} = [surface_dir '/anat/sub-' Subject '_hemi-R_midthickness.32k_fs_LR.surf.gii'];
 
-% --- Import prebuilt dtseries from Subdir/resting_state_whole ---
-source_dir = fullfile(Subdir, 'resting_state_whole');
+% --- Import prebuilt dtseries from Subdir/resting_state ---
+source_dir = fullfile(Subdir, 'resting_state');  % Changed from 'resting_state_whole'
 if ~isfolder(source_dir)
     error('Expected source directory not found: %s', source_dir);
 end

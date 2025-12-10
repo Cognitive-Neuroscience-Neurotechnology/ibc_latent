@@ -340,7 +340,6 @@ else
       --MC_scrub \
       -TR "${TR}" \
       --no-low-pass \
-      --high-pass 0.0 \
       -o "${cleaned_bold}"
 fi
 

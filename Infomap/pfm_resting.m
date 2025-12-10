@@ -43,11 +43,11 @@ for s = 1:length(session_dirs)
     
     if isfile(ap_file)
         files{end+1} = ap_file; %#ok<AGROW>
-        disp(['Found AP: ' ap_file]);
+        %disp(['Found AP: ' ap_file]);
     end
     if isfile(pa_file)
         files{end+1} = pa_file; %#ok<AGROW>
-        disp(['Found PA: ' pa_file]);
+        %disp(['Found PA: ' pa_file]);
     end
 end
 
@@ -61,7 +61,7 @@ disp(['Found ' num2str(length(files)) ' resting-state files to concatenate.']);
 ConcatenatedData = [];
 used_files = {};
 for i = 1:length(files)
-    disp(['Loading: ' files{i}])
+    %disp(['Loading: ' files{i}])
     try
         Cifti = ft_read_cifti_mod(files{i});
     catch ME
@@ -102,7 +102,7 @@ ConcatenatedCifti = Cifti;
 ConcatenatedCifti.data = ConcatenatedData;
 disp(['ConcatenatedData shape before cortex restriction: ' mat2str(size(ConcatenatedData))]);
 disp(['Number of grayordinates in CIFTI: ' num2str(size(ConcatenatedData,2))]);
-disp(['Files used (' num2str(numel(used_files)) '):']); disp(used_files');
+%disp(['Files used (' num2str(numel(used_files)) '):']); disp(used_files');
 
 % ---- Restrict to cortex only: keep first 64,984 grayordinates
 CORTEX_LEN = 64984;
@@ -138,17 +138,19 @@ ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 
 %% ---- Step 2: Make a distance matrix.
 disp('---- Step 2: Making a distance matrix ----');
+
+% Clean up parallel pool to prevent memory leaks
+delete(gcp('nocreate'));
+
 tic;
 pfm_make_dmat_96k(concat_file,MidthickSurfs,half_dir,nWorkers,WorkbenchBinary);
 elapsed_minutes = toc / 60;
 disp(['Elapsed time: ', num2str(elapsed_minutes, '%.2f'), ' minutes'])
 
-% Transpose input data if incorrect shape
-if size(ConcatenatedCifti.data,1) ~= 91282 && size(ConcatenatedCifti.data,2) == 91282
-    ConcatenatedCifti.data = ConcatenatedCifti.data'; % transpose to (91282, timepoints)
-end
+% Clear large variables to free memory
+clear ConcatenatedData;
 
-% Optional: regress adjacent cortical signal from subcortex to reduce artifactual coupling 
+% Optional: regress adjacent cortical signal from subcortex
 disp('Regressing adjacent cortical signal...');
 [ConcatenatedCifti] = pfm_regress_adjacent_cortex(ConcatenatedCifti,[half_dir '/DistanceMatrix.mat'],20);
 
@@ -160,6 +162,10 @@ ft_write_cifti_mod(concat_file, ConcatenatedCifti);
 
 %% ---- Step 3: Apply spatial smoothing.
 disp('---- Step 3: Apply spatial smoothing. ----');
+
+% Clear before smoothing
+clear ConcatenatedCifti;
+
 % Define a range of gaussian smoothing kernels (in sigma)
 KernelSizes = [0.85 1.7 2.55];
 
@@ -176,9 +182,12 @@ end
 
 %% ---- Step 4: Run infomap.
 % Load your concatenated smoothed_file. CHOOSE the smoothing kernel you want to use.
-Kernel = 2.55; % choose one of the kernels from above (Lynch is using 2.55)
+Kernel = 2.55; % choose one of the kernels from above
 disp(['Using smoothing kernel: ' num2str(Kernel)]);
+
+% Load fresh from disk (avoid keeping old copies in memory)
 ConcatenatedCifti = ft_read_cifti_mod([half_dir '/sub-' Subject '_all-tasks_concatenated_cleaned_smoothed_' num2str(Kernel) '_fsLR.dtseries.nii']);
+
 DistanceMatrix = [half_dir '/DistanceMatrix.mat']; % can be path to file
 DistanceCutoff = 10; % in mm; usually between 10 to 30 mm works well.
 GraphDensities = flip([0.0001 0.0002 0.0005 0.001 0.002 0.005 0.01 0.02 0.05]); % Lynch is taking 0.001 (i.e. 0.1%)

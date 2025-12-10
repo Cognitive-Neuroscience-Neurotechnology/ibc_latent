@@ -18,7 +18,8 @@ WORK_DIR=/ptmp/hmueller2/Downloads/fmriprep_work_old
 FS_LICENSE=/ptmp/hmueller2/Downloads/license.txt
 TF_CACHE=/ptmp/hmueller2/templateflow
 
-# Fix unexpanded ${HOME} in APPTAINER_BIND
+# Read the subject ID from the config file
+# SUBJECT=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $CONFIG_FILE | awk '{print $1}')
 unset APPTAINER_BIND
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,${HOME}"
 

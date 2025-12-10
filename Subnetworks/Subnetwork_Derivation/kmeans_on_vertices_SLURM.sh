@@ -10,8 +10,6 @@
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
-#
-
 container=/home/rglz/containers/gfae.sif
 working_dir=/ptmp/hmueller2/Downloads
 
@@ -21,9 +19,11 @@ line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 subject=$(echo "$line" | awk '{print $1}')
 
 # Single-subject override (was previously read via SLURM_ARRAY_TASK_ID and sed)
- # subject=06
+#subject=06
 
 echo "Processing subject: sub-${subject}"
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/kmeans_on_vertices_copy.py --subject ${subject}
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/kmeans_on_vertices.py --subject ${subject}
+
+# run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/kmeans_on_vertices_SLURM.sh

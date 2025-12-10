@@ -1,12 +1,10 @@
 #!/bin/bash -l
  
 #SBATCH --job-name=subn_infomap
-#SBATCH --output=/ptmp/hmueller2/subnetworks_infomap_logs/output/%A_%x.out
-#SBATCH --error=/ptmp/hmueller2/subnetworks_infomap_logs/errors/%A_%x.err
-#SBATCH --exclusive=user
-#SBATCH --cpus-per-task=8
+#SBATCH --output=/ptmp/hmueller2/subnetworks_infomap_logs/output/%A_%x_%a_%u.out
+#SBATCH --error=/ptmp/hmueller2/subnetworks_infomap_logs/errors/%A_%x_%a_%u.err
 #SBATCH --array=0-7   # 8 subjects, index 0 to 7
-#SBATCH --time=24:00:00
+#SBATCH --time=1:00:00
 #SBATCH --partition=thin
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
@@ -26,8 +24,8 @@ echo "Processing subject: sub-${subject}"
 
 # Then use it to run bash out of the singularity container
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/get_FPN_communities.py --subject ${subject} --dir ${working_dir}
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/get_FPN_communities.py --subject ${subject} --dir ${working_dir}
 
 exit 0
 
-# run as: sbatch get_FPN_comms_SLURM.sh
+# run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/get_FPN_comms_SLURM.sh

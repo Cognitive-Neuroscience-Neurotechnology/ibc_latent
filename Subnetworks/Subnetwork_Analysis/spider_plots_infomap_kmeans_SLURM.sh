@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=spider_kmeans
+#SBATCH --job-name=spider_infomap
 #SBATCH --output=/ptmp/hmueller2/spider_logs/output/%A_%x_%a_%u.out
 #SBATCH --error=/ptmp/hmueller2/spider_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=compute

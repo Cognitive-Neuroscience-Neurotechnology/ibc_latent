@@ -3,7 +3,7 @@
 #SBATCH --job-name=kmeans_com
 #SBATCH --output=/ptmp/hmueller2/kmeans_comms_logs/output/%A_%x_%a_%u.out
 #SBATCH --error=/ptmp/hmueller2/kmeans_comms_logs/errors/%A_%x_%a_%u.err
-#SBATCH --partition=thin
+#SBATCH --partition=compute
 #SBATCH --exclusive=user
 #SBATCH --array=0-7
 #SBATCH --time=1:00:00 
@@ -20,13 +20,13 @@ working_dir=/ptmp/hmueller2/Downloads
 config_file=/ptmp/hmueller2/Downloads/subjects_resting.txt
 line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 subject=$(echo "$line" | awk '{print $1}')
+#subject="06"  # For testing only
 
-# Single-subject override (was previously read via SLURM_ARRAY_TASK_ID and sed)
-#subject=06
 echo "Processing subject: sub-${subject}"
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/kmeans_on_communities.py --subject ${subject} --dir ${working_dir}
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/kmeans_on_communities.py --subject ${subject} --dir ${working_dir}
 
 exit 0
 
+# run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Derivation/kmeans_on_comms_SLURM.sh

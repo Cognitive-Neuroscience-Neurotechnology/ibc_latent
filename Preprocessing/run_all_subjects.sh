@@ -4,7 +4,6 @@
 #SBATCH --output=/ptmp/hmueller2/pipeline_logs/output/ibc_preproc_%A_%a.out
 #SBATCH --error=/ptmp/hmueller2/pipeline_logs/errors/ibc_preproc_%A_%a.err
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --time=48:00:00
 #SBATCH --partition=compute
@@ -17,7 +16,6 @@ export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects_resting.txt
 CONTAINER=/home/rglz/containers/gfae.sif
 
-# subject="09"
 subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
 
 sessions=($(ls -d /ptmp/hmueller2/Downloads/fmriprep_out/sub-${subject}/ses-* 2>/dev/null | xargs -n1 basename | sed 's/^ses-//'))
@@ -64,3 +62,5 @@ for sess in "${sessions[@]}"; do
     done
   done
 done
+
+# run with: sbatch Preprocessing/run_all_subjects.sh

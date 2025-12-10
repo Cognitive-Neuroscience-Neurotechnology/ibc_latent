@@ -5,7 +5,7 @@
 #SBATCH --error=/ptmp/hmueller2/plotting_brain_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=thin
 #SBATCH --exclusive=user
-#SBATCH --array=0-7   # Adjust to number of subjects in subjects_resting.txt
+# #SBATCH --array=0-7   # Adjust to number of subjects in subjects_resting.txt
 #SBATCH --time=2:00:00
 #SBATCH --mail-type=FAIL,TIME_LIMIT
 
@@ -17,9 +17,9 @@ chmod +x "${script}" || true
 
 # Read subject from config file
 config_file=/ptmp/hmueller2/Downloads/subjects_resting.txt
-line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
-subject=$(echo "$line" | awk '{print $1}')
-#subject="07"
+#line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
+#subject=$(echo "$line" | awk '{print $1}')
+subject="07"
 
 echo "Processing subject: sub-${subject}"
 

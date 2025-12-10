@@ -18,7 +18,7 @@ echo "Running group-level aggregation"
 echo "=========================================="
 
 srun apptainer exec ${container} python \
-    /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/aggregate_subjects.py
+    #/home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/aggregate_subjects.py
 
 if [ $? -eq 0 ]; then
     echo "✓ Group-level aggregation complete!"

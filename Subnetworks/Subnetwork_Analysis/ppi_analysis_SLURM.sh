@@ -5,7 +5,7 @@
 #SBATCH --error=/ptmp/hmueller2/ppi_analysis_logs/errors/%A_%x_%a_%u.err
 #SBATCH --partition=compute
 #SBATCH --exclusive=user
-#SBATCH --array=0-7   # Adjust to number of subjects
+#SBATCH --array=0-7   # Adjust to number of subjects -1
 #SBATCH --time=6:00:00
 #SBATCH --mail-type=FAIL,TIME_LIMIT
 
@@ -27,12 +27,12 @@ export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
 # Run PPI analysis
 echo "Running PPI analysis for sub-${subject}..."
-srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/ppi_analysis_gPPI.py ${subject}
+#srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/ppi_analysis_gPPI.py ${subject}
 #srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/ppi_analysis_plots.py ${subject}
-
+srun apptainer exec ${container} python /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/ppi_analysis_DMN_DAN.py ${subject}
 
 if [ $? -ne 0 ]; then
-    echo "ERROR: ppi_analysis.py failed for sub-${subject}"
+    echo "ERROR: PPI analysis failed for sub-${subject}"
     exit 1
 fi
 

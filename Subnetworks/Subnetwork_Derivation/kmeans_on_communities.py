@@ -112,10 +112,25 @@ print("----- 02. Extract timeseries per FPN community & correlate with other LSN
 
 subnetworks_file = os.path.join(subnetworks_dir, 'FPN_communities.dscalar.nii')
 
-# Load subnetwork labels (dscalar)
-subnetworks = RR.load_data(subnetworks_file)
-subnetworks = np.squeeze(subnetworks)  # ensure 1D if possible
-print(f"Subnetworks array shape: {subnetworks.shape}")
+# Load subnetwork labels (dscalar) - will be 91k after your padding fix
+subnetworks_full = RR.load_data(subnetworks_file)
+subnetworks_full = np.squeeze(subnetworks_full)  # ensure 1D
+
+# RESTRICT TO CORTEX ONLY FOR CLUSTERING
+CORTEX_SIZE = 64984
+if subnetworks_full.shape[0] == 91282:
+    print(f"  Subnetworks file is 91k. Restricting to cortex ({CORTEX_SIZE}) for clustering...")
+    subnetworks = subnetworks_full[:CORTEX_SIZE]
+elif subnetworks_full.shape[0] == CORTEX_SIZE:
+    print(f"✓ Subnetworks already cortex-only ({CORTEX_SIZE})")
+    subnetworks = subnetworks_full
+else:
+    raise ValueError(f"Unexpected subnetworks size: {subnetworks_full.shape[0]}")
+
+print(f"Subnetworks array shape (for clustering): {subnetworks.shape}")
+unique_vals = np.unique(subnetworks[subnetworks != 0])
+print(f"Number of cortical communities: {len(unique_vals)}")
+
 unique_vals = np.unique(subnetworks[subnetworks != 0])
 print(f"Number of communities: {len(unique_vals)}")
 communities = unique_vals
@@ -196,7 +211,9 @@ scaler = StandardScaler()
 distance_matrix = scaler.fit_transform(distance_matrix)
 
 output_file=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans.dscalar.nii')
-n_clusters=range(1,corr_matrix_SNs.shape[0]+1) # made robust, bc different numbers of SNs present
+n_samples = distance_matrix.shape[0]
+max_k = min(10, n_samples)  # Don't exceed available communities
+n_clusters = list(range(1, max_k + 1))  # Start from k=1
 
 cluster_results, inertia, silhouette_scores, kmeans_list = RR.kmeans_standard(
     n_clusters, 
@@ -266,24 +283,38 @@ print(f"Saved metrics CSV: {csv_path}")
 
 # ADD: remap labels to all vertices and save as dscalar
 print("Writing per-vertex cluster assignments to dscalar...")
-subnetworks = np.squeeze(subnetworks).astype(int)  # community id per vertex (0=bg), shape ~ (91282,)
+
+# CRITICAL: Use the FULL 91k array for output mapping
+subnetworks_output = np.squeeze(subnetworks_full).astype(int)  # ← 91k array (includes padded subcortex)
+
 all_maps = []
 map_names = []
 for k in n_clusters:
     labels = cluster_results[k-1, :].astype(int)  # len = n_communities
-    vertex_labels = np.zeros_like(subnetworks, dtype=np.int32)
+    
+    # Create 91k output array (cortex gets cluster labels, subcortex stays 0)
+    vertex_labels = np.zeros_like(subnetworks_output, dtype=np.int32)  # ← 91282 length
+    
     for j, comm_id in enumerate(ids):
-        mask = (subnetworks == comm_id)
+        # Match communities in the FULL 91k array
+        mask = (subnetworks_output == comm_id)  # Will only match cortical vertices
         if mask.any():
             vertex_labels[mask] = labels[j] + 1  # keep 0 as background
+    
     all_maps.append(vertex_labels.astype(np.float32))
     map_names.append(f'k={k}')
-stacked = np.stack(all_maps, axis=0)  # (num_k, 91282)
 
-bm_axis = dtseries_img.header.get_axis(1)  # reuse BrainModel geometry
+stacked = np.stack(all_maps, axis=0)  # (num_k, 91282) ← Must be 91k!
+
+# Diagnostic output
+print(f"Output dscalar shape: {stacked.shape}")
+print(f"  Cortical vertices with labels: {(stacked[0, :64984] > 0).sum()}")
+print(f"  Subcortical vertices (should be 0): {(stacked[0, 64984:] > 0).sum()}")
+
+bm_axis = dtseries_img.header.get_axis(1)  # 91k BrainModelAxis
 sc_axis = ScalarAxis(map_names)
 nib.save(Cifti2Image(stacked, (sc_axis, bm_axis)), output_file)
-print(f"Saved dscalar: {output_file}")
+print(f"Saved 91k dscalar with cortex-only clusters: {output_file}")
 
 label_table = os.path.join(working_dir, 'subnetworks', 'label_table_infomap_kmeans.txt')
 out_dlabel=os.path.join(subnetworks_dir, f'{subject}_FPN_infomap_communities_kmeans.dlabel.nii')

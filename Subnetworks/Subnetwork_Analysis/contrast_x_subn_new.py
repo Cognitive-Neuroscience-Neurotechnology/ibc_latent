@@ -5,6 +5,8 @@ Approach A (Primary): Compare mean z-score activations between subnetworks
 Approach B (Validation): Calculate overlap with thresholded activation maps
 
 Goal: Identify distinct functional roles (e.g., introspective vs visuospatial)
+
+After this, run "aggregate_subjects.py"
 """
 
 import sys

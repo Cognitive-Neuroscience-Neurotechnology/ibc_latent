@@ -26,14 +26,15 @@ sub_str = f"sub-{subject}"                       # "sub-04"
 00. set up directories
 """
 # Output directory for spider plots
-kmeans_dir = os.path.join(working_dir, 'subnetworks', 'kmeans', sub_str)
-output_dir = os.path.join(working_dir, 'subnetworks', 'kmeans')
-spider_plot_dir = os.path.join(output_dir, "spider_plots")
+subnetwork_dir = os.path.join(working_dir, 'subnetworks')
+kmeans_dir = os.path.join(subnetwork_dir, 'kmeans', sub_str)
+spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots')
+infomap_dir = os.path.join(working_dir, 'individual_networks')
 os.makedirs(spider_plot_dir, exist_ok=True)
 
 # Set ptseries and relabeled kmeans paths
 parc_filename = os.path.join(
-    working_dir, 'individual_networks', sub_str, 'resting_state', f'{sub_str}_individual_nets_concat.ptseries.nii'
+    infomap_dir, sub_str, 'resting_state', f'{sub_str}_individual_nets_concat.ptseries.nii'
 )
 relabeled_kmeans_path = os.path.join(
     kmeans_dir, f'{sub_str}_kmeans_on_vertices_relabeled.dtseries.nii'
@@ -56,7 +57,7 @@ print("timeseries_data shape:", timeseries_data.shape)
 
 # Load vertex-level dtseries for subnetwork timeseries extraction
 dtseries_path = os.path.join(
-    working_dir, 'individual_networks', sub_str, 'resting_state', f'{sub_str}_all-tasks_concatenated_cleaned_fsLR_cortexOnly.dtseries.nii'
+    infomap_dir, sub_str, 'resting_state', f'{sub_str}_all-tasks_concatenated_cleaned_fsLR_cortexOnly.dtseries.nii'
 )
 dtseries_concat = RR.load_data(dtseries_path)
 print("dtseries_concat shape:", dtseries_concat.shape)
@@ -88,7 +89,7 @@ k_values = [2]  # Using k=2 for relabeled results
 corr_matrices = {k: {f'{i}': None for i in range(1, k + 1)} for k in k_values}
 
 # Load colors from label table
-label_table_file = os.path.join(working_dir, 'subnetworks', 'label_table_infomap_kmeans.txt')
+label_table_file = os.path.join(subnetwork_dir, 'label_table_infomap_kmeans.txt')
 raw_colors = {}
 with open(label_table_file, 'r') as f:
     lines = [ln.strip() for ln in f if ln.strip()]
@@ -172,6 +173,6 @@ for k in k_values:
                           minimal=False)
 
 # Save correlation matrices
-filename_pkl = os.path.join(output_dir, f'{sub_str}_corr_matrices.pkl')
+filename_pkl = os.path.join(kmeans_dir, f'{sub_str}_corr_matrices.pkl')
 RR.pickle_save(filename_pkl, corr_matrices)
 print(f"Saved correlation matrices to {filename_pkl}")

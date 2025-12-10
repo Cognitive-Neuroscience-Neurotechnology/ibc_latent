@@ -29,18 +29,19 @@ sub_str = f"sub-{subject}"                       # "sub-04"
 """
 # Output (and kmeans) directory
 subnetwork_dir = os.path.join(working_dir, 'subnetworks')
-kmeans_dir = os.path.join(working_dir, 'subnetworks', 'infomap', sub_str)
-spider_plot_dir = os.path.join(subnetwork_dir, "spider_plots")
-scatter_plot_dir = os.path.join(subnetwork_dir, "scatter_plots")
+kmeans_dir = os.path.join(subnetwork_dir, 'infomap', sub_str)
+spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots')
+infomap_dir = os.path.join(working_dir, 'individual_networks')
+#scatter_plot_dir = os.path.join(subnetwork_dir, 'scatter_plots')
 os.makedirs(spider_plot_dir, exist_ok=True)
-os.makedirs(scatter_plot_dir, exist_ok=True)
+#os.makedirs(scatter_plot_dir, exist_ok=True)
 
 # Set ptseries and dtseries paths directly
 parc_filename = os.path.join(
-    working_dir, 'individual_networks', sub_str, 'resting_state', f'{sub_str}_individual_nets_concat.ptseries.nii'
+    infomap_dir, sub_str, 'resting_state', f'{sub_str}_individual_nets_concat.ptseries.nii'
 )
 dtseries_path = os.path.join(
-    working_dir, 'individual_networks', sub_str, 'resting_state', f'{sub_str}_all-tasks_concatenated_cleaned_fsLR_cortexOnly.dtseries.nii'
+    infomap_dir, sub_str, 'resting_state', f'{sub_str}_all-tasks_concatenated_cleaned_fsLR_cortexOnly.dtseries.nii'
 )
 
 # concatenate parcellated sessions
@@ -198,16 +199,18 @@ for k in k_values:
                                    corr_matrices=corr_matrices[k],
                                    labels=labels,
                                    network_names=network_names,
-                                   filename_base=f'kmeans_{k}',
+                                   filename_base=f'infomap_{k}',
                                    minimal=False)
 
+# Save correlation matrices
 filename_pkl = os.path.join(kmeans_dir, f'{sub_str}_corr_matrices.pkl')
 RR.pickle_save(filename_pkl, corr_matrices)
+print(f"Saved correlation matrices to {filename_pkl}")
 
 
 """
-04. Scatter plot DMN/DAN connectivity (per-community, colored by subnetwork)
-"""
+05. Scatter plot DMN/DAN connectivity (per-community, colored by subnetwork)
+
 print("Plotting DAN/DMN Connectivity by community...")
 
 # Indices of DMN and DAN networks in network_names
@@ -285,7 +288,7 @@ for k in k_values:
         plt.savefig(scatter_out, dpi=150)
         plt.close()
         print(f"Saved scatter: {scatter_out}")
-
+"""
 
 
 

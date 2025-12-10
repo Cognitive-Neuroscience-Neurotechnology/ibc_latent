@@ -4,12 +4,12 @@ set -euo pipefail
 # --------------------- USER SETTINGS ---------------------
 sub="$1"
 
-APPROACH="infomap"   # Options: "infomap", "kmeans"
-SURFACE="very_inflated"  # Options: "inflated", "very_inflated"
+APPROACH="kmeans"   # Options: "infomap", "kmeans"
+SURFACE="inflated"  # Options: "inflated", "very_inflated"
 
 # Adjust these if needed
 WORKING_DIR="/ptmp/hmueller2/Downloads"
-SUBNETWORK_DIR="${WORKING_DIR}/subnetworks_october"
+SUBNETWORK_DIR="${WORKING_DIR}/subnetworks"
 APPROACH_DIR="${SUBNETWORK_DIR}/${APPROACH}"
 MASKS_DIR="${WORKING_DIR}/fsLR_masks"
 OUT_DIR="${SUBNETWORK_DIR}/brain_plots_k2_wb"
@@ -95,30 +95,35 @@ echo "-> Creating subject-specific scene from template..."
 
 SUBJ_SCENE="${OUT_PREFIX}_scene.scene"
 
-# Copy template
+# Copy template for all subjects
 cp "${TEMPLATE_SCENE}" "${SUBJ_SCENE}"
 
-# Replace subject ID (sub-07 from template)
-sed -i "s|sub-07|sub-${sub}|g" "${SUBJ_SCENE}"
+# For non-07 subjects, update subject ID
+if [ "${sub}" != "07" ]; then
+    # Replace subject ID (sub-07 from template)
+    sed -i "s|sub-07|sub-${sub}|g" "${SUBJ_SCENE}"
+    
+    # Update the filename pattern to include current subject ID
+    sed -i "s|07_FPN_infomap|${sub}_FPN_infomap|g" "${SUBJ_SCENE}"
+fi
 
-# Update the filename pattern to include current subject ID
-sed -i "s|07_FPN_infomap|${sub}_FPN_infomap|g" "${SUBJ_SCENE}"
-
-# Replace approach in path if needed
-sed -i "s|/infomap/|/${APPROACH}/|g" "${SUBJ_SCENE}"
-
-# Update filename pattern for kmeans approach
+# Update approach-specific paths for ALL subjects (including 07)
 if [ "${APPROACH}" = "kmeans" ]; then
+    # Replace approach in path
+    sed -i "s|/infomap/|/${APPROACH}/|g" "${SUBJ_SCENE}"
+    
+    # Update filename pattern for kmeans
     sed -i "s|${sub}_FPN_infomap_communities_kmeans_relabeled|sub-${sub}_kmeans_on_vertices_relabeled|g" "${SUBJ_SCENE}"
+    sed -i "s|07_FPN_infomap_communities_kmeans_relabeled|sub-${sub}_kmeans_on_vertices_relabeled|g" "${SUBJ_SCENE}"
 fi
 
 # Verify the replacement worked
 echo "Checking scene file references..."
-if grep -q "sub-07" "${SUBJ_SCENE}"; then
+if [ "${sub}" != "07" ] && grep -q "sub-07" "${SUBJ_SCENE}"; then
     echo "⚠ WARNING: Scene still contains sub-07 references!"
     grep "sub-07" "${SUBJ_SCENE}" | head -3
 else
-    echo "✓ Scene updated to reference sub-${sub}"
+    echo "✓ Scene updated to reference sub-${sub} with approach ${APPROACH}"
 fi
 
 # --------------------- STEP 4: Automated rendering ---------------------

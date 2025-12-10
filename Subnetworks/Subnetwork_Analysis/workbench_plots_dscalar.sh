@@ -4,13 +4,13 @@ set -euo pipefail
 # --------------------- USER SETTINGS ---------------------
 sub="$1"
 
-APPROACH="infomap"   # Options: "infomap", "kmeans"
-SURFACE="very_inflated"  # Options: "inflated", "very_inflated"
+APPROACH="kmeans"   # Options: "infomap", "kmeans"
+SURFACE="inflated"  # Options: "inflated", "very_inflated"
 SCENE_NAME="CortexOnly"   # "CortexOnly" for cortex.scene -- "WhiteScene" for template.scene
 
 # Adjust these if needed
 WORKING_DIR="/ptmp/hmueller2/Downloads"
-SUBNETWORK_DIR="${WORKING_DIR}/subnetworks_october"
+SUBNETWORK_DIR="${WORKING_DIR}/subnetworks"
 APPROACH_DIR="${SUBNETWORK_DIR}/${APPROACH}"
 MASKS_DIR="${WORKING_DIR}/fsLR_masks"
 OUT_DIR="${SUBNETWORK_DIR}/brain_plots_k2_wb"

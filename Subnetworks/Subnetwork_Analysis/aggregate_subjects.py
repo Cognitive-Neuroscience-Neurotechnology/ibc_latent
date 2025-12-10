@@ -1,6 +1,8 @@
 """
 Aggregate contrast × subnetwork results across subjects.
 Performs group-level statistics with proper multiple comparison correction.
+
+After this, run "aggregate_subjects.py"
 """
 
 import pandas as pd
@@ -105,8 +107,9 @@ cols_order = ['task_contrast', 'task', 'contrast', 'dominant_network',
 group_stats = group_stats[cols_order]
 
 # Save
-output_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results'
+output_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis'
 output_path = os.path.join(output_dir, 'group_level_stats.csv')
+os.makedirs(output_dir, exist_ok=True)
 group_stats.to_csv(output_path, index=False)
 
 print(f"✓ Group-level stats saved: {output_path}\n")
@@ -181,10 +184,6 @@ print(f"{'='*70}")
 print("GENERATING GROUP-LEVEL VISUALIZATIONS")
 print(f"{'='*70}\n")
 
-# Create output directory for plots
-plot_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis/plots'
-os.makedirs(plot_dir, exist_ok=True)
-
 # Set up plotting style
 sns.set_style("whitegrid")
 plt.rcParams['figure.dpi'] = 300
@@ -234,7 +233,7 @@ legend_elements = [
 ax.legend(handles=legend_elements, loc='best', fontsize=9)
 
 plt.tight_layout()
-plot1_path = os.path.join(plot_dir, 'group_effect_size_distribution.png')
+plot1_path = os.path.join(output_dir, 'group_effect_size_distribution.png')
 plt.savefig(plot1_path, dpi=300, bbox_inches='tight')
 plt.close()
 print(f"✓ Plot 1 saved: {plot1_path}")
@@ -256,7 +255,7 @@ else:
 # Top FPN_A contrasts
 top_a_df = group_stats.nlargest(15, 'mean_diff_a_minus_b_mean')
 y_pos_a = np.arange(len(top_a_df))
-colors_a = ['darkred' if row['significant_fdr_0.10'] else 'lightcoral' 
+colors_a = ['teal' if row['significant_fdr_0.10'] else '#008080'  # light teal
             for _, row in top_a_df.iterrows()]
 
 ax1.barh(y_pos_a, top_a_df['mean_diff_a_minus_b_mean'], 
@@ -264,7 +263,7 @@ ax1.barh(y_pos_a, top_a_df['mean_diff_a_minus_b_mean'],
          color=colors_a, capsize=3)
 ax1.set_yticks(y_pos_a)
 ax1.set_yticklabels([f"{row['task'][:18]}:\n{row['contrast'][:35]}" 
-                      for _, row in top_a_df.iterrows()], fontsize=7)
+                      for _, row in top_a_df.iterrows()], fontsize=10)
 ax1.set_xlabel('Mean Z-score Difference ± SEM', fontsize=11, fontweight='bold')
 ax1.set_title('TOP 15: FPN_A Dominant', 
               fontsize=12, fontweight='bold')
@@ -274,7 +273,7 @@ ax1.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
 # Top FPN_B contrasts
 top_b_df = group_stats.nsmallest(15, 'mean_diff_a_minus_b_mean')
 y_pos_b = np.arange(len(top_b_df))
-colors_b = ['darkblue' if row['significant_fdr_0.10'] else 'lightblue' 
+colors_b = ['navy' if row['significant_fdr_0.10'] else '#000080'  # blue
             for _, row in top_b_df.iterrows()]
 
 ax2.barh(y_pos_b, top_b_df['mean_diff_a_minus_b_mean'],
@@ -282,7 +281,7 @@ ax2.barh(y_pos_b, top_b_df['mean_diff_a_minus_b_mean'],
          color=colors_b, capsize=3)
 ax2.set_yticks(y_pos_b)
 ax2.set_yticklabels([f"{row['task'][:18]}:\n{row['contrast'][:35]}" 
-                      for _, row in top_b_df.iterrows()], fontsize=7)
+                      for _, row in top_b_df.iterrows()], fontsize=10)
 ax2.set_xlabel('Mean Z-score Difference ± SEM', fontsize=11, fontweight='bold')
 ax2.set_title('TOP 15: FPN_B Dominant', 
               fontsize=12, fontweight='bold')
@@ -292,7 +291,7 @@ ax2.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
 plt.suptitle(f'Group-Level Strongest Functional Differentiation (N={len(result_files)} subjects)', 
              fontsize=14, fontweight='bold', y=0.995)
 plt.tight_layout()
-plot2_path = os.path.join(plot_dir, 'group_top_contrasts_comparison.png')
+plot2_path = os.path.join(output_dir, 'group_top_contrasts_comparison.png')
 plt.savefig(plot2_path, dpi=300, bbox_inches='tight')
 plt.close()
 print(f"✓ Plot 2 saved: {plot2_path}")
@@ -327,7 +326,7 @@ for i, (_, row) in enumerate(task_stats.iterrows()):
             bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7))
 
 plt.tight_layout()
-plot3_path = os.path.join(plot_dir, 'group_task_summary_with_variability.png')
+plot3_path = os.path.join(output_dir, 'group_task_summary_with_variability.png')
 plt.savefig(plot3_path, dpi=300, bbox_inches='tight')
 plt.close()
 print(f"✓ Plot 3 saved: {plot3_path}")
@@ -375,7 +374,7 @@ ax.legend(loc='best', fontsize=9)
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plot4_path = os.path.join(plot_dir, 'group_volcano_plot.png')
+plot4_path = os.path.join(output_dir, 'group_volcano_plot.png')
 plt.savefig(plot4_path, dpi=300, bbox_inches='tight')
 plt.close()
 print(f"✓ Plot 4 saved: {plot4_path}")
@@ -426,7 +425,7 @@ ax2.set_title('TOP 10 FPN_B Contrasts:\nAcross-Subject Variability',
 plt.suptitle(f'Individual Subject Variability (N={len(result_files)} subjects)', 
              fontsize=14, fontweight='bold', y=0.995)
 plt.tight_layout()
-plot5_path = os.path.join(plot_dir, 'group_subject_variability_boxplots.png')
+plot5_path = os.path.join(output_dir, 'group_subject_variability_boxplots.png')
 plt.savefig(plot5_path, dpi=300, bbox_inches='tight')
 plt.close()
 print(f"✓ Plot 5 saved: {plot5_path}")
@@ -434,7 +433,7 @@ print(f"✓ Plot 5 saved: {plot5_path}")
 print(f"\n{'='*70}")
 print("VISUALIZATION SUMMARY")
 print(f"{'='*70}")
-print(f"Generated 5 group-level plots in: {plot_dir}")
+print(f"Generated 5 group-level plots in: {output_dir}")
 print(f"1. Effect size distribution (all {len(group_stats)} contrasts)")
 print(f"2. Top 15 contrasts for each subnetwork with SEM")
 print(f"3. Task-level summary with SD across contrasts")

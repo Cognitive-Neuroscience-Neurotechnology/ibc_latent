@@ -576,10 +576,186 @@ def create_violin_plots_separate(df, merged_df, output_dir, top_n=10):
     
     return plot_fpna_path, plot_fpnb_path
 
+def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
+    """
+    Create a double-panel figure:
+      Left: top-N contrasts favoring FPN-A
+      Right: top-N contrasts favoring FPN-B
+    Each point is one subject's Cohen's d (FPN-A - FPN-B).
+    """
+    print("\n[EXTRA] Creating contrast-level double-panel violin figure...")
+
+    # ---- 1. Load subject-level data ----
+    subject_files = []
+    for subject_dir in os.listdir(results_base):
+        if not subject_dir.startswith('sub-'):
+            continue
+        subj_path = os.path.join(results_base, subject_dir)
+        if not os.path.isdir(subj_path):
+            continue
+
+        for task in os.listdir(subj_path):
+            task_path = os.path.join(subj_path, task)
+            stats_file = os.path.join(task_path, 'subnetwork_stats.csv')
+            if os.path.exists(stats_file):
+                try:
+                    df_subj = pd.read_csv(stats_file)
+                    df_subj['subject'] = subject_dir.replace('sub-', '')
+                    # Expect columns: task, contrast, cohens_d, etc.
+                    subject_files.append(df_subj)
+                except Exception:
+                    pass
+
+    if len(subject_files) == 0:
+        print("    ⚠ No subject-level data found; cannot create contrast violin figure.")
+        return None
+
+    subj_all = pd.concat(subject_files, ignore_index=True)
+    print(f"    ✓ Loaded subject-level data: {len(subj_all)} rows from {subj_all['subject'].nunique()} subjects")
+
+    # ---- 2. Aggregate per contrast (mean d, consistency) ----
+    def contrast_agg(group):
+        d_vals = group['cohens_d'].values
+        return pd.Series({
+            'mean_d': np.mean(d_vals),
+            'n_subj': len(d_vals),
+            'consistency_pos': (d_vals > 0).mean(),  # P(FPN-A > FPN-B)
+            'consistency_neg': (d_vals < 0).mean()   # P(FPN-B > FPN-A)
+        })
+
+    contrast_stats = subj_all.groupby(['task', 'contrast']).apply(contrast_agg).reset_index()
+
+    # Rank by mean_d
+    top_fpna = contrast_stats.sort_values('mean_d', ascending=False).head(top_n).copy()
+    top_fpnb = contrast_stats.sort_values('mean_d', ascending=True).head(top_n).copy()
+
+    print(f"    Top FPN-A contrasts:\n{top_fpna[['task','contrast','mean_d','consistency_pos']].to_string(index=False)}")
+    print(f"    Top FPN-B contrasts:\n{top_fpnb[['task','contrast','mean_d','consistency_neg']].to_string(index=False)}")
+
+    # Subset subject-level data to only those contrasts
+    def subset_subjects(top_table):
+        merged = pd.merge(
+            subj_all,
+            top_table[['task', 'contrast']],
+            on=['task', 'contrast'],
+            how='inner'
+        )
+        # Create a shorter label for plotting
+        merged['label'] = merged['task'].astype(str) + " | " + merged['contrast'].astype(str)
+        return merged
+
+    fpna_subj = subset_subjects(top_fpna)
+    fpnb_subj = subset_subjects(top_fpnb)
+
+    # Order labels by mean_d within each side
+    fpna_order = (
+        fpna_subj.groupby('label')['cohens_d']
+        .mean()
+        .sort_values(ascending=True)  # ascending so strongest is at top (last)
+        .index.tolist()
+    )
+    fpnb_order = (
+        fpnb_subj.groupby('label')['cohens_d']
+        .mean()
+        .sort_values(ascending=True)
+        .index.tolist()
+    )
+
+    # ---- 3. Create double-panel figure ----
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        'font.size': 16,
+        'axes.titlesize': 20,
+        'axes.labelsize': 18,
+        'xtick.labelsize': 14,
+        'ytick.labelsize': 14
+    })
+
+    fig, axes = plt.subplots(1, 2, figsize=(20, 10), sharex=True, sharey=False)
+
+    # Helper to plot one side
+    def plot_side(ax, data, order, title, color):
+        # Violin (or box) + all subject points
+        # We’ll use a simple boxplot to keep the abstract figure clean.
+        positions = np.arange(len(order))
+
+        plot_data = [data[data['label'] == lbl]['cohens_d'].values for lbl in order]
+
+        bp = ax.boxplot(
+            plot_data,
+            vert=False,
+            positions=positions,
+            widths=0.6,
+            patch_artist=True,
+            showfliers=False,
+            medianprops=dict(color='black', linewidth=2),
+            boxprops=dict(linewidth=1.5),
+            whiskerprops=dict(linewidth=1.5),
+            capprops=dict(linewidth=1.5)
+        )
+
+        for patch in bp['boxes']:
+            patch.set_facecolor(color)
+            patch.set_alpha(0.25)
+
+        # Overlay all subjects (jittered)
+        for i, lbl in enumerate(order):
+            vals = data[data['label'] == lbl]['cohens_d'].values
+            y = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
+            ax.scatter(
+                vals,
+                y,
+                s=40,
+                color=color,
+                edgecolors='black',
+                linewidth=0.5,
+                alpha=0.7,
+                zorder=3
+            )
+
+        ax.set_yticks(positions)
+        ax.set_yticklabels(order)
+        ax.set_title(title, fontweight='bold', pad=15)
+        ax.axvline(0, color='black', linestyle='--', linewidth=1.5, alpha=0.8)
+        ax.grid(axis='x', alpha=0.3)
+
+    plot_side(
+        axes[0],
+        fpna_subj,
+        fpna_order,
+        f"Top {top_n} Contrasts Favoring FPN-A",
+        color="#008B8B"  # teal
+    )
+    plot_side(
+        axes[1],
+        fpnb_subj,
+        fpnb_order,
+        f"Top {top_n} Contrasts Favoring FPN-B",
+        color="#1f77b4"  # blue
+    )
+
+    # Shared x-axis label
+    fig.supxlabel("Cohen's d (FPN-A − FPN-B)", fontsize=20, fontweight='bold', y=0.04)
+
+    plt.tight_layout(rect=[0.05, 0.06, 0.98, 0.97])
+    out_path = os.path.join(output_dir, "top_contrasts_fpna_fpnb_doublepanel.png")
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"    ✓ Saved double-panel contrast figure: {out_path}")
+    return out_path
+
 # Create violin plots based on composite score ranking
 plot_fpna, plot_fpnb = create_violin_plots_separate(domain_df_composite, merged, output_dir)
 print(f"  ✓ Saved FPN-A violin plot: {plot_fpna}")
 print(f"  ✓ Saved FPN-B violin plot: {plot_fpnb}")
+
+# Create double-panel contrast-level violin plot
+doublepanel_path = create_contrast_violin_double_panel(
+    results_base='/ptmp/hmueller2/Downloads/subnetwork_analysis_results',
+    output_dir=output_dir,
+    top_n=10
+)
+print(f"  ✓ Saved double-panel abstract figure: {doublepanel_path}")
 
 print("\n" + "="*60)
 print("ANALYSIS COMPLETE!")
@@ -598,3 +774,4 @@ print(f"  - domain_effect_vs_consistency.png")
 print(f"  - ranking_method_comparison.png")
 print(f"  - top_domains_fpna_violin.png")
 print(f"  - top_domains_fpnb_violin.png")
+print(f"  - top_contrasts_fpna_fpnb_doublepanel.png")

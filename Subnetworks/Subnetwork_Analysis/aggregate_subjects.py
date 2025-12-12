@@ -1,8 +1,6 @@
 """
 Aggregate contrast × subnetwork results across subjects.
 Performs group-level statistics with proper multiple comparison correction.
-
-After this, run "aggregate_subjects.py"
 """
 
 import pandas as pd

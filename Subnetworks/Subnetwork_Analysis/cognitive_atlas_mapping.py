@@ -76,6 +76,34 @@ def parse_tags(tag_str):
 
 merged['parsed_tags'] = merged['tags'].apply(parse_tags)
 
+# Merge hand response domains and cardinal direction domains
+def merge_cognitive_tags(tag_list):
+    """
+    Merge related cognitive tags into unified categories:
+    - left_hand/right_hand response execution -> hand_response_execution
+    - north/south/east/west cardinal-direction judgment -> cardinal-direction_judgment
+    """
+    if not isinstance(tag_list, list):
+        return tag_list
+    
+    merged_tags = []
+    for tag in tag_list:
+        # Merge hand response execution
+        if tag in ['left_hand_response_execution', 'right_hand_response_execution']:
+            if 'hand_response_execution' not in merged_tags:
+                merged_tags.append('hand_response_execution')
+        # Merge cardinal direction judgments
+        elif tag in ['south_cardinal-direction_judgment', 'north_cardinal-direction_judgment', 
+                     'east_cardinal-direction_judgment', 'west_cardinal-direction_judgment']:
+            if 'cardinal-direction_judgment' not in merged_tags:
+                merged_tags.append('cardinal-direction_judgment')
+        else:
+            merged_tags.append(tag)
+    
+    return merged_tags
+
+merged['parsed_tags'] = merged['parsed_tags'].apply(merge_cognitive_tags)
+
 # Count tags per contrast
 merged['n_tags'] = merged['parsed_tags'].apply(len)
 print(f"  Average tags per contrast: {merged['n_tags'].mean():.1f}")
@@ -248,72 +276,10 @@ if len(domain_df_highquality) > 0:
     print("\nTOP 10:")
     print(domain_df_highquality.head(10)[['cognitive_domain', 'n_contrasts', 'mean_cohens_d', 'p_fdr', 'consistency']].to_string(index=False))
 
-# ========== 9. VISUALIZATIONS FOR EACH APPROACH ==========
+# ========== 9. VISUALIZATIONS ==========
 print("\n[8/9] Generating visualizations...")
 
-def create_bar_plot(df, title_suffix, filename_suffix, top_n=20):
-    """Create horizontal bar plot of top domains."""
-    fig, ax = plt.subplots(figsize=(12, 10))
-    
-    # Select top domains
-    top_domains = df.head(top_n)
-    
-    # Create color based on FPN preference
-    colors = ['#d62728' if d > 0 else '#1f77b4' for d in top_domains['mean_diff_a_minus_b']]
-    
-    ax.barh(range(len(top_domains)), top_domains['mean_cohens_d'], color=colors)
-    ax.set_yticks(range(len(top_domains)))
-    ax.set_yticklabels(top_domains['cognitive_domain'], fontsize=9)
-    ax.set_xlabel("Cohen's d (FPN-A - FPN-B)", fontsize=11)
-    ax.set_title(f"Top {top_n} Cognitive Domains - {title_suffix}", fontsize=13, fontweight='bold')
-    ax.axvline(0, color='black', linestyle='--', linewidth=1)
-    ax.grid(axis='x', alpha=0.3)
-    
-    # Add significance markers
-    for i, (_, row) in enumerate(top_domains.iterrows()):
-        if row['p_fdr'] < 0.001:
-            marker = '***'
-        elif row['p_fdr'] < 0.01:
-            marker = '**'
-        elif row['p_fdr'] < 0.05:
-            marker = '*'
-        else:
-            marker = ''
-        
-        if marker:
-            x_pos = row['mean_cohens_d'] + (0.05 if row['mean_cohens_d'] > 0 else -0.05)
-            ax.text(x_pos, i, marker, va='center', fontsize=12, fontweight='bold')
-    
-    # Legend
-    from matplotlib.patches import Patch
-    legend_elements = [
-        Patch(facecolor='#d62728', label='FPN-A favored'),
-        Patch(facecolor='#1f77b4', label='FPN-B favored')
-    ]
-    ax.legend(handles=legend_elements, loc='lower right', frameon=True)
-    
-    plt.tight_layout()
-    plot_path = os.path.join(output_dir, f'top_domains_{filename_suffix}.png')
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    return plot_path
-
-# Plot 1: ORIGINAL (by effect size)
-plot1 = create_bar_plot(domain_df_original, "Sorted by Effect Size", "effect_size")
-print(f"  ✓ Saved: {plot1}")
-
-# Plot 2: COMPOSITE (by balanced score)
-plot2 = create_bar_plot(domain_df_composite, "Composite Score Ranking", "composite_score")
-print(f"  ✓ Saved: {plot2}")
-
-# Plot 3: HIGH-QUALITY (filtered)
-if len(domain_df_highquality) >= 10:
-    plot3 = create_bar_plot(domain_df_highquality, "High-Quality Domains Only", "high_quality", top_n=min(20, len(domain_df_highquality)))
-    print(f"  ✓ Saved: {plot3}")
-else:
-    print(f"  ⚠ Skipped high-quality plot (only {len(domain_df_highquality)} domains)")
-
-# Plot 4: Scatter plot - Effect size vs. Consistency (using COMPOSITE data)
+# Plot 1: Scatter plot - Effect size vs. Consistency
 fig, ax = plt.subplots(figsize=(10, 8))
 
 # Color by significance
@@ -348,233 +314,193 @@ legend_elements = [
 ax.legend(handles=legend_elements, loc='lower right', frameon=True)
 
 plt.tight_layout()
-plot4_path = os.path.join(output_dir, 'domain_effect_vs_consistency.png')
-plt.savefig(plot4_path, dpi=300, bbox_inches='tight')
+plot_scatter_path = os.path.join(output_dir, 'domain_effect_vs_consistency.png')
+plt.savefig(plot_scatter_path, dpi=300, bbox_inches='tight')
 plt.close()
-print(f"  ✓ Saved: {plot4_path}")
+print(f"  ✓ Saved scatter plot: {plot_scatter_path}")
 
-# Plot 5: Comparison of ranking methods
-fig, axes = plt.subplots(1, 3, figsize=(18, 8), sharey=True)
-
-# Get top 15 from each method
-top_original = domain_df_original.head(15)
-top_composite = domain_df_composite.head(15)
-top_highqual = domain_df_highquality.head(15) if len(domain_df_highquality) >= 15 else domain_df_highquality
-
-for ax, data, title in zip(axes, 
-                           [top_original, top_composite, top_highqual],
-                           ['Effect Size', 'Composite Score', 'High-Quality']):
-    colors = ['#d62728' if d > 0 else '#1f77b4' for d in data['mean_diff_a_minus_b']]
-    ax.barh(range(len(data)), data['mean_cohens_d'], color=colors, alpha=0.7)
-    ax.set_yticks(range(len(data)))
-    ax.set_yticklabels(data['cognitive_domain'], fontsize=8)
-    ax.set_xlabel("Cohen's d", fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight='bold')
-    ax.axvline(0, color='black', linestyle='--', linewidth=1)
-    ax.grid(axis='x', alpha=0.3)
-
-plt.suptitle("Comparison of Ranking Methods - Top 15 Domains", fontsize=14, fontweight='bold', y=0.98)
-plt.tight_layout()
-plot5_path = os.path.join(output_dir, 'ranking_method_comparison.png')
-plt.savefig(plot5_path, dpi=300, bbox_inches='tight')
-plt.close()
-print(f"  ✓ Saved: {plot5_path}")
-
-def create_violin_plots_separate(df, merged_df, output_dir, top_n=10):
-    """Create separate violin plots for top FPN-A and FPN-B domains with subject-level variability."""
+def create_domain_violin_double_panel(df, merged_df, output_dir, top_n=10):
+    """
+    Create a double-panel figure with cognitive domains:
+      Left: top-N domains favoring FPN-A (violins with subject-level dots)
+      Right: top-N domains favoring FPN-B (violins with subject-level dots)
+    """
+    print("\n[EXTRA] Creating cognitive domain double-panel violin figure...")
     
     # Load subject-level data
     results_base = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results'
     subject_files = []
     
-    print(f"    Loading subject-level data for violin plots...")
     for subject_dir in os.listdir(results_base):
-        if subject_dir.startswith('sub-'):
-            for task in os.listdir(os.path.join(results_base, subject_dir)):
-                task_path = os.path.join(results_base, subject_dir, task)
-                if os.path.isdir(task_path):
-                    stats_file = os.path.join(task_path, 'subnetwork_stats.csv')
-                    if os.path.exists(stats_file):
-                        try:
-                            df_subj = pd.read_csv(stats_file)
-                            df_subj['subject'] = subject_dir.replace('sub-', '')
-                            subject_files.append(df_subj)
-                        except Exception as e:
-                            pass
+        if not subject_dir.startswith('sub-'):
+            continue
+        subj_path = os.path.join(results_base, subject_dir)
+        if not os.path.isdir(subj_path):
+            continue
+
+        subj_file = os.path.join(subj_path, 'fpn_subnetwork_contrast_analysis.csv')
+        if os.path.exists(subj_file):
+            try:
+                df_subj = pd.read_csv(subj_file)
+                df_subj['subject'] = subject_dir.replace('sub-', '')
+                subject_files.append(df_subj)
+            except Exception as e:
+                print(f"    ✗ Failed to load {subj_file}: {e}")
+
+    if len(subject_files) == 0:
+        print("    ⚠ No subject-level data found; cannot create domain violin figure.")
+        return None
+
+    subject_data = pd.concat(subject_files, ignore_index=True)
+    print(f"    ✓ Loaded subject-level data: {len(subject_data)} rows from {subject_data['subject'].nunique()} subjects")
     
-    if len(subject_files) > 0:
-        subject_data = pd.concat(subject_files, ignore_index=True)
-        print(f"    ✓ Loaded subject-level data: {len(subject_data)} observations from {subject_data['subject'].nunique()} subjects")
-        
-        # Merge with cognitive tags
-        subject_merged = pd.merge(
-            subject_data,
-            contrast_metadata[['task', 'contrast', 'tags']],
-            on=['task', 'contrast'],
-            how='left'
-        )
-        subject_merged['parsed_tags'] = subject_merged['tags'].apply(parse_tags)
-    else:
-        print(f"    ⚠ No subject-level data found - falling back to contrast-level")
-        subject_merged = None
+    # Merge with cognitive tags
+    subject_merged = pd.merge(
+        subject_data,
+        contrast_metadata[['task', 'contrast', 'tags']],
+        on=['task', 'contrast'],
+        how='left'
+    )
+    subject_merged['parsed_tags'] = subject_merged['tags'].apply(parse_tags)
     
     # Get top domains for each network
-
-    # By composite score: 'rank_score'
-    # By effect size only: 'abs_cohens_d'
-    # By significance: 'p_fdr'
-    # By consistency: 'consistency'
-
-    top_fpna = df[df['mean_diff_a_minus_b'] > 0].nlargest(top_n, 'consistency')
-    top_fpnb = df[df['mean_diff_a_minus_b'] < 0].nlargest(top_n, 'consistency')
-
-
-    # Prepare data for violin plots
-    def prepare_violin_data(top_domains):
-        """Extract individual subject values for each domain."""
-        if subject_merged is None:
-            # Fallback to contrast-level data
-            violin_data = []
-            for _, domain_row in top_domains.iterrows():
-                domain = domain_row['cognitive_domain']
-                domain_contrasts = merged_df[merged_df['parsed_tags'].apply(lambda x: domain in x if isinstance(x, list) else False)]
-                for _, contrast_row in domain_contrasts.iterrows():
-                    violin_data.append({
-                        'domain': domain,
-                        'cohens_d': contrast_row['cohens_d_mean'],
-                        'task': contrast_row['task'],
-                        'contrast': contrast_row['contrast'],
-                        'source': 'contrast'
-                    })
-            return pd.DataFrame(violin_data)
-        
-        # Use subject-level data
-        violin_data = []
-        for _, domain_row in top_domains.iterrows():
+    top_fpna = df[df['mean_diff_a_minus_b'] > 0].nlargest(top_n, 'rank_score')
+    top_fpnb = df[df['mean_diff_a_minus_b'] < 0].nlargest(top_n, 'rank_score')
+    
+    # Extract subject-level data for each domain
+    def get_domain_subject_data(domains):
+        domain_data = []
+        for _, domain_row in domains.iterrows():
             domain = domain_row['cognitive_domain']
-            # Find all subject observations with this tag
             domain_subjects = subject_merged[
                 subject_merged['parsed_tags'].apply(lambda x: domain in x if isinstance(x, list) else False)
             ]
-            
             for _, subj_row in domain_subjects.iterrows():
-                violin_data.append({
+                domain_data.append({
                     'domain': domain,
                     'cohens_d': subj_row['cohens_d'],
-                    'subject': subj_row['subject'],
-                    'task': subj_row['task'],
-                    'contrast': subj_row['contrast'],
-                    'source': 'subject'
+                    'subject': subj_row['subject']
                 })
-        
-        return pd.DataFrame(violin_data)
+        return pd.DataFrame(domain_data)
     
-    fpna_violin_data = prepare_violin_data(top_fpna)
-    fpnb_violin_data = prepare_violin_data(top_fpnb)
+    fpna_data = get_domain_subject_data(top_fpna)
+    fpnb_data = get_domain_subject_data(top_fpnb)
     
-    # Plot 1: FPN-A favored domains
-    fig, ax = plt.subplots(figsize=(14, 10))
-    
-    # Create violin plot
-    parts = ax.violinplot(
-        [fpna_violin_data[fpna_violin_data['domain'] == d]['cohens_d'].values 
-         for d in top_fpna['cognitive_domain']],
-        positions=range(len(top_fpna)),
-        vert=False,
-        widths=0.7,
-        showmeans=False,
-        showextrema=False
+    # Sort domains by mean Cohen's d
+    fpna_domain_order = (
+        fpna_data.groupby('domain')['cohens_d']
+        .mean()
+        .sort_values(ascending=True)
+        .index.tolist()
+    )
+    fpnb_domain_order = (
+        fpnb_data.groupby('domain')['cohens_d']
+        .mean()
+        .sort_values(ascending=False)
+        .index.tolist()
     )
     
-    # Color violins
-    for pc in parts['bodies']:
-        pc.set_facecolor('#d62728')
-        pc.set_alpha(0.6)
-        pc.set_edgecolor('black')
-        pc.set_linewidth(1.5)
+    # Create double-panel figure
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        'font.size': 14,
+        'axes.titlesize': 18,
+        'axes.labelsize': 16,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12
+    })
     
-    # Overlay scatter points (subjects or contrasts)
-    for i, domain in enumerate(top_fpna['cognitive_domain']):
-        domain_data = fpna_violin_data[fpna_violin_data['domain'] == domain]
-        y_jitter = np.random.normal(i, 0.04, size=len(domain_data))
+    fig, axes = plt.subplots(1, 2, figsize=(20, 10), sharex=True, sharey=False)
+    
+    def plot_domain_side(ax, data, domain_order, title, color):
+        positions = np.arange(len(domain_order))
         
-        # Different appearance for subject vs contrast level
-        if 'source' in domain_data.columns and (domain_data['source'] == 'subject').any():
-            ax.scatter(domain_data['cohens_d'], y_jitter, 
-                      alpha=0.5, s=40, color='darkred', edgecolors='black', linewidth=0.3, zorder=3)
-        else:
-            ax.scatter(domain_data['cohens_d'], y_jitter, 
-                      alpha=0.7, s=60, color='darkred', edgecolors='black', linewidth=0.5, zorder=3)
+        # Create violin plots
+        violin_data = [data[data['domain'] == d]['cohens_d'].values for d in domain_order]
+        parts = ax.violinplot(
+            violin_data,
+            positions=positions,
+            vert=False,
+            widths=0.6,
+            showmeans=False,
+            showextrema=False
+        )
+        
+        # Color violins
+        for pc in parts['bodies']:
+            pc.set_facecolor(color)
+            pc.set_alpha(0.3)
+            pc.set_edgecolor('black')
+            pc.set_linewidth(1.5)
+        
+        # Add boxplot overlay
+        bp = ax.boxplot(
+            violin_data,
+            positions=positions,
+            vert=False,
+            widths=0.3,
+            patch_artist=True,
+            showfliers=False,
+            medianprops=dict(color='black', linewidth=2),
+            boxprops=dict(facecolor='white', alpha=0.7, linewidth=1.5),
+            whiskerprops=dict(linewidth=1.5),
+            capprops=dict(linewidth=1.5)
+        )
+        
+        # Overlay individual subject points
+        for i, domain in enumerate(domain_order):
+            vals = data[data['domain'] == domain]['cohens_d'].values
+            y_jitter = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
+            ax.scatter(
+                vals,
+                y_jitter,
+                s=35,
+                color=color,
+                edgecolors='black',
+                linewidth=0.5,
+                alpha=0.6,
+                zorder=3
+            )
+        
+        # Formatting
+        ax.set_yticks(positions)
+        ax.set_yticklabels(domain_order, fontsize=11, fontweight='bold')
+        ax.set_title(title, fontweight='bold', pad=15, fontsize=18)
+        ax.axvline(0, color='black', linestyle='--', linewidth=1.5, alpha=0.7)
+        ax.grid(axis='x', alpha=0.3)
     
-    # Formatting
-    ax.set_yticks(range(len(top_fpna)))
-    ax.set_yticklabels(top_fpna['cognitive_domain'], fontsize=14, fontweight='bold')
-    ax.set_xlabel("Cohen's d (FPN-A - FPN-B)", fontsize=14, fontweight='bold')
-    
-    data_source = "Subject-Level" if subject_merged is not None else "Contrast-Level"
-    ax.set_title(f"Top {top_n} Cognitive Domains Favoring FPN-A\n({data_source} Variability)", 
-                fontsize=16, fontweight='bold', pad=20)
-    ax.axvline(0, color='black', linestyle='--', linewidth=1.5, alpha=0.7)
-    ax.grid(axis='x', alpha=0.3)
-    ax.set_xlim(left=min(0, fpna_violin_data['cohens_d'].min() * 0.9))
-    
-    plt.tight_layout()
-    plot_fpna_path = os.path.join(output_dir, 'top_domains_fpna_violin.png')
-    plt.savefig(plot_fpna_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    # Plot 2: FPN-B favored domains
-    fig, ax = plt.subplots(figsize=(14, 10))
-    
-    # Create violin plot
-    parts = ax.violinplot(
-        [fpnb_violin_data[fpnb_violin_data['domain'] == d]['cohens_d'].values 
-         for d in top_fpnb['cognitive_domain']],
-        positions=range(len(top_fpnb)),
-        vert=False,
-        widths=0.7,
-        showmeans=False,
-        showextrema=False
+    plot_domain_side(
+        axes[0],
+        fpna_data,
+        fpna_domain_order,
+        f"Top {top_n} Cognitive Domains\nFavoring FPN-A",
+        color="#d62728"
+    )
+    plot_domain_side(
+        axes[1],
+        fpnb_data,
+        fpnb_domain_order,
+        f"Top {top_n} Cognitive Domains\nFavoring FPN-B",
+        color="#1f77b4"
     )
     
-    # Color violins
-    for pc in parts['bodies']:
-        pc.set_facecolor('#1f77b4')
-        pc.set_alpha(0.6)
-        pc.set_edgecolor('black')
-        pc.set_linewidth(1.5)
+    fig.supxlabel("Cohen's d (FPN-A − FPN-B)", fontsize=18, fontweight='bold', y=0.04)
     
-    # Overlay scatter points (subjects or contrasts)
-    for i, domain in enumerate(top_fpnb['cognitive_domain']):
-        domain_data = fpnb_violin_data[fpnb_violin_data['domain'] == domain]
-        y_jitter = np.random.normal(i, 0.04, size=len(domain_data))
-        
-        # Different appearance for subject vs contrast level
-        if 'source' in domain_data.columns and (domain_data['source'] == 'subject').any():
-            ax.scatter(domain_data['cohens_d'], y_jitter, 
-                      alpha=0.5, s=40, color='darkblue', edgecolors='black', linewidth=0.3, zorder=3)
-        else:
-            ax.scatter(domain_data['cohens_d'], y_jitter, 
-                      alpha=0.7, s=60, color='darkblue', edgecolors='black', linewidth=0.5, zorder=3)
-    
-    # Formatting
-    ax.set_yticks(range(len(top_fpnb)))
-    ax.set_yticklabels(top_fpnb['cognitive_domain'], fontsize=14, fontweight='bold')
-    ax.set_xlabel("Cohen's d (FPN-A - FPN-B)", fontsize=14, fontweight='bold')
-    
-    data_source = "Subject-Level" if subject_merged is not None else "Contrast-Level"
-    ax.set_title(f"Top {top_n} Cognitive Domains Favoring FPN-B\n({data_source} Variability)", 
-                fontsize=16, fontweight='bold', pad=20)
-    ax.axvline(0, color='black', linestyle='--', linewidth=1.5, alpha=0.7)
-    ax.grid(axis='x', alpha=0.3)
-    ax.set_xlim(right=max(0, fpnb_violin_data['cohens_d'].max() * 0.9))
-    
-    plt.tight_layout()
-    plot_fpnb_path = os.path.join(output_dir, 'top_domains_fpnb_violin.png')
-    plt.savefig(plot_fpnb_path, dpi=300, bbox_inches='tight')
+    plt.tight_layout(rect=[0.05, 0.06, 0.98, 0.97])
+    out_path = os.path.join(output_dir, "top_domains_fpna_fpnb_doublepanel.png")
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close()
-    
-    return plot_fpna_path, plot_fpnb_path
+    print(f"    ✓ Saved double-panel domain figure: {out_path}")
+    return out_path
+
+# Create the new cognitive domain double-panel violin plot
+domain_doublepanel_path = create_domain_violin_double_panel(
+    domain_df_composite, 
+    merged, 
+    output_dir, 
+    top_n=10
+)
+print(f"  ✓ Saved cognitive domain double-panel: {domain_doublepanel_path}")
 
 def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
     """
@@ -594,17 +520,14 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
         if not os.path.isdir(subj_path):
             continue
 
-        for task in os.listdir(subj_path):
-            task_path = os.path.join(subj_path, task)
-            stats_file = os.path.join(task_path, 'subnetwork_stats.csv')
-            if os.path.exists(stats_file):
-                try:
-                    df_subj = pd.read_csv(stats_file)
-                    df_subj['subject'] = subject_dir.replace('sub-', '')
-                    # Expect columns: task, contrast, cohens_d, etc.
-                    subject_files.append(df_subj)
-                except Exception:
-                    pass
+        subj_file = os.path.join(subj_path, 'fpn_subnetwork_contrast_analysis.csv')
+        if os.path.exists(subj_file):
+            try:
+                df_subj = pd.read_csv(subj_file)
+                df_subj['subject'] = subject_dir.replace('sub-', '')
+                subject_files.append(df_subj)
+            except Exception as e:
+                print(f"    ✗ Failed to load {subj_file}: {e}")
 
     if len(subject_files) == 0:
         print("    ⚠ No subject-level data found; cannot create contrast violin figure.")
@@ -619,20 +542,17 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
         return pd.Series({
             'mean_d': np.mean(d_vals),
             'n_subj': len(d_vals),
-            'consistency_pos': (d_vals > 0).mean(),  # P(FPN-A > FPN-B)
-            'consistency_neg': (d_vals < 0).mean()   # P(FPN-B > FPN-A)
+            'consistency_pos': (d_vals > 0).mean(),
+            'consistency_neg': (d_vals < 0).mean()
         })
 
-    contrast_stats = subj_all.groupby(['task', 'contrast']).apply(contrast_agg).reset_index()
+    contrast_stats = subj_all.groupby(['task', 'contrast'], group_keys=False).apply(contrast_agg).reset_index()
 
     # Rank by mean_d
     top_fpna = contrast_stats.sort_values('mean_d', ascending=False).head(top_n).copy()
     top_fpnb = contrast_stats.sort_values('mean_d', ascending=True).head(top_n).copy()
 
-    print(f"    Top FPN-A contrasts:\n{top_fpna[['task','contrast','mean_d','consistency_pos']].to_string(index=False)}")
-    print(f"    Top FPN-B contrasts:\n{top_fpnb[['task','contrast','mean_d','consistency_neg']].to_string(index=False)}")
-
-    # Subset subject-level data to only those contrasts
+    # ---- 3. Subset subject-level data to only those contrasts ----
     def subset_subjects(top_table):
         merged = pd.merge(
             subj_all,
@@ -640,7 +560,6 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
             on=['task', 'contrast'],
             how='inner'
         )
-        # Create a shorter label for plotting
         merged['label'] = merged['task'].astype(str) + " | " + merged['contrast'].astype(str)
         return merged
 
@@ -651,17 +570,17 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
     fpna_order = (
         fpna_subj.groupby('label')['cohens_d']
         .mean()
-        .sort_values(ascending=True)  # ascending so strongest is at top (last)
+        .sort_values(ascending=True)
         .index.tolist()
     )
     fpnb_order = (
         fpnb_subj.groupby('label')['cohens_d']
         .mean()
-        .sort_values(ascending=True)
+        .sort_values(ascending=False)
         .index.tolist()
     )
 
-    # ---- 3. Create double-panel figure ----
+    # ---- 4. Create double-panel figure ----
     import matplotlib as mpl
     mpl.rcParams.update({
         'font.size': 16,
@@ -673,12 +592,8 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
 
     fig, axes = plt.subplots(1, 2, figsize=(20, 10), sharex=True, sharey=False)
 
-    # Helper to plot one side
     def plot_side(ax, data, order, title, color):
-        # Violin (or box) + all subject points
-        # We’ll use a simple boxplot to keep the abstract figure clean.
         positions = np.arange(len(order))
-
         plot_data = [data[data['label'] == lbl]['cohens_d'].values for lbl in order]
 
         bp = ax.boxplot(
@@ -698,7 +613,7 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
             patch.set_facecolor(color)
             patch.set_alpha(0.25)
 
-        # Overlay all subjects (jittered)
+        # overlay all subjects
         for i, lbl in enumerate(order):
             vals = data[data['label'] == lbl]['cohens_d'].values
             y = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
@@ -724,17 +639,16 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
         fpna_subj,
         fpna_order,
         f"Top {top_n} Contrasts Favoring FPN-A",
-        color="#008B8B"  # teal
+        color="#008B8B"
     )
     plot_side(
         axes[1],
         fpnb_subj,
         fpnb_order,
         f"Top {top_n} Contrasts Favoring FPN-B",
-        color="#1f77b4"  # blue
+        color="#1f77b4"
     )
 
-    # Shared x-axis label
     fig.supxlabel("Cohen's d (FPN-A − FPN-B)", fontsize=20, fontweight='bold', y=0.04)
 
     plt.tight_layout(rect=[0.05, 0.06, 0.98, 0.97])
@@ -744,18 +658,209 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
     print(f"    ✓ Saved double-panel contrast figure: {out_path}")
     return out_path
 
-# Create violin plots based on composite score ranking
-plot_fpna, plot_fpnb = create_violin_plots_separate(domain_df_composite, merged, output_dir)
-print(f"  ✓ Saved FPN-A violin plot: {plot_fpna}")
-print(f"  ✓ Saved FPN-B violin plot: {plot_fpnb}")
-
 # Create double-panel contrast-level violin plot
-doublepanel_path = create_contrast_violin_double_panel(
+contrast_doublepanel_path = create_contrast_violin_double_panel(
     results_base='/ptmp/hmueller2/Downloads/subnetwork_analysis_results',
     output_dir=output_dir,
     top_n=10
 )
-print(f"  ✓ Saved double-panel abstract figure: {doublepanel_path}")
+print(f"  ✓ Saved contrast double-panel: {contrast_doublepanel_path}")
+
+def create_combined_2x2_figure(results_base, merged_df, domain_df, output_dir, top_n=10):
+    """
+    Create a 2×2 figure combining:
+      Top row: Task contrasts (left: FPN-A, right: FPN-B)
+      Bottom row: Cognitive domains (left: FPN-A, right: FPN-B)
+    """
+    print("\n[EXTRA] Creating combined 2×2 abstract figure...")
+    
+    # ---- Load subject-level data ----
+    subject_files = []
+    for subject_dir in os.listdir(results_base):
+        if not subject_dir.startswith('sub-'):
+            continue
+        subj_path = os.path.join(results_base, subject_dir)
+        if not os.path.isdir(subj_path):
+            continue
+        subj_file = os.path.join(subj_path, 'fpn_subnetwork_contrast_analysis.csv')
+        if os.path.exists(subj_file):
+            try:
+                df_subj = pd.read_csv(subj_file)
+                df_subj['subject'] = subject_dir.replace('sub-', '')
+                subject_files.append(df_subj)
+            except Exception as e:
+                print(f"    ✗ Failed to load {subj_file}: {e}")
+    
+    if len(subject_files) == 0:
+        print("    ⚠ No subject-level data found.")
+        return None
+    
+    subj_all = pd.concat(subject_files, ignore_index=True)
+    print(f"    ✓ Loaded {len(subj_all)} rows from {subj_all['subject'].nunique()} subjects")
+    
+    # ---- Prepare contrast data with significance filtering ----
+    # Merge with group-level p-values from merged_df
+    contrast_pvals = merged_df[['task', 'contrast', 'p_value']].drop_duplicates()
+    
+    def contrast_agg(group):
+        d_vals = group['cohens_d'].values
+        return pd.Series({
+            'mean_d': np.mean(d_vals),
+            'n_subj': len(d_vals)
+        })
+    
+    contrast_stats = subj_all.groupby(['task', 'contrast'], group_keys=False).apply(contrast_agg).reset_index()
+    
+    # Merge with p-values
+    contrast_stats = pd.merge(contrast_stats, contrast_pvals, on=['task', 'contrast'], how='left')
+    
+    # Filter for p < 0.05
+    contrast_stats_sig = contrast_stats[contrast_stats['p_value'] < 0.05].copy()
+    print(f"    ✓ Found {len(contrast_stats_sig)} significant contrasts (p < 0.05) out of {len(contrast_stats)} total")
+    
+    # Select top N by Cohen's d (from significant contrasts only)
+    top_fpna_contrasts = contrast_stats_sig.sort_values('mean_d', ascending=False).head(top_n).copy()
+    top_fpnb_contrasts = contrast_stats_sig.sort_values('mean_d', ascending=True).head(top_n).copy()
+    
+    print(f"    ✓ Selected top {len(top_fpna_contrasts)} FPN-A contrasts (mean d: {top_fpna_contrasts['mean_d'].min():.3f} to {top_fpna_contrasts['mean_d'].max():.3f})")
+    print(f"    ✓ Selected top {len(top_fpnb_contrasts)} FPN-B contrasts (mean d: {top_fpnb_contrasts['mean_d'].min():.3f} to {top_fpnb_contrasts['mean_d'].max():.3f})")
+    
+    def subset_contrast_subjects(top_table):
+        merged = pd.merge(subj_all, top_table[['task', 'contrast']], on=['task', 'contrast'], how='inner')
+        merged['label'] = merged['task'].astype(str) + " | " + merged['contrast'].astype(str)
+        return merged
+    
+    fpna_contrast_subj = subset_contrast_subjects(top_fpna_contrasts)
+    fpnb_contrast_subj = subset_contrast_subjects(top_fpnb_contrasts)
+    
+    fpna_contrast_order = (fpna_contrast_subj.groupby('label')['cohens_d'].mean()
+                           .sort_values(ascending=True).index.tolist())
+    fpnb_contrast_order = (fpnb_contrast_subj.groupby('label')['cohens_d'].mean()
+                           .sort_values(ascending=False).index.tolist())
+    
+    # ---- Prepare domain data ----
+    subject_merged = pd.merge(subj_all, contrast_metadata[['task', 'contrast', 'tags']], 
+                              on=['task', 'contrast'], how='left')
+    subject_merged['parsed_tags'] = subject_merged['tags'].apply(parse_tags)
+    subject_merged['parsed_tags'] = subject_merged['parsed_tags'].apply(merge_cognitive_tags)
+    
+    top_fpna_domains = domain_df[domain_df['mean_diff_a_minus_b'] > 0].nlargest(top_n, 'rank_score')
+    top_fpnb_domains = domain_df[domain_df['mean_diff_a_minus_b'] < 0].nlargest(top_n, 'rank_score')
+    
+    def get_domain_subject_data(domains):
+        domain_data = []
+        for _, domain_row in domains.iterrows():
+            domain = domain_row['cognitive_domain']
+            domain_subjects = subject_merged[
+                subject_merged['parsed_tags'].apply(lambda x: domain in x if isinstance(x, list) else False)
+            ]
+            for _, subj_row in domain_subjects.iterrows():
+                domain_data.append({
+                    'domain': domain,
+                    'cohens_d': subj_row['cohens_d'],
+                    'subject': subj_row['subject']
+                })
+        return pd.DataFrame(domain_data)
+    
+    fpna_domain_data = get_domain_subject_data(top_fpna_domains)
+    fpnb_domain_data = get_domain_subject_data(top_fpnb_domains)
+    
+    fpna_domain_order = (fpna_domain_data.groupby('domain')['cohens_d'].mean()
+                         .sort_values(ascending=True).index.tolist())
+    fpnb_domain_order = (fpnb_domain_data.groupby('domain')['cohens_d'].mean()
+                         .sort_values(ascending=False).index.tolist())
+    
+    # ---- Create 2×2 figure ----
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        'font.size': 15,
+        'axes.titlesize': 18,
+        'axes.labelsize': 15,
+        'xtick.labelsize': 15,
+        'ytick.labelsize': 15
+    })
+    
+    fig = plt.figure(figsize=(24, 16))
+    # Increased wspace from 0.4 to 0.5 for more horizontal spacing
+    gs = fig.add_gridspec(2, 2, hspace=0.15, wspace=0.5, left=0.05, right=0.98, top=0.96, bottom=0.05)
+    
+    ax_contrast_a = fig.add_subplot(gs[0, 0])
+    ax_contrast_b = fig.add_subplot(gs[0, 1])
+    ax_domain_a = fig.add_subplot(gs[1, 0])
+    ax_domain_b = fig.add_subplot(gs[1, 1])
+    
+    # Colors
+    color_fpna = "#008B8B"  # Teal
+    color_fpnb = "#1f77b4"  # Blue
+    
+    # ---- Plot function ----
+    def plot_panel(ax, data, order, color, is_contrast=True):
+        positions = np.arange(len(order))
+        label_col = 'label' if is_contrast else 'domain'
+        
+        plot_data = [data[data[label_col] == lbl]['cohens_d'].values for lbl in order]
+        
+        # Boxplot
+        bp = ax.boxplot(
+            plot_data,
+            vert=False,
+            positions=positions,
+            widths=0.6,
+            patch_artist=True,
+            showfliers=False,
+            medianprops=dict(color='black', linewidth=2.5),
+            boxprops=dict(linewidth=2),
+            whiskerprops=dict(linewidth=2),
+            capprops=dict(linewidth=2)
+        )
+        
+        for patch in bp['boxes']:
+            patch.set_facecolor(color)
+            patch.set_alpha(0.25)
+        
+        # Scatter individual points
+        for i, lbl in enumerate(order):
+            vals = data[data[label_col] == lbl]['cohens_d'].values
+            y = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
+            ax.scatter(vals, y, s=45, color=color, edgecolors='black', 
+                      linewidth=0.7, alpha=0.7, zorder=3)
+        
+        ax.set_yticks(positions)
+        ax.set_yticklabels(order, fontsize=13)
+        ax.axvline(0, color='black', linestyle='--', linewidth=2, alpha=0.8)
+        ax.grid(axis='x', alpha=0.3, linewidth=1)
+    
+    # ---- Plot all panels ----
+    # Top row: Contrasts
+    plot_panel(ax_contrast_a, fpna_contrast_subj, fpna_contrast_order, color_fpna, is_contrast=True)
+    plot_panel(ax_contrast_b, fpnb_contrast_subj, fpnb_contrast_order, color_fpnb, is_contrast=True)
+    
+    ax_contrast_a.set_title("FPN-A Dominant", fontsize=20, fontweight='bold', pad=12)
+    ax_contrast_b.set_title("FPN-B Dominant", fontsize=20, fontweight='bold', pad=12)
+    
+    # Bottom row: Domains
+    plot_panel(ax_domain_a, fpna_domain_data, fpna_domain_order, color_fpna, is_contrast=False)
+    plot_panel(ax_domain_b, fpnb_domain_data, fpnb_domain_order, color_fpnb, is_contrast=False)
+    
+    # X-axis labels only on bottom row
+    ax_domain_a.set_xlabel("Cohen's d (FPN-A − FPN-B)", fontsize=14, fontweight='bold')
+    ax_domain_b.set_xlabel("Cohen's d (FPN-A − FPN-B)", fontsize=14, fontweight='bold')
+    
+    out_path = os.path.join(output_dir, "abstract_top_results.png")
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"    ✓ Saved combined 2×2 figure: {out_path}")
+    return out_path
+
+# Create combined 2×2 figure (add this after the individual plots)
+combined_2x2_path = create_combined_2x2_figure(
+    results_base='/ptmp/hmueller2/Downloads/subnetwork_analysis_results',
+    merged_df=merged,
+    domain_df=domain_df_composite,
+    output_dir=output_dir,
+    top_n=10
+)
+print(f"  ✓ Saved combined 2×2 abstract figure: {combined_2x2_path}")
 
 print("\n" + "="*60)
 print("ANALYSIS COMPLETE!")
@@ -767,11 +872,7 @@ print(f"  - {domain_csv_composite}")
 print(f"  - {domain_csv_highquality}")
 print(f"  - {merged_csv}")
 print(f"\nVisualization Plots:")
-print(f"  - top_domains_effect_size.png")
-print(f"  - top_domains_composite_score.png")
-print(f"  - top_domains_high_quality.png (if applicable)")
 print(f"  - domain_effect_vs_consistency.png")
-print(f"  - ranking_method_comparison.png")
-print(f"  - top_domains_fpna_violin.png")
-print(f"  - top_domains_fpnb_violin.png")
+print(f"  - top_domains_fpna_fpnb_doublepanel.png")
 print(f"  - top_contrasts_fpna_fpnb_doublepanel.png")
+print(f"  - abstract_top_results.png (NEW: Combined 2×2)")

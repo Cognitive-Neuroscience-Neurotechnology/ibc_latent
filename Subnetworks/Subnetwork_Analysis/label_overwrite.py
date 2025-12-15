@@ -114,13 +114,44 @@ def main(subject: str, write_dscalar: bool = True):
         dan_mean = float(np.nanmean(np.asarray(corr_vec)[dan_idx]))
         dmn_dan_means.append((cid, dmn_mean, dan_mean))
 
-    # Build assignment: 1 -> DMN-like (higher DMN mean), 2 -> DAN-like
-    if any(np.isnan(m[1]) for m in dmn_dan_means):
+    # Build assignment: choose the labeling that maximizes DMN-DAN separation
+    if any(np.isnan(m[1]) or np.isnan(m[2]) for m in dmn_dan_means):
         print("[error] Could not compute DMN/DAN means for both clusters.")
         sys.exit(1)
-    sorted_means = sorted(dmn_dan_means, key=lambda x: x[1], reverse=True)
-    assign_map = {sorted_means[0][0]: 1, sorted_means[1][0]: 2}
-    print(f"[info] k=2 assignment (1=DMN-like, 2=DAN-like): {assign_map}")
+    
+    # Extract connectivity values for both clusters
+    cluster_1_dmn, cluster_1_dan = dmn_dan_means[0][1], dmn_dan_means[0][2]
+    cluster_2_dmn, cluster_2_dan = dmn_dan_means[1][1], dmn_dan_means[1][2]
+    
+    # Calculate two possible assignment scenarios:
+    # Scenario A: Cluster 1 → Label 1 (DMN-like), Cluster 2 → Label 2 (DAN-like)
+    scenario_a_label1_dmn_advantage = cluster_1_dmn - cluster_1_dan  # should be positive (higher DMN)
+    scenario_a_label2_dan_advantage = cluster_2_dan - cluster_2_dmn  # should be positive (higher DAN)
+    scenario_a_total_separation = scenario_a_label1_dmn_advantage + scenario_a_label2_dan_advantage
+    
+    # Scenario B: Cluster 1 → Label 2 (DAN-like), Cluster 2 → Label 1 (DMN-like)
+    scenario_b_label1_dmn_advantage = cluster_2_dmn - cluster_2_dan  # should be positive (higher DMN)
+    scenario_b_label2_dan_advantage = cluster_1_dan - cluster_1_dmn  # should be positive (higher DAN)
+    scenario_b_total_separation = scenario_b_label1_dmn_advantage + scenario_b_label2_dan_advantage
+    
+    # Choose the scenario with maximum total separation
+    if scenario_a_total_separation >= scenario_b_total_separation:
+        assign_map = {1: 1, 2: 2}  # Cluster 1 → DMN-like, Cluster 2 → DAN-like
+        label1_dmn, label1_dan = cluster_1_dmn, cluster_1_dan
+        label2_dmn, label2_dan = cluster_2_dmn, cluster_2_dan
+        chosen_separation = scenario_a_total_separation
+        scenario = "A"
+    else:
+        assign_map = {1: 2, 2: 1}  # Cluster 1 → DAN-like, Cluster 2 → DMN-like
+        label1_dmn, label1_dan = cluster_2_dmn, cluster_2_dan
+        label2_dmn, label2_dan = cluster_1_dmn, cluster_1_dan
+        chosen_separation = scenario_b_total_separation
+        scenario = "B"
+    
+    print(f"[info] k=2 assignment based on maximum DMN-DAN separation (Scenario {scenario}):")
+    print(f"       Label 1 (DMN-like): DMN={label1_dmn:.3f}, DAN={label1_dan:.3f}, Diff={label1_dmn-label1_dan:.3f}")
+    print(f"       Label 2 (DAN-like): DMN={label2_dmn:.3f}, DAN={label2_dan:.3f}, Diff={label2_dan-label2_dmn:.3f}")
+    print(f"       Total separation score: {chosen_separation:.3f}")
 
     # Relabel cortex labels
     relabeled_cortex = np.zeros_like(labels_k2_cortex)

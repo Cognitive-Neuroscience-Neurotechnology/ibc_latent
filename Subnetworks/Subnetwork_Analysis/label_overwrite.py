@@ -12,7 +12,7 @@ import nibabel as nib
 sys.path.insert(1, '/home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia')
 import RR_utils as RR
 
-approach = "kmeans" # choose "kmeans" or "infomap"
+approach = "infomap" # choose "kmeans" or "infomap"
 
 def main(subject: str, write_dscalar: bool = True):
     subject = subject.zfill(2)

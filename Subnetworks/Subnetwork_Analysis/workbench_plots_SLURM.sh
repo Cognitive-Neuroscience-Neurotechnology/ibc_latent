@@ -19,7 +19,7 @@ chmod +x "${script}" || true
 config_file=/ptmp/hmueller2/Downloads/subjects_resting.txt
 #line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 #subject=$(echo "$line" | awk '{print $1}')
-subject="07"
+subject="13"
 
 echo "Processing subject: sub-${subject}"
 

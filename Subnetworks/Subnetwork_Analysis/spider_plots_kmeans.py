@@ -28,7 +28,7 @@ sub_str = f"sub-{subject}"                       # "sub-04"
 # Output directory for spider plots
 subnetwork_dir = os.path.join(working_dir, 'subnetworks')
 kmeans_dir = os.path.join(subnetwork_dir, 'kmeans', sub_str)
-spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots')
+spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots_additional_k')
 infomap_dir = os.path.join(working_dir, 'individual_networks')
 os.makedirs(spider_plot_dir, exist_ok=True)
 
@@ -85,7 +85,8 @@ network_names = [
     "Somato\nCognitive\nAction"
 ]
 
-k_values = [2]  # Using k=2 for relabeled results
+k_values = range(3, 6) # k_values = range(2, 10)
+# k_values = [2]  # Using k=2 for relabeled results
 corr_matrices = {k: {f'{i}': None for i in range(1, k + 1)} for k in k_values}
 
 # Load colors from label table

@@ -30,7 +30,7 @@ sub_str = f"sub-{subject}"                       # "sub-04"
 # Output (and kmeans) directory
 subnetwork_dir = os.path.join(working_dir, 'subnetworks')
 kmeans_dir = os.path.join(subnetwork_dir, 'infomap', sub_str)
-spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots')
+spider_plot_dir = os.path.join(subnetwork_dir, 'spider_plots_additional_k')
 infomap_dir = os.path.join(working_dir, 'individual_networks')
 #scatter_plot_dir = os.path.join(subnetwork_dir, 'scatter_plots')
 os.makedirs(spider_plot_dir, exist_ok=True)
@@ -86,7 +86,7 @@ kmeans_dscalar = os.path.join(kmeans_dir, f'{subject}_FPN_infomap_communities_km
 filename = kmeans_dlabel if os.path.exists(kmeans_dlabel) else kmeans_dscalar
 subnetworks = RR.load_data(filename)
 
-k_values = [2] # k_values = range(2, 10)
+k_values = range(3, 6) # k_values = range(2, 10)
 corr_matrices = {k: {f'{i}': None for i in range(1, k + 1)} for k in k_values}
 len_corrs_col = []
 

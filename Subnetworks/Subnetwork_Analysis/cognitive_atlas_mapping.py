@@ -484,7 +484,8 @@ def create_domain_violin_double_panel(df, merged_df, output_dir, top_n=10):
         color="#1f77b4"
     )
     
-    fig.supxlabel("Cohen's d (FPN-A − FPN-B)", fontsize=18, fontweight='bold', y=0.04)
+    fig.text(0.5, 0.04, "Cohen's d (FPN-A − FPN-B)", 
+         ha='center', fontsize=18, fontweight='bold')
     
     plt.tight_layout(rect=[0.05, 0.06, 0.98, 0.97])
     out_path = os.path.join(output_dir, "top_domains_fpna_fpnb_doublepanel.png")
@@ -649,7 +650,8 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
         color="#1f77b4"
     )
 
-    fig.supxlabel("Cohen's d (FPN-A − FPN-B)", fontsize=20, fontweight='bold', y=0.04)
+    fig.text(0.5, 0.04, "Cohen's d (FPN-A − FPN-B)", 
+         ha='center', fontsize=20, fontweight='bold')
 
     plt.tight_layout(rect=[0.05, 0.06, 0.98, 0.97])
     out_path = os.path.join(output_dir, "top_contrasts_fpna_fpnb_doublepanel.png")
@@ -862,6 +864,48 @@ combined_2x2_path = create_combined_2x2_figure(
 )
 print(f"  ✓ Saved combined 2×2 abstract figure: {combined_2x2_path}")
 
+# ========== 10. DOMAIN SUMMARY TEXT FILES (REPLACES WORD CLOUDS) ==========
+print("\n[9/9] Creating domain summary text files...")
+
+# FPN-A: positive Cohen's d (mean_diff_a_minus_b > 0)
+fpna_domains = domain_df_composite[domain_df_composite['mean_diff_a_minus_b'] > 0].copy()
+fpnb_domains = domain_df_composite[domain_df_composite['mean_diff_a_minus_b'] < 0].copy()
+
+top_fpna = fpna_domains.nlargest(25, 'rank_score')
+top_fpnb = fpnb_domains.nlargest(25, 'rank_score')
+
+# Save FPN-A domains
+fpna_txt_path = os.path.join(output_dir, 'fpna_top_domains.txt')
+with open(fpna_txt_path, 'w') as f:
+    f.write("Top 25 FPN-A Dominant Cognitive Domains\n")
+    f.write("=" * 60 + "\n\n")
+    for i, (_, row) in enumerate(top_fpna.iterrows(), 1):
+        domain_name = row['cognitive_domain'].replace('_', ' ').replace('-', ' ').title()
+        f.write(f"{i}. {domain_name}\n")
+        f.write(f"   Composite Score: {row['rank_score']:.2f}\n")
+        f.write(f"   Cohen's d: {row['mean_cohens_d']:.3f}\n")
+        f.write(f"   p-value (FDR): {row['p_fdr']:.4f}\n")
+        f.write(f"   Consistency: {row['consistency']*100:.1f}%\n")
+        f.write(f"   Number of contrasts: {row['n_contrasts']}\n\n")
+
+print(f"  ✓ Saved FPN-A domain summary: {fpna_txt_path}")
+
+# Save FPN-B domains
+fpnb_txt_path = os.path.join(output_dir, 'fpnb_top_domains.txt')
+with open(fpnb_txt_path, 'w') as f:
+    f.write("Top 25 FPN-B Dominant Cognitive Domains\n")
+    f.write("=" * 60 + "\n\n")
+    for i, (_, row) in enumerate(top_fpnb.iterrows(), 1):
+        domain_name = row['cognitive_domain'].replace('_', ' ').replace('-', ' ').title()
+        f.write(f"{i}. {domain_name}\n")
+        f.write(f"   Composite Score: {row['rank_score']:.2f}\n")
+        f.write(f"   Cohen's d: {row['mean_cohens_d']:.3f}\n")
+        f.write(f"   p-value (FDR): {row['p_fdr']:.4f}\n")
+        f.write(f"   Consistency: {row['consistency']*100:.1f}%\n")
+        f.write(f"   Number of contrasts: {row['n_contrasts']}\n\n")
+
+print(f"  ✓ Saved FPN-B domain summary: {fpnb_txt_path}")
+
 print("\n" + "="*60)
 print("ANALYSIS COMPLETE!")
 print("="*60)
@@ -875,4 +919,7 @@ print(f"\nVisualization Plots:")
 print(f"  - domain_effect_vs_consistency.png")
 print(f"  - top_domains_fpna_fpnb_doublepanel.png")
 print(f"  - top_contrasts_fpna_fpnb_doublepanel.png")
-print(f"  - abstract_top_results.png (NEW: Combined 2×2)")
+print(f"  - abstract_top_results.png (Combined 2×2)")
+print(f"\nText Summaries:")
+print(f"  - fpna_top_domains.txt")
+print(f"  - fpnb_top_domains.txt")

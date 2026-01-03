@@ -15,6 +15,9 @@ export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 analysis="activation" # "activation" or "ppi"
 
 
+# Install wordcloud to user directory (persists across runs)
+srun apptainer exec ${container} pip install --user wordcloud
+
 echo "=========================================="
 echo "Running cognitive atlas mapping"
 echo "=========================================="

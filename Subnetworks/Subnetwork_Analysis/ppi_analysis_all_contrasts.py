@@ -1,6 +1,7 @@
 """
 PPI analysis to examine task-dependent connectivity between FPN subnetworks.
 I don't want to use this I believe. Let's rather use ppi_analysis_gPPI.py
+OLD!! - Now using _DMN_DAN
 """
 
 import sys

@@ -2,6 +2,7 @@
 Task-level PPI analysis: Examine how subnetwork connectivity differs between tasks.
 Each task gets ONE PPI value (all conditions pooled).
 I don't want to use this I believe. Let's rather use ppi_analysis_gPPI.py
+OLD!! - Now using _DMN_DAN
 """
 
 import sys

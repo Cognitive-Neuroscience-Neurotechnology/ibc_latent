@@ -1,7 +1,7 @@
 '''
 Script to analyze PPI subnetwork distinction across subjects and tasks.
 Generates statistical summaries, rankings, and visualizations.
-Output files: 
+OLD!! - Now using _DMN_DAN
 '''
 
 import os

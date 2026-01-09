@@ -142,6 +142,8 @@ def build_joint_table():
         "cohens_d",           # effect size of mean_diff
         "dominant_network",
         "p_ttest",
+        "mean_fpn_a",
+        "mean_fpn_b",
         "condition",
         "seed",
         "target",
@@ -152,6 +154,10 @@ def build_joint_table():
     ]
     cols_keep = [c for c in cols_keep if c in joint.columns]
     joint = joint[cols_keep].copy()
+
+    # NEW: combined FPN activation (simple average of A and B if both present)
+    if "mean_fpn_a" in joint.columns and "mean_fpn_b" in joint.columns:
+        joint["sum_fpn_combined"] = (joint["mean_fpn_a"] + joint["mean_fpn_b"])
 
     # Map seeds to FPNA/FPNB labels for clarity
     seed_map = {"FPN1": "FPNA", "FPN2": "FPNB"}
@@ -245,6 +251,90 @@ def correlate_mean_diff_with_ppi(joint: pd.DataFrame):
     return pd.DataFrame(results)
 
 
+def correlate_activation_with_ppi(joint: pd.DataFrame) -> pd.DataFrame:
+    """
+    Correlate absolute activation (mean_fpn_a / mean_fpn_b) with PPI beta.
+
+    For each (seed_family, target) pair:
+      - FPNA rows use mean_fpn_a
+      - FPNB rows use mean_fpn_b
+
+    Returns one row per (seed_family, target).
+    """
+    results = []
+    # restrict to DMN/DAN
+    joint_sub = joint[joint["target"].isin(["DMN", "DAN"])].copy()
+
+    for (seed_family, target), g in joint_sub.groupby(["seed_family", "target"]):
+        if seed_family not in ["FPNA", "FPNB"]:
+            continue
+
+        if seed_family == "FPNA":
+            act_col = "mean_fpn_a"
+        else:  # FPNB
+            act_col = "mean_fpn_b"
+
+        if act_col not in g.columns:
+            continue
+
+        g = g.dropna(subset=[act_col, "beta"])
+        if len(g) < 3:
+            continue
+
+        x = g[act_col].values
+        y = g["beta"].values
+        r, p = pearsonr(x, y)
+
+        results.append(
+            {
+                "seed_family": seed_family,
+                "target": target,
+                "activation_col": act_col,
+                "n_points": len(g),
+                "corr_r": r,
+                "p_value": p,
+            }
+        )
+
+    return pd.DataFrame(results)
+
+
+def correlate_combined_fpn_with_ppi(joint: pd.DataFrame) -> pd.DataFrame:
+    """
+    Correlate combined FPN activation (sum_fpn_combined) with PPI beta.
+
+    Ignores A/B split; for each target (DMN/DAN), correlate
+    sum_fpn_combined with beta across all rows (both FPNA and FPNB seeds).
+    """
+    if "sum_fpn_combined" not in joint.columns:
+        return pd.DataFrame()
+
+    results = []
+    joint_sub = joint[joint["target"].isin(["DMN", "DAN"])].copy()
+    joint_sub = joint_sub.dropna(subset=["sum_fpn_combined", "beta"])
+
+    # By target only (pool FPNA/FPNB seeds)
+    for target, g in joint_sub.groupby("target"):
+        if len(g) < 3:
+            continue
+
+        x = g["sum_fpn_combined"].values
+        y = g["beta"].values
+        r, p = pearsonr(x, y)
+
+        results.append(
+            {
+                "level": "combined_FPN",
+                "target": target,
+                "n_points": len(g),
+                "corr_r": r,
+                "p_value": p,
+            }
+        )
+
+    return pd.DataFrame(results)
+
+
 # ---------------------------------------------------------------------
 # 5. MAIN
 # ---------------------------------------------------------------------
@@ -253,7 +343,7 @@ def main():
     print("JOINT MAPPING: Contrast dominance × PPI coupling")
     print("=" * 80)
 
-    print("\n[1/4] Building joint (contrast × PPI) table...")
+    print("\n[1/5] Building joint (contrast × PPI) table...")
     joint = build_joint_table()
     print(f"  Joint table rows: {len(joint)}")
     print(f"  Columns: {list(joint.columns)}")
@@ -262,20 +352,33 @@ def main():
     joint.to_csv(joint_out, index=False)
     print(f"  ✓ Saved long-format joint table to: {joint_out}")
 
-    print("\n[2/4] Summarising PPI by FPNA/FPNB-dominant contrasts (Idea A)...")
+    print("\n[2/5] Summarising PPI by FPNA/FPNB-dominant contrasts (Idea A)...")
     summary_a = summarize_ppi_by_dominance(joint)
     summary_a_out = os.path.join(OUT_DIR, "joint_mapping_PPI_by_dominance.csv")
     summary_a.to_csv(summary_a_out, index=False)
     print(f"  ✓ Saved PPI-by-dominance summary to: {summary_a_out}")
 
-    print("\n[3/4] Correlating mean_diff_a_minus_b with PPI betas (Idea B)...")
+    print("\n[3/5] Correlating mean_diff_a_minus_b with PPI betas (Idea B)...")
     corr_b = correlate_mean_diff_with_ppi(joint)
     corr_b_out = os.path.join(OUT_DIR, "joint_mapping_mean_diff_vs_PPI_correlations.csv")
     corr_b.to_csv(corr_b_out, index=False)
     print(f"  ✓ Saved correlation summary to: {corr_b_out}")
 
-    print("\n[4/4] SUMMARY PRINT")
-    print("\nCorrelation results (Idea B):")
+    print("\n[4/5] Correlating absolute activation with PPI betas...")
+    corr_act = correlate_activation_with_ppi(joint)
+    corr_act_out = os.path.join(OUT_DIR, "joint_mapping_activation_vs_PPI_correlations.csv")
+    corr_act.to_csv(corr_act_out, index=False)
+    print(f"  ✓ Saved activation–PPI correlation summary to: {corr_act_out}")
+
+    print("\n[4b/5] Correlating combined FPN activation with PPI betas...")
+    corr_comb = correlate_combined_fpn_with_ppi(joint)
+    corr_comb_out = os.path.join(OUT_DIR, "joint_mapping_combinedFPN_vs_PPI_correlations.csv")
+    corr_comb.to_csv(corr_comb_out, index=False)
+    print(f"  ✓ Saved combined-FPN–PPI correlation summary to: {corr_comb_out}")
+
+    print("\n[5/5] SUMMARY PRINT")
+
+    print("\nCorrelation results (Idea B: dominance vs PPI):")
     if not corr_b.empty:
         for _, row in corr_b.iterrows():
             print(
@@ -283,7 +386,28 @@ def main():
                 f"r={row['corr_r']:.3f}, p={row['p_value']:.3g}, n={int(row['n_points'])}"
             )
     else:
-        print("  No valid correlations computed (insufficient data).")
+        print("  No valid dominance–PPI correlations computed.")
+
+    print("\nCorrelation results (activation vs PPI):")
+    if not corr_act.empty:
+        for _, row in corr_act.iterrows():
+            print(
+                f"  {row['seed_family']}–{row['target']} "
+                f"({row['activation_col']}): "
+                f"r={row['corr_r']:.3f}, p={row['p_value']:.3g}, n={int(row['n_points'])}"
+            )
+    else:
+        print("  No valid activation–PPI correlations computed.")
+
+    print("\nCorrelation results (combined FPN activation vs PPI):")
+    if not corr_comb.empty:
+        for _, row in corr_comb.iterrows():
+            print(
+                f"  level={row['level']}, target={row['target']}: "
+                f"r={row['corr_r']:.3f}, p={row['p_value']:.3g}, n={int(row['n_points'])}"
+            )
+    else:
+        print("  No valid combined-FPN–PPI correlations computed.")
 
     print("\nPPI-by-dominance summary (Idea A):")
     if not summary_a.empty:

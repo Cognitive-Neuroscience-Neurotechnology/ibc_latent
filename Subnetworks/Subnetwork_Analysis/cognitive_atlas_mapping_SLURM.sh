@@ -1,8 +1,8 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=atlas
-#SBATCH --output=/ptmp/hmueller2/GLM_subnet_logs/output/%j_%x_%u.out
-#SBATCH --error=/ptmp/hmueller2/GLM_subnet_logs/errors/%j_%x_%u.err
+#SBATCH --output=/ptmp/hmueller2/mapping_domains_logs/output/%j_%x_%u.out
+#SBATCH --error=/ptmp/hmueller2/mapping_domains_logs/errors/%j_%x_%u.err
 #SBATCH --partition=compute
 #SBATCH --time=1:00:00
 #SBATCH --cpus-per-task=4
@@ -12,11 +12,7 @@ container=/home/rglz/containers/gfae.sif
 
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
-analysis="activation" # "activation" or "ppi"
-
-
-# Install wordcloud to user directory (persists across runs)
-srun apptainer exec ${container} pip install --user wordcloud
+analysis="ppi" # "activation" or "ppi"
 
 echo "=========================================="
 echo "Running cognitive atlas mapping"

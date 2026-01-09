@@ -1,6 +1,7 @@
 """
 PPI analysis to examine task-dependent connectivity between FPN subnetworks.
 gPPI Version: Single GLM per run instead of one per condition
+OLD!! - Now using _DMN_DAN
 """
 
 # ========== 1) IMPORTS AND HELPER FUNCTIONS ==========

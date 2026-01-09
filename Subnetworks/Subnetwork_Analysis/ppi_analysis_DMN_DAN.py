@@ -1,6 +1,7 @@
 """
 gPPI analysis to examine task-dependent connectivity between FPN subnetworks and DMN/DAN.
 Analyzes how connectivity from each FPN subnetwork (as seed) to DMN and DAN changes across tasks.
+Step 1/3 -> PPI per Contrast on Individual-level
 """
 
 # ========== 1) IMPORTS AND HELPER FUNCTIONS ==========

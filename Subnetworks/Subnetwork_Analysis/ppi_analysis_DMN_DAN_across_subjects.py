@@ -3,6 +3,7 @@ Script to analyze PPI connectivity from FPN subnetworks to DMN/DAN across subjec
 Generates statistical summaries, rankings, and visualizations for seed-target-contrast combinations.
 Output files: seed_target_contrast_ranking.csv, seed_target_overview.png, contrast_heatmaps.png, 
               seed_comparison.png, analysis_summary.txt
+Step 2/3 -> PPI per Contrast on Group-level
 '''
 
 import os

@@ -1,6 +1,7 @@
 """
 Compare task-level PPI across subjects and visualize which tasks show strongest connectivity changes.
 Output files: ppi_by_task.png, ppi_tstat_by_task.png, effect_size_vs_se.png
+OLD!! - Now using _DMN_DAN
 """
 import sys
 import os

@@ -1,8 +1,8 @@
 #!/bin/bash -l
 
 #SBATCH --job-name=ppi_contrasts
-#SBATCH --output=/ptmp/hmueller2/ppi_analysis_logs/output/%A_%x_%u.out
-#SBATCH --error=/ptmp/hmueller2/ppi_analysis_logs/errors/%A_%x_%u.err
+#SBATCH --output=/ptmp/hmueller2/ppi_plotting/output/%A_%x_%u.out
+#SBATCH --error=/ptmp/hmueller2/ppi_plotting/errors/%A_%x_%u.err
 #SBATCH --partition=thin
 #SBATCH --time=2:00:00
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT

@@ -298,173 +298,506 @@ def _attach_contrast_metadata(
     return combo_stats
 
 
-def _create_polarity_barcharts(combo_stats: pd.DataFrame, output_dir: str) -> None:
+def _create_contrast_boxplots_fpna_fpnb_2x2(
+    combo_stats: pd.DataFrame,
+    group_df: pd.DataFrame,
+    output_dir: str,
+    top_n: int = 15,
+) -> None:
     """
-    Create per-seed_target bar charts for positive vs negative effects,
-    restricted to significant contrasts (p<0.05), sorted by effect size
-    (Cohen's d). For each seed_target, show top 10 positive and top 10
-    negative contrasts. Bars display Cohen's d, not raw beta.
+    2×2 figure with horizontal boxplots + jittered dots for *contrasts*.
+
+    Layout (rows = seeds, cols = targets):
+      Row 0: FPNA→DMN (left), FPNA→DAN (right)
+      Row 1: FPNB→DMN (left), FPNB→DAN (right)
+
+    For each panel:
+      - Use combo_stats to select top-N significant contrasts (p<0.05) by |cohens_d|
+        within seed_family×target (seed_family derived from seed: FPNA/FPNB).
+      - From group_df, aggregate to subject-level and compute subject-level
+        Cohen's d (beta distribution across runs per subject), and plot those.
     """
-    # Keep only significant contrasts
-    sig = combo_stats[combo_stats["p_value"] < 0.05].copy()
-    if sig.empty:
-        print("  No significant contrasts (p<0.05); skipping polarity bar-charts.")
+    print("\n[ALT] Creating 2×2 contrast boxplot figure (FPNA/FPNB × DMN/DAN)...")
+
+    if combo_stats.empty or group_df.empty:
+        print("  ✗ combo_stats or group_df is empty; skipping contrast boxplot 2×2.")
         return
 
-    seed_target_pairs = sorted(sig["seed_target"].unique())
-    n_pairs = len(seed_target_pairs)
-    if n_pairs == 0:
-        print("  No seed_target pairs in significant contrasts; skipping plots.")
+    required_cs = {"seed", "target", "task", "condition", "task_condition", "cohens_d", "p_value"}
+    required_g = {"subject", "task", "contrast", "seed", "target", "beta_contrast"}
+    if not required_cs.issubset(combo_stats.columns):
+        print("  ✗ Missing required columns in combo_stats; skipping contrast boxplot 2×2.")
+        return
+    if not required_g.issubset(group_df.columns):
+        print("  ✗ Missing required columns in group_df; skipping contrast boxplot 2×2.")
         return
 
-    fig, axes = plt.subplots(n_pairs, 2, figsize=(16, 4 * n_pairs), squeeze=False)
+    cs = combo_stats.copy()
+    gd = group_df.copy()
 
-    for idx, pair in enumerate(seed_target_pairs):
-        pair_data = sig[sig["seed_target"] == pair]
+    # derive seed_family from seed (FPNA/FPNB)
+    cs["seed_family"] = cs["seed"].str.extract(r"(FPN[AB])", expand=False)
+    cs = cs[cs["seed_family"].isin(["FPNA", "FPNB"])].copy()
+    if cs.empty:
+        print("  ✗ No FPNA/FPNB rows in combo_stats; skipping contrast boxplot 2×2.")
+        return
 
-        # Ensure we only consider rows with finite Cohen's d
-        pair_data = pair_data[np.isfinite(pair_data["cohens_d"])]
+    # build task_condition on group_df to match combo_stats
+    gd = gd.rename(columns={"contrast": "condition"})
+    gd["task_condition"] = gd["task"].astype(str) + "_" + gd["condition"].astype(str)
 
-        # LEFT: Top 10 positive effects by Cohen's d (largest d first)
-        ax_pos = axes[idx, 0]
-        pos_effects = (
-            pair_data[pair_data["cohens_d"] > 0]
-            .sort_values("cohens_d", ascending=False)
-            .head(10)
-        )
+    # --- NEW: compute subject-level Cohen's d per task_condition×seed×target ---
+    def _cohens_d_1sample(vals: np.ndarray) -> float:
+        vals = np.asarray(vals, float)
+        vals = vals[np.isfinite(vals)]
+        if vals.size < 2:
+            return np.nan
+        m = float(vals.mean())
+        s = float(vals.std(ddof=1))
+        return m / s if s > 0 else 0.0
 
-        if len(pos_effects) > 0:
-            y_labels = [
-                f"{row['task']}_{row['condition']}"
-                for _, row in pos_effects.iterrows()
-            ]
-            colors = ["darkgreen"] * len(pos_effects)
+    subj_level = (
+        gd.groupby(["subject", "task_condition", "seed", "target"])["beta_contrast"]
+        .apply(lambda v: _cohens_d_1sample(v))
+        .reset_index(name="cohens_d_subj")
+    )
 
-            ax_pos.barh(
-                range(len(pos_effects)),
-                pos_effects["cohens_d"],
-                color=colors,
-                alpha=0.7,
-                edgecolor="black",
-            )
-            ax_pos.set_yticks(range(len(pos_effects)))
-            ax_pos.set_yticklabels(y_labels, fontsize=8)
+    # helper: select top-N contrasts for a seed_family×target from combo_stats
+    def _select_top_tc(seed_family: str, target: str) -> list[str]:
+        sub = cs[
+            (cs["seed_family"] == seed_family)
+            & (cs["target"] == target)
+            & (cs["p_value"] < 0.05)
+        ].copy()
+        if sub.empty:
+            return []
+        sub["abs_d"] = sub["cohens_d"].abs()
+        sub = sub.sort_values("abs_d", ascending=False).head(top_n)
+        return sub["task_condition"].tolist()
 
-            # Add simple significance markers
-            for i, (_, row) in enumerate(pos_effects.iterrows()):
-                if row["p_value"] < 0.001:
-                    mark = "***"
-                elif row["p_value"] < 0.01:
-                    mark = "**"
-                elif row["p_value"] < 0.05:
-                    mark = "*"
-                else:
-                    continue
-                ax_pos.text(
-                    row["cohens_d"],
-                    i,
-                    f" {mark}",
-                    va="center",
-                    fontsize=8,
-                    fontweight="bold",
-                )
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+    })
 
-            ax_pos.axvline(x=0, color="black", linestyle="-", linewidth=1)
-            ax_pos.set_xlabel("Effect size (Cohen's d)", fontsize=10)
-            ax_pos.set_title(
-                f"{pair}: INCREASED Connectivity (Top 10, p<0.05)",
-                fontsize=11,
-                fontweight="bold",
-            )
-            ax_pos.grid(axis="x", alpha=0.3)
-            ax_pos.set_xlim(left=0)
-            ax_pos.invert_yaxis()  # largest effect at top
-        else:
-            ax_pos.text(
-                0.5,
-                0.5,
-                "No positive significant effects",
-                transform=ax_pos.transAxes,
+    fig, axes = plt.subplots(2, 2, figsize=(16, 10), squeeze=False)
+    fig.suptitle(
+        "PPI Contrasts – Subject-wise Cohen's d (FPNA/FPNB × DMN/DAN)\n"
+        "(selection: top |d| contrasts from combo_stats, p<0.05)",
+        fontsize=15,
+        fontweight="bold",
+    )
+
+    combos = [
+        ("FPNA", "DMN", 0, 0),  # top-left
+        ("FPNB", "DMN", 0, 1),  # top-right
+        ("FPNA", "DAN", 1, 0),  # bottom-left
+        ("FPNB", "DAN", 1, 1),  # bottom-right
+    ]
+
+    def _plot_panel(ax, seed_family: str, target: str):
+        top_tc = _select_top_tc(seed_family, target)
+        if not top_tc:
+            ax.text(
+                0.5, 0.5,
+                f"No significant contrasts for {seed_family}→{target}",
+                transform=ax.transAxes,
                 ha="center",
                 va="center",
-                fontsize=10,
-            )
-            ax_pos.set_title(
-                f"{pair}: INCREASED Connectivity", fontsize=11, fontweight="bold"
-            )
-
-        # RIGHT: Top 10 negative effects by Cohen's d (most negative d first)
-        ax_neg = axes[idx, 1]
-        neg_effects = (
-            pair_data[pair_data["cohens_d"] < 0]
-            .sort_values("cohens_d", ascending=True)  # more negative d at top
-            .head(10)
-        )
-
-        if len(neg_effects) > 0:
-            y_labels = [
-                f"{row['task']}_{row['condition']}"
-                for _, row in neg_effects.iterrows()
-            ]
-            colors = ["darkred"] * len(neg_effects)
-
-            ax_neg.barh(
-                range(len(neg_effects)),
-                neg_effects["cohens_d"],
-                color=colors,
-                alpha=0.7,
-                edgecolor="black",
-            )
-            ax_neg.set_yticks(range(len(neg_effects)))
-            ax_neg.set_yticklabels(y_labels, fontsize=8)
-
-            for i, (_, row) in enumerate(neg_effects.iterrows()):
-                if row["p_value"] < 0.001:
-                    mark = "***"
-                elif row["p_value"] < 0.01:
-                    mark = "**"
-                elif row["p_value"] < 0.05:
-                    mark = "*"
-                else:
-                    continue
-                ax_neg.text(
-                    row["cohens_d"],
-                    i,
-                    f" {mark}",
-                    va="center",
-                    fontsize=8,
-                    fontweight="bold",
-                )
-
-            ax_neg.axvline(x=0, color="black", linestyle="-", linewidth=1)
-            ax_neg.set_xlabel("Effect size (Cohen's d)", fontsize=10)
-            ax_neg.set_title(
-                f"{pair}: DECREASED Connectivity (Top 10, p<0.05)",
                 fontsize=11,
-                fontweight="bold",
             )
-            ax_neg.grid(axis="x", alpha=0.3)
-            ax_neg.set_xlim(right=0)
-            ax_neg.invert_yaxis()  # most negative at top
-        else:
-            ax_neg.text(
-                0.5,
-                0.5,
-                "No negative significant effects",
-                transform=ax_neg.transAxes,
+            ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+            ax.grid(axis="x", alpha=0.3)
+            return
+
+        sub = subj_level[
+            (subj_level["seed"].str.contains(seed_family, na=False))
+            & (subj_level["target"] == target)
+            & (subj_level["task_condition"].isin(top_tc))
+        ].copy()
+
+        sub = sub[np.isfinite(sub["cohens_d_subj"])]
+        if sub.empty:
+            ax.text(
+                0.5, 0.5,
+                f"No subject-level d for {seed_family}→{target}",
+                transform=ax.transAxes,
                 ha="center",
                 va="center",
-                fontsize=10,
+                fontsize=11,
             )
-            ax_neg.set_title(
-                f"{pair}: DECREASED Connectivity", fontsize=11, fontweight="bold"
+            ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+            ax.grid(axis="x", alpha=0.3)
+            return
+
+        # order contrasts by mean subject-level d
+        order = (
+            sub.groupby("task_condition")["cohens_d_subj"]
+            .mean()
+            .sort_values(ascending=True)
+            .index.tolist()
+        )
+        positions = np.arange(len(order))
+
+        plot_data = [
+            sub[sub["task_condition"] == tc]["cohens_d_subj"].values for tc in order
+        ]
+
+        bp = ax.boxplot(
+            plot_data,
+            vert=False,
+            positions=positions,
+            widths=0.6,
+            patch_artist=True,
+            showfliers=False,
+            medianprops=dict(color="black", linewidth=1.5),
+            boxprops=dict(linewidth=1.2),
+            whiskerprops=dict(linewidth=1.2),
+            capprops=dict(linewidth=1.2),
+        )
+        for patch in bp["boxes"]:
+            patch.set_facecolor("#dddddd")
+            patch.set_alpha(0.7)
+
+        color = "#f94144" if target == "DMN" else "#90be6d"
+
+        for i, tc in enumerate(order):
+            vals = sub[sub["task_condition"] == tc]["cohens_d_subj"].values
+            y = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
+            ax.scatter(
+                vals,
+                y,
+                s=25,
+                color=color,
+                edgecolors="black",
+                linewidth=0.4,
+                alpha=0.7,
+                zorder=3,
             )
 
-    plt.tight_layout()
-    out_path = os.path.join(output_dir, "contrast_barcharts_polarity.png")
+        ax.set_yticks(positions)
+        ax.set_yticklabels(order, fontsize=9)
+        ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+        ax.grid(axis="x", alpha=0.3)
+        ax.invert_yaxis()
+        ax.set_xlabel("Cohen's d (subject-level PPI effect)", fontsize=11)
+        # NEW: constrain x-axis
+        ax.set_xlim(-8.0, 6.0)
+        ax.set_title(f"{seed_family}→{target}", fontsize=13, fontweight="bold")
+
+    for seed_family, target, r, c in combos:
+        _plot_panel(axes[r, c], seed_family, target)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    out_path = os.path.join(output_dir, "ppi_contrast_boxplots_FPNA_FPNB_DMN_DAN.png")
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
-    print(f"  ✓ Saved polarity bar-charts to {out_path}")
+    print(f"  ✓ Saved 2×2 contrast boxplot figure to {out_path}")
+
+def _export_top_contrast_tables_fpna_fpnb_2x2(
+    combo_stats: pd.DataFrame,
+    output_dir: str,
+    top_n: int = 20,
+) -> None:
+    """
+    Export tables of contrasts shown in the FPNA/FPNB × DMN/DAN 2×2 boxplot.
+
+    Selection matches _create_contrast_boxplots_fpna_fpnb_2x2:
+      - For each (seed_family, target), filter to p<0.05,
+      - select top-N by |cohens_d| (group-level),
+      - then label each as positive/negative by sign of cohens_d.
+
+    The exported CSV therefore contains exactly the contrasts that appear
+    in the 2×2 contrast boxplot (if top_n matches), one row per contrast.
+    It also includes per-panel positive/negative ranks so you can
+    report e.g. top 10 positive / top 10 negative per panel.
+    """
+    if combo_stats.empty:
+        print("  ✗ combo_stats is empty; skipping export of top contrast tables.")
+        return
+
+    required_cs = {
+        "seed", "target", "task", "condition", "task_condition",
+        "mean_effect", "t_statistic", "cohens_d", "p_value",
+    }
+    if not required_cs.issubset(combo_stats.columns):
+        print("  ✗ Missing required columns in combo_stats; skipping export of top contrast tables.")
+        return
+
+    cs = combo_stats.copy()
+    cs["seed_family"] = cs["seed"].str.extract(r"(FPN[AB])", expand=False)
+    cs = cs[cs["seed_family"].isin(["FPNA", "FPNB"])].copy()
+    cs = cs[cs["target"].isin(["DMN", "DAN"])].copy()
+    cs = cs[cs["p_value"] < 0.05].copy()
+    if cs.empty:
+        print("  ✗ No significant FPNA/FPNB contrasts; skipping export of top contrast tables.")
+        return
+
+    rows = []
+    for seed_family in ["FPNA", "FPNB"]:
+        for target in ["DMN", "DAN"]:
+            sub = cs[
+                (cs["seed_family"] == seed_family) &
+                (cs["target"] == target)
+            ].copy()
+            if sub.empty:
+                continue
+
+            # match plot selection: top-N by |cohens_d|
+            sub["abs_d"] = sub["cohens_d"].abs()
+            sub = sub.sort_values("abs_d", ascending=False).head(top_n)
+            if sub.empty:
+                continue
+
+            # within this panel subset, compute ranks separately for pos/neg
+            pos = sub[sub["cohens_d"] > 0].copy()
+            neg = sub[sub["cohens_d"] < 0].copy()
+
+            pos = pos.sort_values("cohens_d", ascending=False)
+            pos["pos_rank"] = np.arange(1, len(pos) + 1, dtype=float)
+            neg = neg.sort_values("cohens_d", ascending=True)
+            neg["neg_rank"] = np.arange(1, len(neg) + 1, dtype=float)
+
+            merged = pd.concat([pos, neg], axis=0)
+
+            for _, r in merged.iterrows():
+                sign_label = (
+                    "positive" if r["cohens_d"] > 0
+                    else "negative" if r["cohens_d"] < 0
+                    else "zero"
+                )
+                rows.append(
+                    {
+                        "seed_family": seed_family,
+                        "target": target,
+                        "panel": f"{seed_family}→{target}",
+                        "sign": sign_label,
+                        # keep NaNs as floats; don't cast to int
+                        "pos_rank": r.get("pos_rank", np.nan),
+                        "neg_rank": r.get("neg_rank", np.nan),
+                        "task": r.get("task"),
+                        "condition": r.get("condition"),
+                        "task_condition": r["task_condition"],
+                        "mean_effect": r["mean_effect"],
+                        "t_statistic": r["t_statistic"],
+                        "cohens_d": r["cohens_d"],
+                        "p_value": r["p_value"],
+                        "n_subjects": r.get("n_subjects"),
+                        "pretty_name": r.get("pretty_name"),
+                        "tags": r.get("tags"),
+                    }
+                )
+
+    if not rows:
+        print("  ✗ No rows for top contrast tables.")
+        return
+
+    out_df = pd.DataFrame(rows)
+    out_path = os.path.join(
+        output_dir,
+        "ppi_contrast_boxplots_FPNA_FPNB_DMN_DAN_top_contrasts.csv",
+    )
+    out_df.to_csv(out_path, index=False)
+    print(f"  ✓ Saved top-{top_n} by |d| contrast table (matching 2×2 boxplot panels) to {out_path}")
+
+def _create_contrast_boxplots_fpn_1x2(
+    combo_stats: pd.DataFrame,
+    group_df: pd.DataFrame,
+    output_dir: str,
+    top_n: int = 15,
+) -> None:
+    """
+    1×2 figure after collapsing FPNA & FPNB into a single 'FPN' family.
+
+    Panels:
+      - Top:    FPN→DMN  (colored #f94144)
+      - Bottom: FPN→DAN  (colored #90be6d)
+
+    Uses subject-level Cohen's d on the x-axis.
+    """
+    print("\n[ALT] Creating 1×2 FPN (FPNA+FPNB) contrast boxplot figure (DMN/DAN)...")
+
+    if combo_stats.empty or group_df.empty:
+        print("  ✗ combo_stats or group_df is empty; skipping FPN contrast boxplot 1×2.")
+        return
+
+    required_cs = {"seed", "target", "task", "condition", "task_condition", "cohens_d", "p_value"}
+    required_g = {"subject", "task", "contrast", "seed", "target", "beta_contrast"}
+    if not required_cs.issubset(combo_stats.columns):
+        print("  ✗ Missing required columns in combo_stats; skipping FPN contrast boxplot 1×2.")
+        return
+    if not required_g.issubset(group_df.columns):
+        print("  ✗ Missing required columns in group_df; skipping FPN contrast boxplot 1×2.")
+        return
+
+    cs = combo_stats.copy()
+    gd = group_df.copy()
+
+    cs["seed_family"] = cs["seed"].str.extract(r"(FPN[AB])", expand=False)
+    cs = cs[cs["seed_family"].isin(["FPNA", "FPNB"])].copy()
+    if cs.empty:
+        print("  ✗ No FPNA/FPNB rows in combo_stats; skipping FPN contrast boxplot 1×2.")
+        return
+
+    cs["seed_family"] = "FPN"
+
+    gd = gd.rename(columns={"contrast": "condition"})
+    gd["task_condition"] = gd["task"].astype(str) + "_" + gd["condition"].astype(str)
+    gd["seed_family"] = gd["seed"].str.extract(r"(FPN[AB])", expand=False)
+    gd = gd[gd["seed_family"].isin(["FPNA", "FPNB"])].copy()
+    if gd.empty:
+        print("  ✗ No FPNA/FPNB rows in group_df; skipping FPN contrast boxplot 1×2.")
+        return
+
+    gd["seed_family"] = "FPN"
+
+    # --- NEW: compute subject-level Cohen's d per task_condition×seed_family×target ---
+    def _cohens_d_1sample(vals: np.ndarray) -> float:
+        vals = np.asarray(vals, float)
+        vals = vals[np.isfinite(vals)]
+        if vals.size < 2:
+            return np.nan
+        m = float(vals.mean())
+        s = float(vals.std(ddof=1))
+        return m / s if s > 0 else 0.0
+
+    subj_level = (
+        gd.groupby(["subject", "task_condition", "seed_family", "target"])["beta_contrast"]
+        .apply(lambda v: _cohens_d_1sample(v))
+        .reset_index(name="cohens_d_subj")
+    )
+
+    def _select_top_tc_fpn(target: str) -> list[str]:
+        sub = cs[
+            (cs["seed_family"] == "FPN")
+            & (cs["target"] == target)
+            & (cs["p_value"] < 0.05)
+        ].copy()
+        if sub.empty:
+            return []
+        sub["abs_d"] = sub["cohens_d"].abs()
+        sub = sub.sort_values("abs_d", ascending=False).head(top_n)
+        return sub["task_condition"].tolist()
+
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 12,
+    })
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10), squeeze=False)
+    fig.suptitle(
+        "PPI Contrasts – Subject-wise Cohen's d (FPN = FPNA+FPNB)\n"
+        "(selection: top |d| contrasts from collapsed FPN combo_stats, p<0.05)",
+        fontsize=15,
+        fontweight="bold",
+    )
+
+    targets = ["DMN", "DAN"]
+
+    def _plot_panel(ax, target: str):
+        top_tc = _select_top_tc_fpn(target)
+        if not top_tc:
+            ax.text(
+                0.5, 0.5,
+                f"No significant contrasts for FPN→{target}",
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=11,
+            )
+            ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+            ax.grid(axis="x", alpha=0.3)
+            return
+
+        sub = subj_level[
+            (subj_level["seed_family"] == "FPN")
+            & (subj_level["target"] == target)
+            & (subj_level["task_condition"].isin(top_tc))
+        ].copy()
+
+        sub = sub[np.isfinite(sub["cohens_d_subj"])]
+        if sub.empty:
+            ax.text(
+                0.5, 0.5,
+                f"No subject-level d for FPN→{target}",
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=11,
+            )
+            ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+            ax.grid(axis="x", alpha=0.3)
+            return
+
+        order = (
+            sub.groupby("task_condition")["cohens_d_subj"]
+            .mean()
+            .sort_values(ascending=True)
+            .index.tolist()
+        )
+        positions = np.arange(len(order))
+        plot_data = [
+            sub[sub["task_condition"] == tc]["cohens_d_subj"].values for tc in order
+        ]
+
+        bp = ax.boxplot(
+            plot_data,
+            vert=False,
+            positions=positions,
+            widths=0.6,
+            patch_artist=True,
+            showfliers=False,
+            medianprops=dict(color="black", linewidth=1.5),
+            boxprops=dict(linewidth=1.2),
+            whiskerprops=dict(linewidth=1.2),
+            capprops=dict(linewidth=1.2),
+        )
+        for patch in bp["boxes"]:
+            patch.set_facecolor("#dddddd")
+            patch.set_alpha(0.7)
+
+        color = "#f94144" if target == "DMN" else "#90be6d"
+
+        for i, tc in enumerate(order):
+            vals = sub[sub["task_condition"] == tc]["cohens_d_subj"].values
+            y = np.random.normal(loc=positions[i], scale=0.08, size=len(vals))
+            ax.scatter(
+                vals,
+                y,
+                s=25,
+                color=color,
+                edgecolors="black",
+                linewidth=0.4,
+                alpha=0.7,
+                zorder=3,
+            )
+
+        ax.set_yticks(positions)
+        ax.set_yticklabels(order, fontsize=9)
+        ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.7)
+        ax.grid(axis="x", alpha=0.3)
+        ax.invert_yaxis()
+        ax.set_xlabel("Cohen's d (subject-level PPI effect)", fontsize=11)
+        # NEW: constrain x-axis to [-4, 4]
+        ax.set_xlim(-4.0, 4.0)
+        ax.set_title(f"FPN→{target}", fontsize=13, fontweight="bold")
+
+    _plot_panel(axes[0, 0], "DMN")
+    _plot_panel(axes[1, 0], "DAN")
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    out_path = os.path.join(output_dir, "ppi_contrast_boxplots_FPN_DMN_DAN.png")
+    plt.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"  ✓ Saved FPN 1×2 contrast boxplot figure to {out_path}")
 
 
 def _compare_fpna_fpnb_contrasts(combo_stats: pd.DataFrame, output_dir: str) -> None:
@@ -605,7 +938,7 @@ def main():
         print("  Computing group-level summary statistics...")
         combo_stats = _build_group_contrast_stats(group_df)
 
-        # Attach pretty_name and tags from all_contrast.tsv (for BOTH summary and top table)
+        # Attach pretty_name and tags from all_contrast.tsv
         print("  Attaching contrast metadata (pretty_name, tags)...")
         combo_stats = _attach_contrast_metadata(combo_stats, ROOT_DIR)
 
@@ -635,9 +968,14 @@ def main():
         print("  Comparing FPNA vs FPNB at contrast level...")
         _compare_fpna_fpnb_contrasts(combo_stats, group_dir)
 
-        # Create polarity bar-chart figure
-        print("  Creating polarity bar-chart plots...")
-        _create_polarity_barcharts(combo_stats, group_dir)
+        # NEW: contrast-level boxplot figures (subject-level Cohen's d)
+        print("  Creating contrast-level boxplot+dots figures...")
+        _create_contrast_boxplots_fpna_fpnb_2x2(combo_stats, group_df, group_dir, top_n=15)
+        _create_contrast_boxplots_fpn_1x2(combo_stats, group_df, group_dir, top_n=15)
+
+        # NEW: export top contrasts per FPNA/FPNB × DMN/DAN panel (matching boxplot selection)
+        print("  Exporting top contrast tables for boxplot panels...")
+        _export_top_contrast_tables_fpna_fpnb_2x2(combo_stats, group_dir, top_n=20)
     else:
         print("\nNo contrast-level data generated.")
 

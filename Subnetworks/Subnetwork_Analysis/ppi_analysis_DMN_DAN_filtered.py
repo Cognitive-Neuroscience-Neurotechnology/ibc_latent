@@ -215,14 +215,14 @@ for session_dir in session_dirs:
         ts_subnet1_clean = clean(
             ts_subnet1.reshape(-1, 1), 
             detrend=True,           # Remove linear drift
-            standardize='zscore_sample',  # Z-score
+            standardize='zscore_sample',  # Z-score -> DEMEANING physiological regressor!!
             confounds=None          # NO confound regression!
         ).ravel()
         
         ts_subnet2_clean = clean(
             ts_subnet2.reshape(-1, 1),
             detrend=True,
-            standardize='zscore_sample',
+            standardize='zscore_sample',  # Z-score -> DEMEANING physiological regressor!!
             confounds=None
         ).ravel()
 
@@ -302,7 +302,7 @@ for session_dir in session_dirs:
                         frame_times=frame_times
                     )
                     psych_regressor = psych_regressor[:, 0]
-                    psych_regressor = psych_regressor - psych_regressor.mean()
+                    psych_regressor = psych_regressor - psych_regressor.mean() # DEMEANING psychological regressor!!
 
                     # After compute_regressor, add:
                     if np.allclose(psych_regressor.std(), 0, atol=1e-8):

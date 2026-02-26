@@ -3,7 +3,7 @@ Take communities from infomap and plot them on the brain like the k-means subnet
 """
 
 # Example usage:
-# python3 /home/hmueller2/ibc_code/ibc_latent/Infomap/Plotting/visualize_communities_brain.py --subject 01 --dir /ptmp/hmueller2/Downloads --density 0.05
+# python3 /home/hmueller2/ibc_code/ibc_latent/Infomap/Plotting/visualize_communities_brain.py --subject 01 --dir /ptmp/hmueller2/2025_ibc_latent/outputs --density 0.05
 
 import numpy as np
 import nibabel as nib

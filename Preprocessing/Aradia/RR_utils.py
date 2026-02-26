@@ -24,7 +24,7 @@ from itertools import combinations
 
 
 
-script_dir='/ptmp/hmueller2/Downloads/fmriprep_out' ### change this to your script directory!!  
+script_dir='/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out' ### change this to your script directory!!  
 
 """
 Directory where scripts are located
@@ -49,7 +49,7 @@ def get_sessions_dirs(input_dir:str):
         list: list of session directories
     
     Example:
-        get_sessions_dirs('/ptmp/hmueller2/Downloads/fmriprep_out/sub-01')
+        get_sessions_dirs('/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out/sub-01')
         # Output: ['ses-00', 'ses-03', 'ses-04', 'ses-05', 'ses-06', 'ses-07', ...]
     
     """

@@ -10,11 +10,11 @@ Map PPI contrast results to cognitive domains using Cognitive Atlas tags.
 Creates domain-level summary analogous to ppi_dmn_dan_top_contrasts.csv.
 
 Input:
-    - /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_contrasts_group_summary.csv
+    - /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_contrasts_group_summary.csv
 
 Output:
-    - /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_top_domains.csv
-    - /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/domain_barcharts_polarity.png
+    - /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_top_domains.csv
+    - /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/domain_barcharts_polarity.png
 """
 
 
@@ -912,7 +912,7 @@ def main():
     print("="*70)
     
     # Paths
-    ppi_base = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan'
+    ppi_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan'
     group_dir = os.path.join(ppi_base, 'group_analysis')
     summary_file = os.path.join(group_dir, 'ppi_dmn_dan_contrasts_group_summary.csv')
     

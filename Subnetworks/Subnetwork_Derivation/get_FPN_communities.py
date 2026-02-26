@@ -12,7 +12,7 @@ import RR_utils as RR
 
 parser = argparse.ArgumentParser(description='Extract FPN communities from Infomap results')
 parser.add_argument('--subject', help='do not include sub- prefix here, e.g. 01')
-parser.add_argument('--dir', help='Base working directory, e.g. /ptmp/hmueller2/Downloads')
+parser.add_argument('--dir', help='Base working directory, e.g. /ptmp/hmueller2/2025_ibc_latent/outputs')
 args = parser.parse_args()
 
 subject = args.subject.zfill(2)  # Ensure two-digit format

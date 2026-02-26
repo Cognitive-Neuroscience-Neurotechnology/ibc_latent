@@ -10,7 +10,7 @@ from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 from nibabel import load as nib_load
 
 # Configuration
-working_dir = Path('/ptmp/hmueller2/Downloads')
+working_dir = Path('/ptmp/hmueller2/2025_ibc_latent/outputs')
 kmeans_dir = working_dir / 'subnetworks' / 'kmeans'
 infomap_dir = working_dir / 'subnetworks' / 'infomap'
 output_dir = working_dir / 'subnetworks' / 'comparison' / 'between_subject_analysis'

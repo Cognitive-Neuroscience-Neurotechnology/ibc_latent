@@ -15,7 +15,7 @@ import glob
 # Setup
 approach = 'kmeans' # 'infomap' or 'kmeans'
 
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 subnetwork_dir = os.path.join(working_dir, 'subnetworks')
 connectivity_dir = os.path.join(subnetwork_dir, 'connectivity_analysis')
 output_dir = os.path.join(subnetwork_dir, 'connectivity_analysis_summary')

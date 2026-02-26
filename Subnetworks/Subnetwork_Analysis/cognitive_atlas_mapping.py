@@ -18,7 +18,7 @@ print("COGNITIVE DOMAIN MAPPING FOR FPN SUBNETWORKS")
 print("="*60)
 
 # Load group-level FPN subnetwork results
-results_base = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis'
+results_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/group_analysis'
 fpn_results = pd.read_csv(os.path.join(results_base, 'group_level_stats.csv'))
 print(f"\n[1/6] Loaded FPN results: {len(fpn_results)} contrasts")
 print(f"  Columns: {list(fpn_results.columns)}")
@@ -227,7 +227,7 @@ print(f"  Domains with |Cohen's d| > 0.3: {(domain_df['abs_cohens_d'] > 0.3).sum
 print(f"  Domains with consistency > 80%: {(domain_df['consistency'] > 0.8).sum()}")
 
 # ========== 7. SAVE RESULTS ==========
-output_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/cognitive_atlas'
+output_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/cognitive_atlas'
 os.makedirs(output_dir, exist_ok=True)
 
 # Save ORIGINAL ranking (by Cohen's d)
@@ -328,7 +328,7 @@ def create_domain_violin_double_panel(df, merged_df, output_dir, top_n=10):
     print("\n[EXTRA] Creating cognitive domain double-panel violin figure...")
     
     # Load subject-level data
-    results_base = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results'
+    results_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation'
     subject_files = []
     
     for subject_dir in os.listdir(results_base):
@@ -662,7 +662,7 @@ def create_contrast_violin_double_panel(results_base, output_dir, top_n=10):
 
 # Create double-panel contrast-level violin plot
 contrast_doublepanel_path = create_contrast_violin_double_panel(
-    results_base='/ptmp/hmueller2/Downloads/subnetwork_analysis_results',
+    results_base='/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation',
     output_dir=output_dir,
     top_n=10
 )
@@ -856,7 +856,7 @@ def create_combined_2x2_figure(results_base, merged_df, domain_df, output_dir, t
 
 # Create combined 2×2 figure (add this after the individual plots)
 combined_2x2_path = create_combined_2x2_figure(
-    results_base='/ptmp/hmueller2/Downloads/subnetwork_analysis_results',
+    results_base='/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation',
     merged_df=merged,
     domain_df=domain_df_composite,
     output_dir=output_dir,

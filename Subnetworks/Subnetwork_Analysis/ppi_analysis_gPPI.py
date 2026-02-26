@@ -16,7 +16,7 @@ from nilearn.signal import clean
 
 # Helper: robust events file lookup (try with/without dir and fall back to glob)
 def find_events_file(subject, session, task, direction=None, run=None):
-    base = os.path.join('/ptmp/hmueller2/Downloads/ibc_raw', f'sub-{subject}', session, 'func')
+    base = os.path.join('/ptmp/hmueller2/2025_ibc_latent/data/ibc_raw', f'sub-{subject}', session, 'func')
 
     candidates = []
     if run:
@@ -66,9 +66,9 @@ def infer_subnet_masks_for_ncols(subnetwork_data, func_ncols):
 
 # ========== 2) SETUP: LOAD SUBJECT DATA AND PATHS ==========
 subject = sys.argv[1]
-base_dir = '/ptmp/hmueller2/Downloads/fmriprep_out'
-subnetwork_dir = f'/ptmp/hmueller2/Downloads/subnetworks/infomap/sub-{subject}'
-output_base = f'/ptmp/hmueller2/Downloads/ppi_results/sub-{subject}'
+base_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out'
+subnetwork_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap/sub-{subject}'
+output_base = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/old_versions/ppi_results/sub-{subject}'
 os.makedirs(output_base, exist_ok=True)
 
 # 1) Load FPN subnetwork masks

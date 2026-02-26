@@ -70,9 +70,9 @@ def calculate_overlap_metrics(z_data, mask_a, mask_b, thresholds=[1.96, 2.0, 2.5
 # ========== Setup paths ==========
 subject = sys.argv[1] if len(sys.argv) > 1 else input("Enter subject ID: ")
 
-subnetwork_dir = f'/ptmp/hmueller2/Downloads/subnetworks/infomap/sub-{subject}'
-contrast_base = f'/ptmp/hmueller2/Downloads/contrast_maps_fsLR/sub-{subject}'
-output_dir = f'/ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-{subject}'
+subnetwork_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap/sub-{subject}'
+contrast_base = f'/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-{subject}'
+output_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-{subject}'
 os.makedirs(output_dir, exist_ok=True)
 
 # ========== Load FPN subnetworks ==========

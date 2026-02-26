@@ -18,14 +18,14 @@ print("COGNITIVE DOMAIN MAPPING FOR FPN-DMN/DAN CONNECTIVITY")
 print("="*60)
 
 # Load PPI results (contrast-level group statistics)
-ppi_base = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis'
+ppi_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis'
 ppi_results = pd.read_csv(os.path.join(ppi_base, 'seed_target_contrast_ranking.csv'))
 print(f"\n[1/6] Loaded PPI results: {len(ppi_results)} seed-target-contrast combinations")
 print(f"  Columns: {list(ppi_results.columns)}")
 
 # Load subject-level PPI data for variance estimation (optional - skip if not found)
 subject_ppi_files = []
-ppi_subject_base = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan'
+ppi_subject_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan'
 
 print("\n[DEBUG] Searching for subject-level PPI data...")
 print(f"  Base directory: {ppi_subject_base}")
@@ -253,7 +253,7 @@ print(f"  Top FPNA domain (effect): {fpna_domains_effect.iloc[0]['cognitive_doma
 print(f"  Top FPNB domain (effect): {fpnb_domains_effect.iloc[0]['cognitive_domain']} (diff={fpnb_domains_effect.iloc[0]['mean_diff_dmn_minus_dan']:.3f})")
 
 # ========== 7. SAVE RESULTS ==========
-output_dir = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan/cognitive_atlas'
+output_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/cognitive_atlas'
 os.makedirs(output_dir, exist_ok=True)
 
 fpna_domains_effect.to_csv(os.path.join(output_dir, 'fpna_target_specificity_effect.csv'), index=False)

@@ -18,9 +18,9 @@ import numpy as np
 from scipy.stats import pearsonr
 
 # Paths (adjust if you move things)
-PPI_BASE = "/ptmp/hmueller2/Downloads/ppi_results_dmn_dan"
-CONTRAST_BASE = "/ptmp/hmueller2/Downloads/subnetwork_analysis_results"
-OUT_DIR = "/ptmp/hmueller2/Downloads/joint_mapping"
+PPI_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan"
+CONTRAST_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation"
+OUT_DIR = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/joint_mapping"
 
 os.makedirs(OUT_DIR, exist_ok=True)
 

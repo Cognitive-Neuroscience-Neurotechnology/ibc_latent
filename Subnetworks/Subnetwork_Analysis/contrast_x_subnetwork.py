@@ -36,9 +36,9 @@ def permutation_test(z_subnet1, z_subnet2, n_permutations=10000):
     return observed_diff, p_value
 
 subject = sys.argv[1]
-subnetwork_dir = f'/ptmp/hmueller2/Downloads/subnetworks/infomap/sub-{subject}'
-contrast_base = f'/ptmp/hmueller2/Downloads/contrast_maps_fsLR/sub-{subject}'
-output_dir = f'/ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-{subject}'
+subnetwork_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap/sub-{subject}'
+contrast_base = f'/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-{subject}'
+output_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-{subject}'
 os.makedirs(output_dir, exist_ok=True)
 
 # Load FPN subnetwork masks

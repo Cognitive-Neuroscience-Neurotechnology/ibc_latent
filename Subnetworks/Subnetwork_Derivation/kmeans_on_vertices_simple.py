@@ -18,7 +18,7 @@ args = parser.parse_args()
 subject = args.subject
 
 # Setup directories
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 network_dir = os.path.join(working_dir, "individual_networks", f'sub-{subject}')
 output_dir = os.path.join(working_dir, "subnetworks", "kmeans", f'sub-{subject}')
 os.makedirs(output_dir, exist_ok=True)

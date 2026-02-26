@@ -12,7 +12,7 @@ import numpy as np
 sns.set_style("whitegrid")
 sns.set_context("paper", font_scale=1.2)
 
-results_base = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results'
+results_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation'
 group_dir = os.path.join(results_base, 'group_analysis')
 plot_dir = os.path.join(group_dir, 'plots')
 os.makedirs(plot_dir, exist_ok=True)

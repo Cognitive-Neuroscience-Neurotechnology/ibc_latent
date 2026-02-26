@@ -8,8 +8,8 @@ import numpy as np
 import nibabel as nib
 from math import ceil
 
-AP_PATH = "/ptmp/hmueller2/Downloads/fmriprep_out/sub-04/ses-01/postfmriprep/GLM/sub-04_ses-01_task-HcpEmotion_dir-ap_cleaned.dtseries.nii"
-PA_PATH = "/ptmp/hmueller2/Downloads/fmriprep_out/sub-04/ses-01/postfmriprep/GLM/sub-04_ses-01_task-HcpEmotion_dir-pa_cleaned.dtseries.nii"
+AP_PATH = "/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out/sub-04/ses-01/postfmriprep/GLM/sub-04_ses-01_task-HcpEmotion_dir-ap_cleaned.dtseries.nii"
+PA_PATH = "/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out/sub-04/ses-01/postfmriprep/GLM/sub-04_ses-01_task-HcpEmotion_dir-pa_cleaned.dtseries.nii"
 SECONDS = 20  # first N seconds to inspect
 
 def tr_and_len(img):

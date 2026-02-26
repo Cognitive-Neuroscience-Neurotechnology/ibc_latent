@@ -22,11 +22,11 @@ if len(sys.argv) > 1:
     subjects = sys.argv[1:]
 else:
     # Auto-detect all subjects in ppi_results_dmn_dan
-    ppi_base = "/ptmp/hmueller2/Downloads/ppi_results_dmn_dan"
+    ppi_base = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan"
     subjects = sorted([d.replace("sub-", "") for d in os.listdir(ppi_base) 
                       if os.path.isdir(os.path.join(ppi_base, d)) and d.startswith("sub-")])
 
-PPI_BASE = "/ptmp/hmueller2/Downloads/ppi_results_dmn_dan"
+PPI_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan"
 OUTPUT_DIR = os.path.join(PPI_BASE, "group_analysis")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

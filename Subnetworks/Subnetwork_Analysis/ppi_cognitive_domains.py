@@ -18,7 +18,7 @@ print("PPI COGNITIVE DOMAIN MAPPING")
 print("="*60)
 
 # Load PPI contrast specificity results
-ppi_results_file = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/contrast_specificity_scores.csv'
+ppi_results_file = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/contrast_specificity_scores.csv'
 ppi_results = pd.read_csv(ppi_results_file)
 print(f"\n[1/6] Loaded PPI results: {len(ppi_results)} contrasts")
 print(f"  Columns: {list(ppi_results.columns)}")
@@ -214,7 +214,7 @@ if primary_metric:
     print(f"  Domains with |{primary_metric}| > median: {(domain_df[f'{primary_metric}_abs'] > domain_df[f'{primary_metric}_abs'].median()).sum()}")
 
 # ========== 7. SAVE RESULTS ==========
-output_dir = '/ptmp/hmueller2/Downloads/ppi_results_dmn_dan/cognitive_atlas'
+output_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/cognitive_atlas'
 os.makedirs(output_dir, exist_ok=True)
 
 # Save rankings

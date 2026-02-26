@@ -4,7 +4,7 @@ Group-level analysis: find contrasts with high activation in BOTH FPN_A and FPN_
 
 Inputs:
   - Subject-level outputs from contrast_x_subn_new.py:
-      /ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-*/fpn_subnetwork_contrast_analysis.csv
+      /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-*/fpn_subnetwork_contrast_analysis.csv
 
 For each task_contrast:
   - Aggregate mean_fpn_a and mean_fpn_b across subjects.
@@ -40,7 +40,7 @@ def cohens_d_1sample(values: np.ndarray) -> float:
 
 # ---------- Collect subject-level files ----------
 
-RESULT_PATTERN = "/ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-*/fpn_subnetwork_contrast_analysis.csv"
+RESULT_PATTERN = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-*/fpn_subnetwork_contrast_analysis.csv"
 result_files = sorted(glob.glob(RESULT_PATTERN))
 
 print(f"{'='*70}")
@@ -115,7 +115,7 @@ group_df = pd.DataFrame(group_rows)
 
 # ---------- Save full group table ----------
 
-group_out_dir = "/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis"
+group_out_dir = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/group_analysis"
 os.makedirs(group_out_dir, exist_ok=True)
 
 raw_path = os.path.join(group_out_dir, "fpn_subnetwork_group_activation_both_raw.csv")

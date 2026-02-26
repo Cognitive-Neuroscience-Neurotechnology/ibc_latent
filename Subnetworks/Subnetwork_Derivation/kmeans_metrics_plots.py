@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 clustering_method = "kmeans"  # either "infomap" or "kmeans"
 
 # ---- SET YOUR PATHS HERE ----
-base_dir = "/ptmp/hmueller2/Downloads"  # parent of subnetworks/
+base_dir = "/ptmp/hmueller2/2025_ibc_latent/outputs"  # parent of subnetworks/
 out_dir = os.path.join(base_dir, "subnetworks", clustering_method)
 
 METRICS = [

@@ -14,7 +14,7 @@ print("CROSS-SUBJECT VARIABILITY ANALYSIS FOR TOP 30 CONTRASTS")
 print(f"{'='*90}\n")
 
 # Load group-level stats to identify top contrasts
-group_stats_path = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis/group_level_stats.csv'
+group_stats_path = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/group_analysis/group_level_stats.csv'
 group_stats = pd.read_csv(group_stats_path)
 
 # Get top 15 contrasts for each network (by mean_diff_a_minus_b_mean)
@@ -39,7 +39,7 @@ print(top_fpn_b[['task', 'contrast', 'mean_diff_a_minus_b_mean']].to_string(inde
 top_contrasts = pd.concat([top_fpn_a, top_fpn_b])
 
 # Get all subject result files
-subject_files = sorted(glob.glob('/ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-*/fpn_subnetwork_contrast_analysis.csv'))
+subject_files = sorted(glob.glob('/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-*/fpn_subnetwork_contrast_analysis.csv'))
 subjects = [os.path.basename(os.path.dirname(f)).replace('sub-', '') for f in subject_files]
 
 print(f"\n\nFound {len(subjects)} subjects: {', '.join(subjects)}\n")
@@ -112,7 +112,7 @@ for network in ['FPN_A', 'FPN_B']:
 
 # Save detailed summary
 results_df = pd.DataFrame(results)
-output_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis'
+output_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/group_analysis'
 output_file = os.path.join(output_dir, 'top30_cross_subject_variability.csv')
 results_df.to_csv(output_file, index=False)
 print(f"\n✓ Saved detailed results to: {output_file}")

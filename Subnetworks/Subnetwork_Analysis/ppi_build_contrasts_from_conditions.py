@@ -3,12 +3,12 @@ Step 2: Build PPI contrast-level betas from condition-level PPI betas.
 
 Input:
   - per-subject condition-level PPI results:
-      /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/sub-*/ppi_dmn_dan_results.csv
+      /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/sub-*/ppi_dmn_dan_results.csv
       (output of ppi_analysis_DMN_DAN_filtered.py)
 
 Output:
   - per-subject contrast-level PPI results:
-      /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/sub-*/ppi_dmn_dan_contrasts.csv
+      /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/sub-*/ppi_dmn_dan_contrasts.csv
 """
 # filepath: /home/hmueller2/ibc_code/ibc_latent/Subnetworks/Subnetwork_Analysis/ppi_build_contrasts_from_conditions.py
 
@@ -26,14 +26,14 @@ sys.path.insert(0, ROOT_DIR)
 
 from public_analysis.ibc_public.utils_contrasts import make_contrasts
 
-PPI_BASE = "/ptmp/hmueller2/Downloads/ppi_results_dmn_dan"
+PPI_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan"
 # NEW: where all_contrast.tsv actually lives (same folder as this script)
 DATA_INFO_DIR = os.path.join(os.path.dirname(__file__), "Data Info")
 
 # Additional fallback locations (including your /ptmp/Downloads copy)
 ALL_CONTRAST_CANDIDATES = [
     os.path.join(DATA_INFO_DIR, "all_contrast.tsv"),
-    "/ptmp/hmueller2/Downloads/all_contrasts.tsv",  # note the "s" in the filename you mentioned
+    "/ptmp/hmueller2/2025_ibc_latent/misc/all_contrasts.tsv",  # note the "s" in the filename you mentioned
 ]
 
 

@@ -71,7 +71,7 @@ subject = args.subject
 """
 print("----- 00. Set up directories -----")
 
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 timeseries_dir = os.path.join(working_dir, "fmriprep_out", f'sub-{subject}')
 network_dir = os.path.join(working_dir, "individual_networks", f'sub-{subject}')
 output_dir = os.path.join(working_dir, "subnetworks", "kmeans", f'sub-{subject}')

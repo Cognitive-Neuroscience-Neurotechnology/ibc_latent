@@ -16,7 +16,7 @@ approach = "kmeans" # choose "kmeans" or "infomap"
 
 def main(subject: str, write_dscalar: bool = True):
     subject = subject.zfill(2)
-    working_dir = '/ptmp/hmueller2/Downloads'
+    working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
     sub_str = f"sub-{subject}"
 
     # Helper: ensure exactly one _relabeled suffix

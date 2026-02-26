@@ -18,12 +18,12 @@ print(f"{'='*70}\n")
 
 # Collect all subject CSVs
 result_files = sorted(glob.glob(
-    '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-*/fpn_subnetwork_contrast_analysis.csv'
+    '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-*/fpn_subnetwork_contrast_analysis.csv'
 ))
 
 if not result_files:
     print("ERROR: No subject result files found!")
-    print("Expected pattern: /ptmp/hmueller2/Downloads/subnetwork_analysis_results/sub-*/fpn_subnetwork_contrast_analysis.csv")
+    print("Expected pattern: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/sub-*/fpn_subnetwork_contrast_analysis.csv")
     exit(1)
 
 print(f"Found {len(result_files)} subject files:")
@@ -105,7 +105,7 @@ cols_order = ['task_contrast', 'task', 'contrast', 'dominant_network',
 group_stats = group_stats[cols_order]
 
 # Save
-output_dir = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/group_analysis'
+output_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/group_analysis'
 output_path = os.path.join(output_dir, 'group_level_stats.csv')
 os.makedirs(output_dir, exist_ok=True)
 group_stats.to_csv(output_path, index=False)

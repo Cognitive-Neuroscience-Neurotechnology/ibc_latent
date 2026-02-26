@@ -9,7 +9,7 @@ import pandas as pd
 from pathlib import Path
 
 # Configuration
-BASE_DIR = "/ptmp/hmueller2/Downloads/contrast_maps_fsLR_october"
+BASE_DIR = "/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR_october"
 OUTPUT_FILE = "/home/hmueller2/ibc_code/ibc_latent/Data Info/contrast_number.csv"
 
 def count_tasks_and_contrasts(subject_dir):

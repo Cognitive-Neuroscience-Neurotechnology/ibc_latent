@@ -2,7 +2,7 @@ import nibabel as nib
 import numpy as np
 
 subject = "06"
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 
 parc_filename = f"{working_dir}/individual_networks_october/sub-{subject}/resting_state/sub-{subject}_individual_nets_concat.ptseries.nii"
 

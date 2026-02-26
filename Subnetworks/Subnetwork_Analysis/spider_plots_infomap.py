@@ -21,7 +21,7 @@ parser.add_argument('--subject', help='do not include sub- prefix here, e.g. 01'
 args = parser.parse_args()
 
 subject = args.subject.zfill(2)                  # Ensure two-digit format, e.g. "01"
-working_dir = '/ptmp/hmueller2/Downloads'        # Hardcoded base working directory
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'        # Hardcoded base working directory
 sub_str = f"sub-{subject}"                       # "sub-04"
 
 """

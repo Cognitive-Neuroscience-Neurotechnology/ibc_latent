@@ -9,8 +9,8 @@ Map PPI contrast results to cognitive domains using Cognitive Atlas tags.
 Creates domain-level summary analogous to ppi_dmn_dan_top_contrasts.csv.
 
 Input:
-    - /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_FPNA_vs_FPNB_contrasts.csv
-    - /ptmp/hmueller2/Downloads/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_FPNA_vs_FPNB_domains.csv
+    - /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_FPNA_vs_FPNB_contrasts.csv
+    - /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan/group_analysis/ppi_dmn_dan_FPNA_vs_FPNB_domains.csv
 
 Output:
     - ppi_dmn_dan_FPNA_FPNB_pattern_summary.csv 
@@ -23,7 +23,7 @@ Output:
         -> Bar chart: number of domains/contrasts with each DMN–DAN relationship (e.g. recouple_DAN_decouple_DMN) for FPNA vs FPNB.
 """
 
-PPI_BASE = "/ptmp/hmueller2/Downloads/ppi_results_dmn_dan"
+PPI_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/ppi_results_dmn_dan"
 GROUP_DIR = os.path.join(PPI_BASE, "group_analysis")
 
 ALPHA = 0.05

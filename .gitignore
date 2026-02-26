@@ -1,6 +1,2 @@
 *.nii
 *.nii.gz
-GLM/First_GLM.ipynb
-GLM/First_RSA.ipynb
-GLM/src/find_incorrect_naming.py
-ICA/src/ica_on_contrasts_x_parcels.py

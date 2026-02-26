@@ -3,7 +3,7 @@ import pandas as pd
 import glob
 
 # Paths
-base_dir = "/ptmp/hmueller2/Downloads/ibc_preprocessed"
+base_dir = "/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/ibc_preprocessed_MNI"
 overview_path = "/home/hmueller2/ibc_code/ibc_latent/Data Info/session_overview.csv"
 
 # Load overview CSV

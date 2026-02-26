@@ -25,7 +25,7 @@ args = parser.parse_args()
 subject = args.subject.zfill(2)
 k = args.k
 
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 output_dir = os.path.join(working_dir, 'subnetworks', 'comparison', f'sub-{subject}')
 os.makedirs(output_dir, exist_ok=True)
 

@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
-results_base = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results'
+results_base = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation'
 output_dir = os.path.join(results_base, 'group_analysis')
 os.makedirs(output_dir, exist_ok=True)
 

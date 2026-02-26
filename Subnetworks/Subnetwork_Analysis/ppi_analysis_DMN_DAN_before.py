@@ -17,7 +17,7 @@ from scipy import stats
 
 # Helper: robust events file lookup (try with/without dir and fall back to glob)
 def find_events_file(subject, session, task, direction=None, run=None):
-    base = os.path.join('/ptmp/hmueller2/Downloads/ibc_raw', f'sub-{subject}', session, 'func')
+    base = os.path.join('/ptmp/hmueller2/2025_ibc_latent/data/ibc_raw', f'sub-{subject}', session, 'func')
 
     candidates = []
     if run:
@@ -40,7 +40,7 @@ def find_events_file(subject, session, task, direction=None, run=None):
 
 # ========== 2) SETUP: LOAD SUBJECT DATA AND PATHS ==========
 subject = sys.argv[1]
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 base_dir = os.path.join(working_dir, 'fmriprep_out_october')
 subnetwork_dir = os.path.join(working_dir, 'subnetworks_october', 'infomap', f'sub-{subject}')
 output_base = os.path.join(working_dir, 'ppi_results_dmn_dan', f'sub-{subject}')

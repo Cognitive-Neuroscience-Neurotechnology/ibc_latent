@@ -19,11 +19,11 @@ if len(sys.argv) > 1:
     subjects = sys.argv[1:]
 else:
     # Auto-detect all subjects in ppi_results
-    ppi_base = "/ptmp/hmueller2/Downloads/ppi_results"
+    ppi_base = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/old_versions/ppi_results"
     subjects = sorted([d.replace("sub-", "") for d in os.listdir(ppi_base) 
                       if os.path.isdir(os.path.join(ppi_base, d)) and d.startswith("sub-")])
 
-PPI_BASE = "/ptmp/hmueller2/Downloads/ppi_results"
+PPI_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/old_versions/ppi_results"
 OUTPUT_DIR = os.path.join(PPI_BASE, "group_analysis")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -482,7 +482,7 @@ def create_network_context_radar(df, task_stats, output_dir):
     }
     
     networks = list(network_indices.keys())
-    working_dir = '/ptmp/hmueller2/Downloads'
+    working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
     
     # Compute connectivity for each task
     connectivity_data = {}
@@ -663,7 +663,7 @@ def compute_network_connectivity_from_raw(subject, task, subnetwork_id):
     sys.path.insert(1, '/home/hmueller2/ibc_code/ibc_latent/Preprocessing/Aradia')
     import RR_utils as RR
     
-    working_dir = '/ptmp/hmueller2/Downloads'
+    working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
     sub_str = f"sub-{subject}"
     
     # Load LSN ptseries (19 networks after removing FPN and Noise)

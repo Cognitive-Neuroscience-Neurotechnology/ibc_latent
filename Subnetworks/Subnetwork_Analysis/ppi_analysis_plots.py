@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 subject = sys.argv[1]
-base_dir = '/ptmp/hmueller2/Downloads/ppi_results'
+base_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/old_versions/ppi_results'
 subject_dir = os.path.join(base_dir, f'sub-{subject}')
 
 # Check if results exist

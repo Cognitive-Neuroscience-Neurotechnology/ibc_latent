@@ -15,9 +15,9 @@ from nilearn.glm.first_level import FirstLevelModel, compute_regressor
 from nilearn.signal import clean
 
 subject = sys.argv[1]
-base_dir = '/ptmp/hmueller2/Downloads/fmriprep_out'
-subnetwork_dir = f'/ptmp/hmueller2/Downloads/subnetworks/infomap/sub-{subject}'
-output_base = f'/ptmp/hmueller2/Downloads/ppi_results/sub-{subject}'
+base_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out'
+subnetwork_dir = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap/sub-{subject}'
+output_base = f'/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/old_versions/ppi_results/sub-{subject}'
 os.makedirs(output_base, exist_ok=True)
 
 # Load FPN subnetwork masks
@@ -84,7 +84,7 @@ for session_dir in session_dirs:
             run_id = f'task-{task}_dir-{direction}'
         
         motion_path = os.path.join(session_dir, 'postfmriprep', 'regressors', motion_fname)
-        onset_path = os.path.join('/ptmp/hmueller2/Downloads/ibc_raw', f'sub-{subject}', session, 'func', onset_fname)
+        onset_path = os.path.join('/ptmp/hmueller2/2025_ibc_latent/data/ibc_raw', f'sub-{subject}', session, 'func', onset_fname)
         
         if not os.path.exists(motion_path) or not os.path.exists(onset_path):
             print(f"Skipping {run_id}: missing files")

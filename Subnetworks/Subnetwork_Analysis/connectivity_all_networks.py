@@ -22,7 +22,7 @@ parser.add_argument('--approach', choices=['infomap', 'kmeans'], default='infoma
 args = parser.parse_args()
 
 subject = args.subject.zfill(2)
-working_dir = '/ptmp/hmueller2/Downloads'
+working_dir = '/ptmp/hmueller2/2025_ibc_latent/outputs'
 sub_str = f"sub-{subject}"
 
 # Setup directories

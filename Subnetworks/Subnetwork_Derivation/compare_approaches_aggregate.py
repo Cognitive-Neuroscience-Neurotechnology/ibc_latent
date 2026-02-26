@@ -11,7 +11,7 @@ import json
 from scipy import stats
 
 # Configuration
-working_dir = Path('/ptmp/hmueller2/Downloads')
+working_dir = Path('/ptmp/hmueller2/2025_ibc_latent/outputs')
 comparison_dir = working_dir / 'subnetworks' / 'comparison'
 output_dir = working_dir / 'subnetworks' / 'comparison' / 'group_analysis'
 output_dir.mkdir(parents=True, exist_ok=True)

@@ -13,8 +13,8 @@ import glob
 from PIL import ImageFont
 
 # ========== CONFIGURATION ==========
-INPUT_CSV = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/cognitive_atlas/cognitive_domain_fpn_profiles_composite_score.csv'
-OUTPUT_DIR = '/ptmp/hmueller2/Downloads/subnetwork_analysis_results/cognitive_atlas'
+INPUT_CSV = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/cognitive_atlas/cognitive_domain_fpn_profiles_composite_score.csv'
+OUTPUT_DIR = '/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_activation/cognitive_atlas'
 TOP_N = 25
 
 # Color palettes

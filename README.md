@@ -53,16 +53,12 @@ Subnetworks/                    # Subnetwork derivation and analysis
 5. Subnetwork analysis
     - See [Subnetworks/Subnetwork_Analysis](Subnetworks/Subnetwork_Analysis) for activation and ppi analyses.
 
-## Dependencies / Environment
+## Dependencies
 
 - Python (recommend using a virtual environment)
 - fMRIPrep (container or local install)
 - Workbench (for CIFTI/GIFTI operations)
 - MATLAB (for MSCcodebase utilities)
-
-## Local Paths
-
-Set these environment variables so local paths do not appear in the repo:
 
 ## Contact
 

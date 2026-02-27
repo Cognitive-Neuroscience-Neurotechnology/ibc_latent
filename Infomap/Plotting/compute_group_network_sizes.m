@@ -25,8 +25,8 @@ function compute_group_network_sizes(subjects_file)
     % -----------------------------
     % 3) Directories & constants
     % -----------------------------
-    infomap_root = '/ptmp/hmueller2/Downloads/individual_networks';
-    va_root      = '/ptmp/hmueller2/Downloads/fmriprep_out';
+    infomap_root = '/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks';
+    va_root      = '/ptmp/hmueller2/outputs/preprocessing/fmriprep_out';
     Structures   = {'CORTEX_LEFT','CORTEX_RIGHT'};
     MAX_NETWORKS = length(NetworkNames);
     AllNetworkSizes = nan(nSubjects, MAX_NETWORKS);

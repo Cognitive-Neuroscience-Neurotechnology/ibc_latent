@@ -1,2 +1,4 @@
-*.nii
-*.nii.gz
+# Just helper scripts
+ap_pa_quickqueck.py
+session_overview.py
+generate_inflated.sh

@@ -13,14 +13,14 @@ WorkbenchBinary = '/mnt/workbench/run_wb_command.sh'; % Used in order to use wb_
 nWorkers = 8;
 
 Subject = getenv('Subject');
-working_dir = '/ptmp/hmueller2/Downloads';
+working_dir = '/ptmp/hmueller2/2025_ibc_latent';
 
 
 %% ---- Step 1: Import of concatenated fMRI data from all resting-state sessions.
 disp(['---- Step 1: Temporal Concatenation for subject: ' Subject ' ----']);
 
-surface_dir=[working_dir '/fmriprep_out/sub-' Subject]; 
-Subdir = [working_dir '/individual_networks/sub-' Subject];
+surface_dir=[working_dir '/outputs/preprocessing/fmriprep_out/sub-' Subject]; 
+Subdir = [working_dir '/outputs/individual_networks/derived_networks/sub-' Subject];
 mkdir(Subdir)
 half_dir = [Subdir '/resting_state'];
 mkdir(half_dir);

@@ -10,16 +10,15 @@
 #SBATCH --mail-type=FAIL,TIME_LIMIT
 
 container=/home/rglz/containers/gfae.sif
-working_dir=/ptmp/hmueller2/Downloads
+working_dir=/ptmp/hmueller2/2025_ibc_latent
 
 script=/home/hmueller2/ibc_code/ibc_latent/Infomap/Plotting/workbench_networks.sh
 chmod +x "${script}" || true
 
 # Read subject from config file
-config_file=/ptmp/hmueller2/Downloads/subjects_resting.txt
+config_file=/ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt
 line=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$config_file")
 subject=$(echo "$line" | awk '{print $1}')
-#subject="07"
 
 echo "Processing subject: sub-${subject}"
 

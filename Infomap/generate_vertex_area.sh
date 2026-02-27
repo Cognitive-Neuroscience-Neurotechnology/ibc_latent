@@ -5,7 +5,7 @@
 # run: /home/hmueller2/ibc_code/ibc_latent/Infomap/generate_vertex_area.sh
 
 # Set base directory
-BASE_DIR="/ptmp/hmueller2/Downloads/fmriprep_out"
+BASE_DIR="/ptmp/hmueller2/outputs/preprocessing/fmriprep_out"
 
 # Loop over subjects 01 to 15
 for i in 01 04 05 06 07 08 09 11 12 13 14 15; do

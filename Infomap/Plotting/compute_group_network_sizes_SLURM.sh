@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=group_net_sizes
-#SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%j_%x.out
-#SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%j_%x.err
+#SBATCH --output=/ptmp/hmueller2/2025_ibc_latent/logs/infomap_logs/output/%j_%x.out
+#SBATCH --error=/ptmp/hmueller2/2025_ibc_latent/logs/infomap_logs/errors/%j_%x.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -13,7 +13,7 @@
 # ----------------------------
 # Load all subjects from text file
 # ----------------------------
-SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects_resting.txt
+SUBJECTS_FILE=/ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt
 echo "---- Running group network sizes for all subjects ----"
 
 # ----------------------------

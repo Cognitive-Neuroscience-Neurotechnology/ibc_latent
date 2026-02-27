@@ -10,10 +10,10 @@ sub="$1"
 SURFACE="inflated"  # Options: "inflated", "very_inflated"
 
 # Adjust these if needed
-WORKING_DIR="/ptmp/hmueller2/Downloads"
-MASKS_DIR="${WORKING_DIR}/fsLR_masks"
-INFOMAP_DIR="${WORKING_DIR}/individual_networks/sub-${sub}/resting_state"
-OUT_DIR="${WORKING_DIR}/network_images_wb"
+WORKING_DIR="/ptmp/hmueller2/2025_ibc_latent"
+MASKS_DIR="${WORKING_DIR}/misc/fsLR_masks"
+INFOMAP_DIR="${WORKING_DIR}/individual_networks/derived_networks/sub-${sub}/resting_state"
+OUT_DIR="${WORKING_DIR}/outputs/individual_networks/network_images_wb"
 WB_COMMAND="/home/hmueller2/workbench/bin_linux64/wb_command"
 WB_VIEW="/home/hmueller2/workbench/bin_linux64/wb_view"
 

@@ -2,3 +2,11 @@
 ap_pa_quickqueck.py
 session_overview.py
 generate_inflated.sh
+
+# Ignore Python stuff
+__pycache__/
+*.pyc
+Aradia/
+
+# Ignore Jupyter Notebooks as they were just used for testing and are not part of the final project
+*.ipynb

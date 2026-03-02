@@ -1,0 +1,268 @@
+============================================
+Multiple Demand System Mapping (SLURM)
+============================================
+Job ID: 861202
+Node: compute-28
+Start time: Mon Mar  2 16:12:15 CET 2026
+
+Contrast base: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR
+Output directory: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system
+Config file: /ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt
+Subjects: 04 06 07 09 11 13 14 15 
+
+Script directory: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand
+Working directory: /home/hmueller2/ibc_code/ibc_latent
+Container: /home/rglz/containers/gfae.sif
+
+============================================
+Processing all subjects and computing group map...
+============================================
+
+
+============================================================
+Processing subject 04
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 04
+
+============================================================
+Processing subject 06
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 06
+
+============================================================
+Processing subject 07
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 07
+
+============================================================
+Processing subject 09
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 09
+
+============================================================
+Processing subject 11
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 11
+
+============================================================
+Processing subject 13
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 13
+
+============================================================
+Processing subject 14
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 14
+
+============================================================
+Processing subject 15
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 15
+
+============================================================
+Computing Group-Level MD Map
+============================================================
+
+============================================================
+Processing subject 04
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 04
+
+============================================================
+Processing subject 06
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 06
+
+============================================================
+Processing subject 07
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 07
+
+============================================================
+Processing subject 09
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 09
+
+============================================================
+Processing subject 11
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 11
+
+============================================================
+Processing subject 13
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 13
+
+============================================================
+Processing subject 14
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 14
+
+============================================================
+Processing subject 15
+============================================================
+  - Not available: HcpWm/2back-0back
+  - Not available: ItemRecognition/encode5-encode1
+  - Not available: MDTB/2back_hard-easy
+  - Not available: MDTB/search_hard-easy
+  - Not available: MDTB/semantic_hard-easy
+  - Not available: MDTB/finger_complex-simple
+  - Not available: GoodBadUgly/dot_hard-easy
+  - Not available: Stroop/incongruent-congruent
+  - Not available: Catell/hard-easy
+No MD contrasts available for subject 15
+No valid subject maps found for group analysis
+
+============================================================
+MD Mapping Complete!
+============================================================
+Results saved to: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system
+
+============================================
+Analysis completed successfully!
+============================================
+Results saved to: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system
+
+To view group results:
+  wb_view /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/group/group_MD_mean.dscalar.nii
+
+To compare subjects:
+  python visualize_md_maps.py compare /ptmp/hmueller2/2025_ibc_latent/outputs/md_system --output /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/figures
+
+Job finished at: Mon Mar  2 16:12:42 CET 2026
+============================================

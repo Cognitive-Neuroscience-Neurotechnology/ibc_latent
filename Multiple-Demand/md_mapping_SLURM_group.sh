@@ -7,13 +7,12 @@
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 
-#
+
 # SLURM script for computing group-level MD map
-#
+
 # Run this after md_mapping_SLURM_array.sh completes
-#
 # Submit with: sbatch md_mapping_SLURM_group.sh
-#
+
 
 echo "============================================"
 echo "Multiple Demand System - Group Analysis"
@@ -23,7 +22,7 @@ echo "Node: $SLURM_NODELIST"
 echo "Start time: $(date)"
 echo ""
 
-# Set your paths here
+# Set your paths
 CONTRAST_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR"
 OUTPUT_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/md_system"
 CONFIG_FILE="/ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt"
@@ -52,21 +51,9 @@ mkdir -p "$SCRIPT_DIR/logs"
 container=/home/rglz/containers/gfae.sif  # Change to your container path
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
-# Check if container exists
-if [ ! -f "$container" ]; then
-    echo "ERROR: Container not found: $container"
-    exit 1
-fi
-
 echo "Script directory: $SCRIPT_DIR"
 echo "Container: $container"
 echo ""
-
-# Check if Python script exists
-if [ ! -f "$SCRIPT_DIR/md_mapping.py" ]; then
-    echo "ERROR: md_mapping.py not found in $SCRIPT_DIR"
-    exit 1
-fi
 
 # Compute group map
 echo "Computing group-level MD map..."

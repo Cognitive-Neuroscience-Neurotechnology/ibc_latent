@@ -49,22 +49,10 @@ mkdir -p "$SCRIPT_DIR/logs"
 container=/home/rglz/containers/gfae.sif  # Change to your container path
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
-# Check if container exists
-if [ ! -f "$container" ]; then
-    echo "ERROR: Container not found: $container"
-    exit 1
-fi
-
 echo "Script directory: $SCRIPT_DIR"
 echo "Working directory: $(pwd)"
 echo "Container: $container"
 echo ""
-
-# Check if Python script exists
-if [ ! -f "$SCRIPT_DIR/md_mapping.py" ]; then
-    echo "ERROR: md_mapping.py not found in $SCRIPT_DIR"
-    exit 1
-fi
 
 # Process all subjects at once with group analysis
 echo "============================================"
@@ -76,7 +64,8 @@ srun apptainer exec ${container} python "$SCRIPT_DIR/md_mapping.py" \
     --subjects $SUBJECTS \
     --group \
     --contrast-base "$CONTRAST_BASE" \
-    --output "$OUTPUT_DIR"
+    --output "$OUTPUT_DIR" \
+    --smooth 4.0
 
 EXIT_CODE=$?
 
@@ -87,8 +76,13 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "============================================"
     echo "Results saved to: $OUTPUT_DIR"
     echo ""
+    echo "Maps have been smoothed with 4mm FWHM Gaussian kernel for better regional visualization."
+    echo ""
     echo "To view group results:"
     echo "  wb_view $OUTPUT_DIR/group/group_MD_mean.dscalar.nii"
+    echo ""
+    echo "To visualize with Workbench scene file:"
+    echo "  ./md_mapping_view.sh group $OUTPUT_DIR --group"
     echo ""
     echo "To compare subjects:"
     echo "  python visualize_md_maps.py compare $OUTPUT_DIR --output $OUTPUT_DIR/figures"

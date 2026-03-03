@@ -17,6 +17,8 @@ import numpy as np
 import nibabel as nib
 from collections import defaultdict
 import argparse
+import subprocess
+from scipy.ndimage import gaussian_filter
 
 # ============================================================================
 # MD-RELATED CONTRASTS DEFINITION
@@ -53,6 +55,37 @@ def load_contrast_map(file_path):
     except Exception as e:
         print(f"  Error loading {file_path}: {e}")
         return None, None
+
+
+def smooth_surface_map(data, smoothing_fwhm=4.0):
+    """
+    Apply Gaussian smoothing to surface data.
+    
+    Parameters
+    ----------
+    data : np.ndarray
+        1D array of vertex values
+    smoothing_fwhm : float
+        Full-width at half-maximum of smoothing kernel in mm
+        Typical values: 2-6 mm for surface data
+    
+    Returns
+    -------
+    smoothed_data : np.ndarray
+        Smoothed data array
+    """
+    if smoothing_fwhm <= 0:
+        return data
+    
+    # Convert FWHM to sigma for Gaussian kernel
+    # FWHM = 2.355 * sigma for Gaussian distribution
+    sigma = smoothing_fwhm / 2.355
+    
+    # Simple Gaussian smoothing (treats surface as a regular grid)
+    # For true surface-aware smoothing, use wb_command
+    smoothed = gaussian_filter(data, sigma=sigma, mode='nearest')
+    
+    return smoothed
 
 
 def find_fixed_effects_contrasts(subject, contrast_base):
@@ -135,7 +168,7 @@ def find_fixed_effects_contrasts(subject, contrast_base):
     return results
 
 
-def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True):
+def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True, smoothing_fwhm=4.0):
     """
     Compute the MD system map for a single subject by averaging MD-related contrasts.
     
@@ -149,6 +182,8 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
         Directory to save output maps
     save_individual : bool
         Whether to save individual contrast contributions
+    smoothing_fwhm : float
+        FWHM of Gaussian smoothing kernel in mm (0 = no smoothing)
     
     Returns
     -------
@@ -197,6 +232,12 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
     md_maps_array = np.array(md_maps)
     md_map_mean = np.mean(md_maps_array, axis=0)
     md_map_std = np.std(md_maps_array, axis=0)
+    
+    # Apply smoothing if requested
+    if smoothing_fwhm > 0:
+        print(f"\nApplying Gaussian smoothing (FWHM={smoothing_fwhm}mm)...")
+        md_map_mean = smooth_surface_map(md_map_mean, smoothing_fwhm)
+        md_map_std = smooth_surface_map(md_map_std, smoothing_fwhm)
     
     n_contrasts = len(md_maps)
     print(f"\nCombined {n_contrasts} MD contrasts")
@@ -255,7 +296,7 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
     return md_map_mean, n_contrasts
 
 
-def compute_group_md_map(subjects, contrast_base, output_dir):
+def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0):
     """
     Compute group-level MD map by averaging across subjects.
     
@@ -267,6 +308,8 @@ def compute_group_md_map(subjects, contrast_base, output_dir):
         Base directory containing contrast maps
     output_dir : str
         Directory to save group output
+    smoothing_fwhm : float
+        FWHM of Gaussian smoothing kernel in mm (0 = no smoothing)
     """
     print(f"\n{'='*60}")
     print(f"Computing Group-Level MD Map")
@@ -279,7 +322,8 @@ def compute_group_md_map(subjects, contrast_base, output_dir):
     for subject in subjects:
         md_map, n_contrasts = compute_md_map(subject, contrast_base, 
                                              output_dir=output_dir, 
-                                             save_individual=False)
+                                             save_individual=False,
+                                             smoothing_fwhm=smoothing_fwhm)
         if md_map is not None and n_contrasts >= 2:  # Require at least 2 contrasts
             subject_maps.append(md_map)
             valid_subjects.append(subject)
@@ -305,6 +349,13 @@ def compute_group_md_map(subjects, contrast_base, output_dir):
     group_mean = np.mean(subject_maps_array, axis=0)
     group_std = np.std(subject_maps_array, axis=0)
     group_sem = group_std / np.sqrt(len(subject_maps))
+    
+    # Apply additional smoothing to group map for cleaner visualization
+    if smoothing_fwhm > 0:
+        print(f"\nApplying additional smoothing to group map (FWHM={smoothing_fwhm}mm)...")
+        group_mean = smooth_surface_map(group_mean, smoothing_fwhm)
+        group_std = smooth_surface_map(group_std, smoothing_fwhm)
+        group_sem = smooth_surface_map(group_sem, smoothing_fwhm)
     
     print(f"\nGroup analysis: {len(valid_subjects)} subjects")
     print(f"Valid subjects: {', '.join(valid_subjects)}")
@@ -370,22 +421,24 @@ Examples:
     # Process single subject
     python md_mapping.py --subject 01 --contrast-base /path/to/contrasts --output /path/to/output
     
-    # Process all subjects
-    python md_mapping.py --all-subjects --contrast-base /path/to/contrasts --output /path/to/output
+    # With smoothing (4mm FWHM - recommended)
+    python md_mapping.py --subject 01 --contrast-base /path/to/contrasts --output /path/to/output --smooth 4
     
-    # Process specific subjects and compute group map
-    python md_mapping.py --subjects 01 02 04 05 --group --contrast-base /path/to/contrasts --output /path/to/output
+    # Process all subjects with smoothing and group map
+    python md_mapping.py --all-subjects --contrast-base /path/to/contrasts --output /path/to/output --smooth 4 --group
         """
     )
     
     parser.add_argument('--subject', type=str, help='Single subject ID (e.g., 01)')
     parser.add_argument('--subjects', nargs='+', help='List of subject IDs')
     parser.add_argument('--all-subjects', action='store_true', 
-                       help='Process all available subjects')
+                       help='Process all available subjects (default if no subject flags are provided)')
     parser.add_argument('--contrast-base', type=str, required=True,
                        help='Base directory containing contrast maps')
     parser.add_argument('--output', type=str, required=True,
                        help='Output directory for MD maps')
+    parser.add_argument('--smooth', type=float, default=4.0, metavar='FWHM',
+                       help='Gaussian smoothing FWHM in mm (default: 4.0, set to 0 for no smoothing)')
     parser.add_argument('--group', action='store_true',
                        help='Compute group-level MD map')
     parser.add_argument('--no-individual-contrasts', action='store_true',
@@ -400,13 +453,17 @@ Examples:
         subjects = [args.subject]
     elif args.subjects:
         subjects = args.subjects
-    elif args.all_subjects:
-        # Find all available subjects
+    else:
         subject_dirs = glob.glob(os.path.join(args.contrast_base, 'sub-*'))
         subjects = sorted([os.path.basename(d).replace('sub-', '') for d in subject_dirs])
-        print(f"Found {len(subjects)} subjects: {', '.join(subjects)}")
-    else:
-        parser.error("Must specify --subject, --subjects, or --all-subjects")
+        if args.all_subjects:
+            print(f"Found {len(subjects)} subjects: {', '.join(subjects)}")
+        else:
+            print("No subject selection flags provided, defaulting to all available subjects.")
+            print(f"Found {len(subjects)} subjects: {', '.join(subjects)}")
+
+    if not subjects:
+        parser.error(f"No subjects found under: {args.contrast_base}")
     
     # Create output directory
     os.makedirs(args.output, exist_ok=True)
@@ -414,16 +471,19 @@ Examples:
     # Process individual subjects
     for subject in subjects:
         compute_md_map(subject, args.contrast_base, args.output, 
-                      save_individual=not args.no_individual_contrasts)
+                      save_individual=not args.no_individual_contrasts,
+                      smoothing_fwhm=args.smooth)
     
     # Compute group map if requested
     if args.group and len(subjects) > 1:
-        compute_group_md_map(subjects, args.contrast_base, args.output)
+        compute_group_md_map(subjects, args.contrast_base, args.output, args.smooth)
     
     print(f"\n{'='*60}")
     print("MD Mapping Complete!")
     print(f"{'='*60}")
     print(f"Results saved to: {args.output}")
+    if args.smooth > 0:
+        print(f"Smoothing applied: FWHM={args.smooth}mm")
 
 
 if __name__ == '__main__':

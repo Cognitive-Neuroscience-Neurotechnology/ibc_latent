@@ -2,6 +2,13 @@
 %% This was written by Charles Lynch, PhD, in 2023.
 %% This code is part of the PFM-Tutorial repository, available at https://github.com/cjl2007/PFM-Depression
 
+"
+---------
+This script was used later than pfm_resting.m.
+Here, we use the prebuilt concatenated resting-state dtseries files that were generated in pfm_resting.m, and then apply the subsequent steps of the PFM pipeline to those files.
+---------
+"
+
 %% ---- Before you begin ---- 
 
 % Add dependencies to Matlab search path & github repo of MSC

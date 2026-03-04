@@ -2,11 +2,19 @@
 ap_pa_quickqueck.py
 session_overview.py
 generate_inflated.sh
+pfm_tutorial_short.m
+pfm_tutorial.m
+
 
 # Ignore Python stuff
 __pycache__/
 *.pyc
+
+
+# Ignore other repos
 Aradia/
+MSCcodebase/
+
 
 # Ignore Jupyter Notebooks as they were just used for testing and are not part of the final project
 *.ipynb

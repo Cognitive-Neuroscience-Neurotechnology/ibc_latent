@@ -13,10 +13,8 @@
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
 
-# in case of multiple subjects, use: 
 SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects_again.txt
 Subject=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" $SUBJECTS_FILE)
-#Subject="15"
 
 Type="resting"
 

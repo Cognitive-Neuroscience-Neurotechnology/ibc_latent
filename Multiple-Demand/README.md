@@ -6,6 +6,13 @@ This directory contains scripts for mapping the Multiple Demand system in indivi
 
 The Multiple Demand (MD) system is a domain-general network that activates across various cognitively demanding tasks. This script identifies the MD system by averaging z-score maps from contrasts that manipulate task difficulty.
 
+**Two analysis approaches:**
+
+1. **Vertex-wise analysis** (`md_mapping.py`): Analyzes ~59k cortical surface vertices individually
+2. **Parcel-based analysis** (`md_mapping_parcels.py`): Uses HCP-MMP1 360 cortical parcels for region-level analysis
+
+Both approaches follow methods similar to Assem et al. (2020) "A Domain-General Cognitive Core Defined in Multimodally Parcellated Human Cortex."
+
 ## Contrasts Used
 
 The script uses the following difficulty-based contrasts:
@@ -20,8 +27,27 @@ The script uses the following difficulty-based contrasts:
 ## Requirements
 
 ```bash
-pip install numpy nibabel
+pip install numpy nibabel pandas
 ```
+
+## Key Features
+
+### Smoothing
+- Surface-based Gaussian smoothing (default: 4mm FWHM)
+- Recommended for reducing noise while preserving boundaries
+- Can be disabled with `--smooth 0`
+
+### Thresholding
+- Statistical thresholding to identify reliable MD regions
+- Example thresholds:
+  - `--threshold 2.3`: p < 0.01 (one-tailed)  
+  - `--threshold 3.1`: p < 0.001 (one-tailed)
+- Saves both thresholded and unthresholded maps
+
+### Parcellation
+- Use `md_mapping_parcels.py` for HCP-MMP1 360-parcel analysis
+- Provides region-level MD scores for easier interpretation
+- Outputs CSV files with parcel names and z-scores
 
 ## Usage
 
@@ -94,14 +120,43 @@ python md_mapping.py \
     --output /path/to/output/md_maps
 ```
 
+### With thresholding (recommended for identifying MD regions)
+
+```bash
+python md_mapping.py \
+    --all-subjects \
+    --group \
+    --threshold 2.3 \
+    --contrast-base /path/to/contrast_maps_fsLR \
+    --output /path/to/output/md_maps
+```
+
+### Parcel-based analysis (360 cortical regions)
+
+```bash
+# Individual subjects
+python md_mapping_parcels.py \
+    --all-subjects \
+    --contrast-base /path/to/contrast_maps_fsLR \
+    --output /path/to/output/md_maps_parcels
+
+# With group analysis
+python md_mapping_parcels.py \
+    --all-subjects \
+    --group \
+    --contrast-base /path/to/contrast_maps_fsLR \
+    --output /path/to/output/md_maps_parcels
+```
+
 ## Output Structure
 
-The script generates the following outputs:
+### Vertex-wise Analysis (`md_mapping.py`)
 
 ```
 output_dir/
 ├── sub-01/
 │   ├── sub-01_MD_mean.dscalar.nii          # Mean MD map (average z-scores)
+│   ├── sub-01_MD_mean_thresh_2.3.dscalar.nii  # Thresholded map (if --threshold used)
 │   ├── sub-01_MD_std.dscalar.nii           # Standard deviation across contrasts
 │   ├── sub-01_MD_contrasts.txt             # List of contrasts used
 │   └── individual_contrasts/               # Individual contrast contributions
@@ -112,9 +167,33 @@ output_dir/
 │   └── ...
 └── group/                                   # Group-level maps (if --group is used)
     ├── group_MD_mean.dscalar.nii           # Group mean
+    ├── group_MD_mean_thresh_2.3.dscalar.nii  # Thresholded group map
     ├── group_MD_std.dscalar.nii            # Group standard deviation
     ├── group_MD_sem.dscalar.nii            # Group standard error
+    ├── group_HcpWm_2back-0back_mean.dscalar.nii   # Group mean for HcpWm contrast
+    ├── group_ItemRecognition_encode5-encode1_mean.dscalar.nii  # Group mean for ItemRecognition contrast
+    ├── group_Stroop_incongruent-congruent_mean.dscalar.nii     # Group mean for Stroop contrast
+    ├── group_Catell_hard-easy_mean.dscalar.nii                 # Group mean for Catell contrast
     └── group_MD_info.txt                   # Subject list and info
+```
+
+### Parcel-based Analysis (`md_mapping_parcels.py`)
+
+```
+output_dir/
+├── sub-01/
+│   ├── sub-01_MD_parcels.csv               # Parcel names and z-scores (CSV)
+│   ├── sub-01_MD_parcels.npz               # Numpy array format
+│   ├── sub-01_MD_parcels_info.txt          # Info about analysis
+│   └── individual_contrasts/               # Individual contrast CSVs
+│       ├── HcpWm_2back-0back.csv
+│       └── ...
+├── sub-02/
+│   └── ...
+└── group/
+    ├── group_MD_parcels.csv                # Group parcel z-scores
+    ├── group_MD_parcels.npz                # Numpy array format
+    └── group_MD_parcels_info.txt           # Top parcels and subject list
 ```
 
 ## Input Data Requirements

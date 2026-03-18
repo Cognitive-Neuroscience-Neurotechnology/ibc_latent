@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=infomap
-#SBATCH --output=/ptmp/hmueller2/infomap_logs/output/%A_%x_%a.out
-#SBATCH --error=/ptmp/hmueller2/infomap_logs/errors/%A_%x_%a.err
+#SBATCH --output=/ptmp/hmueller2/2025_ibc_latent/logs/output/%A_%x_%a.out
+#SBATCH --error=/ptmp/hmueller2/2025_ibc_latent/logs/errors/%A_%x_%a.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

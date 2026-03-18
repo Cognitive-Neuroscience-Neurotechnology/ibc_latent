@@ -11,6 +11,8 @@
 #SBATCH --array=0-7   # 8 subjects 
 #SBATCH --mail-type=END,FAIL,TIME_LIMIT
 
+# Script to run pipeline_preprocessing.sh
+
 export APPTAINER_BIND="/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2"
 
 SUBJECTS_FILE=/ptmp/hmueller2/Downloads/subjects_resting.txt

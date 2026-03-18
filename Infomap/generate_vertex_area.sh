@@ -19,10 +19,8 @@ for i in 01 04 05 06 07 08 09 11 12 13 14 15; do
 
     echo "Processing $SUBJ..."
 
-    # Generate vertex area for left hemisphere
+    # Generate vertex area for left and right hemisphere
     wb_command -surface-vertex-areas "$L_SURF" "$L_VA"
-
-    # Generate vertex area for right hemisphere
     wb_command -surface-vertex-areas "$R_SURF" "$R_VA"
 
     # Combine into CIFTI dense scalar

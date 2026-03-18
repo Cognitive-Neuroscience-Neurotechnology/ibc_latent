@@ -1,0 +1,5 @@
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd-compute-27: error: *** STEP 870875.0 ON compute-27 CANCELLED AT 2026-03-10T15:33:30 ***
+slurmstepd-compute-27: error: *** JOB 870875 ON compute-27 CANCELLED AT 2026-03-10T15:33:30 ***
+srun: forcing job termination

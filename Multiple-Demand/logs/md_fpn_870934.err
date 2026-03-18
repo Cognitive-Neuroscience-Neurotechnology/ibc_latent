@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 436, in <module>
+    main()
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 328, in main
+    subnetwork_data, subnet_img = load_cifti_row(subnet_path, args.k_index)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 48, in load_cifti_row
+    raise ValueError(f"Row index {row_index} out of range for {path} with shape {data.shape}")
+ValueError: Row index 1 out of range for /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap/sub-04/04_FPN_infomap_communities_kmeans_relabeled.dlabel.nii with shape (1, 91282)
+srun: error: compute-6: task 0: Exited with exit code 1

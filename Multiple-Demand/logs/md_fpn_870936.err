@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 436, in <module>
+    main()
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 423, in main
+    write_csv(summary_csv, summaries)
+  File "/home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py", line 220, in write_csv
+    writer.writerows(rows)
+  File "/opt/fsl/lib/python3.11/csv.py", line 157, in writerows
+    return self.writer.writerows(map(self._dict_to_list, rowdicts))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/fsl/lib/python3.11/csv.py", line 149, in _dict_to_list
+    raise ValueError("dict contains fields not in fieldnames: "
+ValueError: dict contains fields not in fieldnames: 'threshold_mode', 'fpna_dice', 'map_subject', 'fpna_overlap_vertices', 'fpnb_dice', 'fpnab_vertices', 'fpnb_consensus_threshold', 'fpnab_pct_region_covered_by_md', 'fpna_consensus_threshold', 'fpna_jaccard', 'fpnab_dice', 'fpnab_jaccard', 'threshold_value', 'median_md_fpnb', 'fpnb_region_vertices', 'mean_diff_fpna_minus_fpnb', 'fpnab_region_vertices', 'fpna_pct_md_in_region', 'mean_md_fpnab', 'mask_subject', 'md_vertices_thresholded', 'fpnab_overlap_vertices', 'fpnab_pct_md_in_region', 'fpna_region_vertices', 'fpna_pct_region_covered_by_md', 'fpnb_jaccard', 'fpnb_pct_md_in_region', 'analysis_level', 'fpna_vertices', 'fpnb_overlap_vertices', 'mean_md_fpna', 'mean_md_fpnb', 'fpnb_vertices', 'median_md_fpna', 'fpnb_pct_region_covered_by_md'
+srun: error: compute-6: task 0: Exited with exit code 1

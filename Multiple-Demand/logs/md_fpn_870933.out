@@ -1,0 +1,22 @@
+============================================
+MD vs FPN Mapping (SLURM)
+============================================
+Job ID: 870933
+Node: compute-8
+Start time: Wed Mar 11 10:45:48 CET 2026
+
+MD directory:         /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Subnetwork directory: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap
+Output directory:     /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn
+Subjects:             04 06 07 09 11 13 14 15 
+Threshold percent:    top 20%
+Container:            /home/rglz/containers/gfae.sif
+
+============================================
+Running MD vs FPN comparison
+============================================
+Command: python Command: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py Command: --subjects Command: 04 Command: 06 Command: 07 Command: 09 Command: 11 Command: 13 Command: 14 Command: 15 Command: --md-dir Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise Command: --subnetwork-dir Command: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap Command: --output Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn Command: --threshold-percent Command: 20 
+Subjects: 04 06 07 09 11 13 14 15
+MD directory: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Subnetwork directory: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap
+Overlap threshold: top 20% of MD vertices

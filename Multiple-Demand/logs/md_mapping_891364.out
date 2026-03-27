@@ -1,0 +1,457 @@
+============================================
+Multiple Demand System Mapping (SLURM)
+============================================
+Job ID: 891364
+Node: compute-1
+Start time: Fri Mar 27 12:30:22 CET 2026
+
+Contrast base: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR
+Output directory: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system
+Config file: /ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt
+Subjects: 04 06 07 09 11 13 14 15 
+Mode: vertex
+Run group map: 1
+Save individual contrasts: 0
+Vertex smooth FWHM: 4.0
+Vertex threshold percent: top 20%
+
+Script directory: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand
+Working directory: /home/hmueller2/ibc_code/ibc_latent
+Container: /home/rglz/containers/gfae.sif
+
+============================================
+Running vertex-wise MD mapping
+============================================
+Command: python Command: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_mapping.py Command: --subjects Command: 04 Command: 06 Command: 07 Command: 09 Command: 11 Command: 13 Command: 14 Command: 15 Command: --contrast-base Command: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR Command: --output Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise Command: --smooth Command: 4.0 Command: --wb-command Command: wb_command Command: --left-surface Command: /home/hmueller2/ibc_code/ibc_latent/MSCcodebase/Utilities/Conte69_atlas-v2.LR.32k_fs_LR.wb/Conte69.L.midthickness.32k_fs_LR.surf.gii Command: --right-surface Command: /home/hmueller2/ibc_code/ibc_latent/MSCcodebase/Utilities/Conte69_atlas-v2.LR.32k_fs_LR.wb/Conte69.R.midthickness.32k_fs_LR.surf.gii Command: --group Command: --no-individual-contrasts Command: --threshold-percent Command: 20 
+
+============================================================
+Processing subject 04
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-04
+  Subject directory contents (92 items): ['.DS_Store', '._.DS_Store', 'res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-09', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.007 ± 0.366
+Max z-score: 2.086
+
+Subject MD mean map range before threshold: min=-1.974, max=2.086
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.224
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_mean_thresh_top20pct_cutoff0.224.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_contrasts.txt
+
+============================================================
+Processing subject 06
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-06
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.005 ± 0.444
+Max z-score: 3.765
+
+Subject MD mean map range before threshold: min=-2.354, max=3.765
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.347
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_mean_thresh_top20pct_cutoff0.347.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_contrasts.txt
+
+============================================================
+Processing subject 07
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-07
+  Subject directory contents (79 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-23', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.002 ± 0.345
+Max z-score: 2.210
+
+Subject MD mean map range before threshold: min=-2.066, max=2.210
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.214
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_mean_thresh_top20pct_cutoff0.214.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_contrasts.txt
+
+============================================================
+Processing subject 09
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-09
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-04', 'ses-05', 'ses-10', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-31', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-43']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.006 ± 0.362
+Max z-score: 1.992
+
+Subject MD mean map range before threshold: min=-2.225, max=1.992
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.242
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_mean_thresh_top20pct_cutoff0.242.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_contrasts.txt
+
+============================================================
+Processing subject 11
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-11
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-05', 'ses-08', 'ses-11', 'ses-12', 'ses-16', 'ses-18', 'ses-19', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-42', 'ses-44']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.004 ± 0.374
+Max z-score: 2.189
+
+Subject MD mean map range before threshold: min=-1.992, max=2.189
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.282
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_mean_thresh_top20pct_cutoff0.282.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_contrasts.txt
+
+============================================================
+Processing subject 13
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-13
+  Subject directory contents (78 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.003 ± 0.371
+Max z-score: 2.189
+
+Subject MD mean map range before threshold: min=-2.093, max=2.189
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.236
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_mean_thresh_top20pct_cutoff0.236.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_contrasts.txt
+
+============================================================
+Processing subject 14
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-14
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-10', 'ses-11', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-34', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.010 ± 0.369
+Max z-score: 2.479
+
+Subject MD mean map range before threshold: min=-2.325, max=2.479
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.236
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_mean_thresh_top20pct_cutoff0.236.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_contrasts.txt
+
+============================================================
+Processing subject 15
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-15
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-05', 'ses-06', 'ses-10', 'ses-11', 'ses-14', 'ses-15', 'ses-19', 'ses-20', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.005 ± 0.360
+Max z-score: 2.146
+
+Subject MD mean map range before threshold: min=-2.207, max=2.146
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.258
+Retained vertices: 18257 (20.0%)
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_mean.dscalar.nii
+✓ Saved thresholded MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_mean_thresh_top20pct_cutoff0.258.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_contrasts.txt
+
+============================================================
+Computing Group-Level MD Map
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-04
+  Subject directory contents (92 items): ['.DS_Store', '._.DS_Store', 'res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-09', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+
+============================================================
+Processing subject 04
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-04
+  Subject directory contents (92 items): ['.DS_Store', '._.DS_Store', 'res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-09', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.007 ± 0.366
+Max z-score: 2.086
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-04/sub-04_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-06
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+
+============================================================
+Processing subject 06
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-06
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.005 ± 0.444
+Max z-score: 3.765
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-06/sub-06_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-07
+  Subject directory contents (79 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-23', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+
+============================================================
+Processing subject 07
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-07
+  Subject directory contents (79 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-23', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.002 ± 0.345
+Max z-score: 2.210
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-07/sub-07_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-09
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-04', 'ses-05', 'ses-10', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-31', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-43']
+
+============================================================
+Processing subject 09
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-09
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-04', 'ses-05', 'ses-10', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-31', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-43']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.006 ± 0.362
+Max z-score: 1.992
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-09/sub-09_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-11
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-05', 'ses-08', 'ses-11', 'ses-12', 'ses-16', 'ses-18', 'ses-19', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-42', 'ses-44']
+
+============================================================
+Processing subject 11
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-11
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-05', 'ses-08', 'ses-11', 'ses-12', 'ses-16', 'ses-18', 'ses-19', 'ses-20', 'ses-21', 'ses-22', 'ses-25', 'ses-26', 'ses-27', 'ses-30', 'ses-32', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-41', 'ses-42', 'ses-44']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.004 ± 0.374
+Max z-score: 2.189
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-11/sub-11_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-13
+  Subject directory contents (78 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+
+============================================================
+Processing subject 13
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-13
+  Subject directory contents (78 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-08', 'ses-11', 'ses-12', 'ses-15', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.003 ± 0.371
+Max z-score: 2.189
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-13/sub-13_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-14
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-10', 'ses-11', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-34', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+
+============================================================
+Processing subject 14
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-14
+  Subject directory contents (90 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-ColumbiaCards_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-10', 'ses-11', 'ses-12', 'ses-13', 'ses-16', 'ses-17', 'ses-18', 'ses-19', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-34', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: -0.010 ± 0.369
+Max z-score: 2.479
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-14/sub-14_MD_contrasts.txt
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-15
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-05', 'ses-06', 'ses-10', 'ses-11', 'ses-14', 'ses-15', 'ses-19', 'ses-20', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+
+============================================================
+Processing subject 15
+============================================================
+  Looking for contrasts in: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR/sub-15
+  Subject directory contents (89 items): ['res_task-ArchiEmotional_space-fsLR_dir-ffx', 'res_task-ArchiSocial_space-fsLR_dir-ffx', 'res_task-ArchiSpatial_space-fsLR_dir-ffx', 'res_task-ArchiStandard_space-fsLR_dir-ffx', 'res_task-Attention_space-fsLR_dir-ffx', 'res_task-Audi_space-fsLR_dir-ffx', 'res_task-BiologicalMotion1_space-fsLR_dir-ffx', 'res_task-BiologicalMotion2_space-fsLR_dir-ffx', 'res_task-BreathHolding_space-fsLR_dir-ffx', 'res_task-Catell_space-fsLR_dir-ffx', 'res_task-Checkerboard_space-fsLR_dir-ffx', 'res_task-Color_space-fsLR_dir-ffx', 'res_task-Discount_space-fsLR_dir-ffx', 'res_task-DotPatterns_space-fsLR_dir-ffx', 'res_task-EmoMem_space-fsLR_dir-ffx', 'res_task-EmoReco_space-fsLR_dir-ffx', 'res_task-EmotionalPain_space-fsLR_dir-ffx', 'res_task-Enumeration_space-fsLR_dir-ffx', 'res_task-FaceBody_space-fsLR_dir-ffx', 'res_task-FingerTap_space-fsLR_dir-ffx', 'res_task-HcpEmotion_space-fsLR_dir-ffx', 'res_task-HcpGambling_space-fsLR_dir-ffx', 'res_task-HcpLanguage_space-fsLR_dir-ffx', 'res_task-HcpMotor_space-fsLR_dir-ffx', 'res_task-HcpRelational_space-fsLR_dir-ffx', 'res_task-HcpSocial_space-fsLR_dir-ffx', 'res_task-HcpWm_space-fsLR_dir-ffx', 'res_task-ItemRecognition_space-fsLR_dir-ffx', 'res_task-Lec1_space-fsLR_dir-ffx', 'res_task-Lec2_space-fsLR_dir-ffx', 'res_task-MCSE_space-fsLR_dir-ffx', 'res_task-MTTNS_space-fsLR_dir-ffx', 'res_task-MTTWE_space-fsLR_dir-ffx', 'res_task-MVEB_space-fsLR_dir-ffx', 'res_task-MVIS_space-fsLR_dir-ffx', 'res_task-MathLanguage_space-fsLR_dir-ffx', 'res_task-Motion_space-fsLR_dir-ffx', 'res_task-Moto_space-fsLR_dir-ffx', 'res_task-NARPS_space-fsLR_dir-ffx', 'res_task-PainMovie_space-fsLR_dir-ffx', 'res_task-PreferenceFaces_space-fsLR_dir-ffx', 'res_task-PreferenceFood_space-fsLR_dir-ffx', 'res_task-PreferenceHouses_space-fsLR_dir-ffx', 'res_task-PreferencePaintings_space-fsLR_dir-ffx', 'res_task-RSVPLanguage_space-fsLR_dir-ffx', 'res_task-RewProc_space-fsLR_dir-ffx', 'res_task-Scene_space-fsLR_dir-ffx', 'res_task-SelectiveStopSignal_space-fsLR_dir-ffx', 'res_task-Self_space-fsLR_dir-ffx', 'res_task-SpatialNavigation_space-fsLR_dir-ffx', 'res_task-StopNogo_space-fsLR_dir-ffx', 'res_task-StopSignal_space-fsLR_dir-ffx', 'res_task-Stroop_space-fsLR_dir-ffx', 'res_task-TheoryOfMind_space-fsLR_dir-ffx', 'res_task-TwoByTwo_space-fsLR_dir-ffx', 'res_task-VSTMC_space-fsLR_dir-ffx', 'res_task-VSTM_space-fsLR_dir-ffx', 'res_task-Visu_space-fsLR_dir-ffx', 'res_task-VisualSearch_space-fsLR_dir-ffx', 'res_task-WardAndAllport_space-fsLR_dir-ffx', 'res_task-WedgeAnti_space-fsLR_dir-ffx', 'res_task-WedgeClock_space-fsLR_dir-ffx', 'ses-00', 'ses-01', 'ses-02', 'ses-03', 'ses-04', 'ses-05', 'ses-06', 'ses-10', 'ses-11', 'ses-14', 'ses-15', 'ses-19', 'ses-20', 'ses-21', 'ses-24', 'ses-25', 'ses-26', 'ses-29', 'ses-30', 'ses-31', 'ses-35', 'ses-36', 'ses-37', 'ses-38', 'ses-39', 'ses-40', 'ses-42']
+  ✓ Loaded: HcpWm/2back-0back
+  ✓ Loaded: Stroop/incongruent-congruent
+  ✓ Loaded: Catell/hard-easy
+  ✓ Loaded: Attention/double_incongruent-double_congruent
+
+Applied Workbench CIFTI smoothing to input contrasts (FWHM=4.0mm)
+
+Combined 4 MD contrasts
+Mean z-score: 0.005 ± 0.360
+Max z-score: 2.146
+
+✓ Saved mean MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_mean.dscalar.nii
+✓ Saved std MD map: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_std.dscalar.nii
+✓ Saved contrast info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/sub-15/sub-15_MD_contrasts.txt
+
+Group analysis: 8 subjects
+Valid subjects: 04, 06, 07, 09, 11, 13, 14, 15
+Mean group z-score: 0.001
+Max group z-score: 1.009
+
+Group MD mean map range before threshold: min=-0.770, max=1.009
+Threshold mode: top 20.0% of vertices
+Percentile cutoff (80.0th): 0.128
+Retained vertices: 18257 (20.0%)
+
+✓ Saved group mean: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_MD_mean.dscalar.nii
+✓ Saved group thresholded mean: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_MD_mean_thresh_top20pct_cutoff0.128.dscalar.nii
+✓ Saved group std: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_MD_std.dscalar.nii
+✓ Saved group SEM: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_MD_sem.dscalar.nii
+✓ Saved group contrast mean (8 subj): /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_HcpWm_2back-0back_mean.dscalar.nii
+✓ Saved group contrast mean (8 subj): /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_Stroop_incongruent-congruent_mean.dscalar.nii
+✓ Saved group contrast mean (8 subj): /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_Catell_hard-easy_mean.dscalar.nii
+✓ Saved group contrast mean (8 subj): /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_Attention_double_incongruent-double_congruent_mean.dscalar.nii
+✓ Saved group info: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/group/group_MD_info.txt
+
+============================================================
+MD Mapping Complete!
+============================================================
+Results saved to: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Workbench geodesic smoothing applied: FWHM=4.0mm
+Threshold applied: top 20.0% of vertices
+
+============================================
+Analysis completed successfully!
+============================================
+Results root: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system
+Vertex outputs: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Parcel outputs: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/parcel_based
+Workbench geodesic smoothing used (FWHM=4.0).
+
+To visualize with Workbench scene file:
+  ./md_mapping_view.sh group /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise --group
+
+To compare subjects:
+  python visualize_md_maps.py compare /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise --output /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/figures
+
+Job finished at: Fri Mar 27 12:33:36 CET 2026
+============================================

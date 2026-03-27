@@ -1,0 +1,45 @@
+============================================
+MD vs FPN Mapping (SLURM)
+============================================
+Job ID: 881622
+Node: compute-8
+Start time: Wed Mar 18 16:35:38 CET 2026
+
+MD directory:         /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Subnetwork directory: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap
+Output directory:     /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn
+Subjects:             04 06 07 09 11 13 14 15 
+Threshold percent:    top 20%
+Container:            /home/rglz/containers/gfae.sif
+
+============================================
+Running MD vs FPN comparison
+============================================
+Command: python Command: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_vs_fpn.py Command: --subjects Command: 04 Command: 06 Command: 07 Command: 09 Command: 11 Command: 13 Command: 14 Command: 15 Command: --md-dir Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise Command: --subnetwork-dir Command: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap Command: --output Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn Command: --threshold-percent Command: 20 
+Subjects: 04 06 07 09 11 13 14 15
+MD directory: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise
+Subnetwork directory: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap
+Overlap threshold: top 20% of MD vertices
+sub-04: mean(FPN_A)=0.208, mean(FPN_B)=0.066, A-B=0.143, thresholded_MD=18257
+sub-06: mean(FPN_A)=0.323, mean(FPN_B)=0.301, A-B=0.022, thresholded_MD=18257
+sub-07: mean(FPN_A)=0.152, mean(FPN_B)=0.210, A-B=-0.058, thresholded_MD=18257
+sub-09: mean(FPN_A)=-0.033, mean(FPN_B)=-0.088, A-B=0.055, thresholded_MD=18257
+sub-11: mean(FPN_A)=0.254, mean(FPN_B)=0.025, A-B=0.229, thresholded_MD=18257
+sub-13: mean(FPN_A)=0.163, mean(FPN_B)=0.200, A-B=-0.037, thresholded_MD=18257
+sub-14: mean(FPN_A)=-0.066, mean(FPN_B)=-0.084, A-B=0.018, thresholded_MD=18257
+sub-15: mean(FPN_A)=0.102, mean(FPN_B)=0.196, A-B=-0.094, thresholded_MD=18257
+group consensus: mean(FPN_A)=0.164, mean(FPN_B)=0.134, A-B=0.030
+
+Saved:
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/individual_subjects.csv
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/group_vs_individual_masks.csv
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/group_vs_consensus_masks.csv
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/group_mask_probabilities.npz
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/overlap_dscalars (17 dscalar files)
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn/summary.csv
+
+============================================
+Completed successfully!
+Results: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn
+End time: Wed Mar 18 16:36:02 CET 2026
+============================================

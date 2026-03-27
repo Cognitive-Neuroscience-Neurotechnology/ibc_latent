@@ -1,243 +1,139 @@
-# Multiple Demand (MD) System Mapping
+# Multiple-Demand Analysis: MD Mapping and MD-vs-FPN
 
-This directory contains scripts for mapping the Multiple Demand system in individual subjects using difficulty-based task contrasts.
+This folder contains a compact two-stage workflow:
 
-## Overview
+1. Build subject and group MD maps from difficulty contrasts.
+2. Compare MD maps against subject-specific FPN_A/FPN_B subnetworks.
 
-The Multiple Demand (MD) system is a domain-general network that activates across various cognitively demanding tasks. This script identifies the MD system by averaging z-score maps from contrasts that manipulate task difficulty.
+The goal is to quantify both:
 
-**Two analysis approaches:**
+- where MD overlaps with FPN subnetworks (binary overlap), and
+- how strong MD activation is inside those subnetworks (value-based maps and summary stats).
 
-1. **Vertex-wise analysis** (`md_mapping.py`): Analyzes ~59k cortical surface vertices individually
-2. **Parcel-based analysis** (`md_mapping_parcels.py`): Uses HCP-MMP1 360 cortical parcels for region-level analysis
+## Code Overview
 
-Both approaches follow methods similar to Assem et al. (2020) "A Domain-General Cognitive Core Defined in Multimodally Parcellated Human Cortex."
+### 1) md_mapping.py
 
-## Contrasts Used
+Builds MD maps from predefined hard-versus-easy contrasts.
 
-The script uses the following difficulty-based contrasts:
+- Input: fixed-effects contrast maps in fsLR CIFTI space.
+- Output: subject MD mean maps, optional thresholded maps, and optional group map.
+- Supports geodesic smoothing via Workbench.
 
-- **HcpWm**: `2back-0back`
-- **ItemRecognition**: `encode5-encode1`
-- **MDTB**: `2back_hard-easy`, `search_hard-easy`, `semantic_hard-easy`, `finger_complex-simple`
-- **GoodBadUgly**: `dot_hard-easy`
-- **Stroop**: `incongruent-congruent`
-- **Catell**: `hard-easy`
+Typical outputs:
 
-## Requirements
+- sub-XX_MD_mean.dscalar.nii
+- sub-XX_MD_mean_top20pct.dscalar.nii (or z-thresholded variant)
+- group/group_MD_mean.dscalar.nii (if group enabled)
+
+### 2) md_vs_fpn.py
+
+Compares MD maps to FPN_A/FPN_B labels from Infomap relabeled files.
+
+Approach A (threshold overlap):
+
+- Threshold MD map and measure overlap with FPN_A, FPN_B, and FPN_A|B.
+- Saves overlap CSV metrics and overlap dscalar maps.
+
+Approach B (MD values in masks):
+
+- Summarizes raw MD values within FPN_A/FPN_B/FPN_A|B.
+- Saves dscalar maps with MD values inside masks and zero elsewhere.
+
+Typical outputs:
+
+- individual_subjects.csv
+- group_vs_individual_masks.csv
+- group_vs_consensus_masks.csv
+- overlap_dscalars/
+- approach_b_md_value_maps/
+
+## Minimal Workflow
+
+1. Run MD mapping to create MD maps.
+2. Run MD-vs-FPN comparison using the MD maps and relabeled FPN maps.
+3. Visualize dscalar outputs in Workbench and use CSVs for statistics.
+
+## Direct Python Usage
+
+### Step 1: MD mapping
 
 ```bash
-pip install numpy nibabel pandas
+python md_mapping.py \
+    --all-subjects \
+    --group \
+    --contrast-base /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR \
+    --output /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise \
+    --smooth 4 \
+    --threshold-percent 20
 ```
 
-## Key Features
+### Step 2: MD vs FPN
 
-### Smoothing
-- Surface-based Gaussian smoothing (default: 4mm FWHM)
-- Recommended for reducing noise while preserving boundaries
-- Can be disabled with `--smooth 0`
-
-### Thresholding
-- Statistical thresholding to identify reliable MD regions
-- Example thresholds:
-  - `--threshold 2.3`: p < 0.01 (one-tailed)  
-  - `--threshold 3.1`: p < 0.001 (one-tailed)
-- Saves both thresholded and unthresholded maps
-
-### Parcellation
-- Use `md_mapping_parcels.py` for HCP-MMP1 360-parcel analysis
-- Provides region-level MD scores for easier interpretation
-- Outputs CSV files with parcel names and z-scores
-
-## Usage
-
-### SLURM Cluster (Recommended)
-
-For running on HPC systems with SLURM:
-
-#### Option 1: Single Job (All subjects)
 ```bash
-# Edit paths in md_mapping_SLURM.sh if needed, then:
+python md_vs_fpn.py \
+    --all-subjects \
+    --md-dir /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise \
+    --subnetwork-dir /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap \
+    --output /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_vs_fpn \
+    --threshold-percent 20
+```
+
+## SLURM Usage
+
+### MD mapping job
+
+```bash
 sbatch md_mapping_SLURM.sh
 ```
 
-#### Option 2: Array Job (Parallel processing)
-```bash
-# Process all subjects in parallel (faster):
-sbatch md_mapping_SLURM_array.sh
+Useful environment overrides:
 
-# After array jobs complete, compute group map:
-sbatch md_mapping_SLURM_group.sh
+- MODE=vertex|parcels|both
+- RUN_GROUP=1 or RUN_GROUP=0
+- THRESHOLD_PERCENT=20
+- SMOOTH_FWHM=4
+
+Example:
+
+```bash
+MODE=both RUN_GROUP=1 THRESHOLD_PERCENT=20 sbatch md_mapping_SLURM.sh
 ```
 
-#### Monitor jobs
+### MD-vs-FPN job
+
 ```bash
-# Check job status
+sbatch md_vs_fpn_SLURM.sh
+```
+
+Optional override:
+
+```bash
+THRESHOLD_PERCENT=20 sbatch md_vs_fpn_SLURM.sh
+```
+
+### Monitor jobs
+
+```bash
 squeue -u $USER
-
-# View output
-tail -f logs/md_mapping_*.out
+tail -f logs/*.out
 ```
 
-### Direct Python Execution
+## Input Expectations
 
-For running directly (e.g., on login nodes for testing, not recommended for full analysis):
-
-#### Process a single subject
-
-```bash
-python md_mapping.py \
-    --subject 01 \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps
-```
-
-### Process multiple subjects
-
-```bash
-python md_mapping.py \
-    --subjects 01 02 04 05 06 07 \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps
-```
-
-### Process all available subjects
-
-```bash
-python md_mapping.py \
-    --all-subjects \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps
-```
-
-### Compute group-level MD map
-
-```bash
-python md_mapping.py \
-    --all-subjects \
-    --group \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps
-```
-
-### With thresholding (recommended for identifying MD regions)
-
-```bash
-python md_mapping.py \
-    --all-subjects \
-    --group \
-    --threshold 2.3 \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps
-```
-
-### Parcel-based analysis (360 cortical regions)
-
-```bash
-# Individual subjects
-python md_mapping_parcels.py \
-    --all-subjects \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps_parcels
-
-# With group analysis
-python md_mapping_parcels.py \
-    --all-subjects \
-    --group \
-    --contrast-base /path/to/contrast_maps_fsLR \
-    --output /path/to/output/md_maps_parcels
-```
-
-## Output Structure
-
-### Vertex-wise Analysis (`md_mapping.py`)
-
-```
-output_dir/
-├── sub-01/
-│   ├── sub-01_MD_mean.dscalar.nii          # Mean MD map (average z-scores)
-│   ├── sub-01_MD_mean_thresh_2.3.dscalar.nii  # Thresholded map (if --threshold used)
-│   ├── sub-01_MD_std.dscalar.nii           # Standard deviation across contrasts
-│   ├── sub-01_MD_contrasts.txt             # List of contrasts used
-│   └── individual_contrasts/               # Individual contrast contributions
-│       ├── HcpWm_2back-0back.dscalar.nii
-│       ├── MDTB_2back_hard-easy.dscalar.nii
-│       └── ...
-├── sub-02/
-│   └── ...
-└── group/                                   # Group-level maps (if --group is used)
-    ├── group_MD_mean.dscalar.nii           # Group mean
-    ├── group_MD_mean_thresh_2.3.dscalar.nii  # Thresholded group map
-    ├── group_MD_std.dscalar.nii            # Group standard deviation
-    ├── group_MD_sem.dscalar.nii            # Group standard error
-    ├── group_HcpWm_2back-0back_mean.dscalar.nii   # Group mean for HcpWm contrast
-    ├── group_ItemRecognition_encode5-encode1_mean.dscalar.nii  # Group mean for ItemRecognition contrast
-    ├── group_Stroop_incongruent-congruent_mean.dscalar.nii     # Group mean for Stroop contrast
-    ├── group_Catell_hard-easy_mean.dscalar.nii                 # Group mean for Catell contrast
-    └── group_MD_info.txt                   # Subject list and info
-```
-
-### Parcel-based Analysis (`md_mapping_parcels.py`)
-
-```
-output_dir/
-├── sub-01/
-│   ├── sub-01_MD_parcels.csv               # Parcel names and z-scores (CSV)
-│   ├── sub-01_MD_parcels.npz               # Numpy array format
-│   ├── sub-01_MD_parcels_info.txt          # Info about analysis
-│   └── individual_contrasts/               # Individual contrast CSVs
-│       ├── HcpWm_2back-0back.csv
-│       └── ...
-├── sub-02/
-│   └── ...
-└── group/
-    ├── group_MD_parcels.csv                # Group parcel z-scores
-    ├── group_MD_parcels.npz                # Numpy array format
-    └── group_MD_parcels_info.txt           # Top parcels and subject list
-```
-
-## Input Data Requirements
-
-The script expects fixed-effects contrast maps in fsLR space with the following directory structure:
-
-```
-contrast_base/
-└── sub-01/
-    └── res_task-HcpWm_space-fsLR_dir-ffx/
-        └── z_score_maps/
-            ├── 2back-0back.dscalar.nii
-            └── ...
-```
-
-## Interpreting Results
-
-- **MD mean map**: Higher z-scores indicate stronger and more consistent MD system activation across difficulty contrasts
-- **MD std map**: Shows variability across different difficulty manipulations
-- Typical MD regions include:
-  - Lateral prefrontal cortex
-  - Anterior cingulate cortex / pre-SMA
-  - Anterior insula / frontal operculum
-  - Intraparietal sulcus
+- MD mapping expects fixed-effects z-score contrast maps under task-specific fsLR folders.
+- MD-vs-FPN expects:
+  - MD maps at md-dir/sub-XX/sub-XX_MD_mean.dscalar.nii
+  - FPN labels at subnetwork-dir/sub-XX/XX_FPN_infomap_communities_kmeans_relabeled.dlabel.nii
 
 ## Visualization
 
-You can visualize the output CIFTI files using:
-
 ```bash
-# Using Connectome Workbench
-wb_view sub-01_MD_mean.dscalar.nii
-
-# Or through the GUI
-workbench
+wb_view /path/to/file.dscalar.nii
 ```
 
-## Notes
+Recommended checks:
 
-- The script automatically handles missing contrasts (e.g., if a subject doesn't have all tasks)
-- At least 2 contrasts are required per subject for group analysis
-- The script uses fixed-effects z-score maps, which should be computed beforehand using `run_fixed_effects_only.py`
-
-## References
-
-- Duncan, J. (2010). The multiple-demand (MD) system of the primate brain: mental programs for intelligent behaviour. *Trends in Cognitive Sciences*, 14(4), 172-179.
-- Fedorenko, E., Duncan, J., & Kanwisher, N. (2013). Broad domain generality in focal regions of frontal and parietal cortex. *PNAS*, 110(41), 16616-16621.
+1. MD mean and thresholded maps from md_mapping.
+2. overlap_dscalars maps for Approach A.
+3. approach_b_md_value_maps for Approach B value-preserving interpretation.

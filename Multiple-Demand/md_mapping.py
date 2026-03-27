@@ -4,8 +4,6 @@ Mapping the MD system in every individual by using task contrasts with difficult
 Contrasts to use:
     HcpWm - 2back-0back
     ItemRecognition - encode5-encode1 (probe5_mem-probe1_mem, probe5_new-probe1_new?)
-    MDTB - 2back_hard-easy, search_hard-easy, semantic_hard-easy, finger_complex-simple
-    GoodBadUgly - dot_hard-easy
     Stroop - incongruent-congruent
     Catell - hard-easy
 """
@@ -18,7 +16,8 @@ import nibabel as nib
 from collections import defaultdict
 import argparse
 import subprocess
-from scipy.ndimage import gaussian_filter
+import tempfile
+import shutil
 
 # ============================================================================
 # MD-RELATED CONTRASTS DEFINITION
@@ -26,11 +25,13 @@ from scipy.ndimage import gaussian_filter
 
 MD_CONTRASTS = {
     'HcpWm': ['2back-0back'],
-    'ItemRecognition': ['encode5-encode1'],  # Could also include probe5-probe1
-    'MDTB': ['2back_hard-easy', 'search_hard-easy', 'semantic_hard-easy', 'finger_complex-simple'],
-    'GoodBadUgly': ['dot_hard-easy'],
     'Stroop': ['incongruent-congruent'],
     'Catell': ['hard-easy'],
+    'Attention': ['double_incongruent-double_congruent'],
+    #'ItemRecognition': ['probe5_mem-probe1_mem'],
+    #'MVEB': ['6_letters_different-2_letters_different'],
+    #'MVIS': ['6_dots-2_dots'],
+    #'VisualSearch': ['probe_item_four-probe_item_two'],
 }
 
 # Flatten the dictionary into a list of tuples (task, contrast)
@@ -38,6 +39,28 @@ MD_CONTRAST_LIST = []
 for task, contrasts in MD_CONTRASTS.items():
     for contrast in contrasts:
         MD_CONTRAST_LIST.append((task, contrast))
+
+DEFAULT_WB_COMMAND = '/home/hmueller2/workbench/bin_linux64/wb_command'
+DEFAULT_LEFT_SURFACE = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'MSCcodebase',
+        'Utilities',
+        'Conte69_atlas-v2.LR.32k_fs_LR.wb',
+        'Conte69.L.midthickness.32k_fs_LR.surf.gii',
+    )
+)
+DEFAULT_RIGHT_SURFACE = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'MSCcodebase',
+        'Utilities',
+        'Conte69_atlas-v2.LR.32k_fs_LR.wb',
+        'Conte69.R.midthickness.32k_fs_LR.surf.gii',
+    )
+)
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -57,35 +80,119 @@ def load_contrast_map(file_path):
         return None, None
 
 
-def smooth_surface_map(data, smoothing_fwhm=4.0):
-    """
-    Apply Gaussian smoothing to surface data.
-    
-    Parameters
-    ----------
-    data : np.ndarray
-        1D array of vertex values
-    smoothing_fwhm : float
-        Full-width at half-maximum of smoothing kernel in mm
-        Typical values: 2-6 mm for surface data
-    
-    Returns
-    -------
-    smoothed_data : np.ndarray
-        Smoothed data array
-    """
+def smooth_cifti_with_workbench(input_cifti, output_cifti, smoothing_fwhm,
+                                wb_command=DEFAULT_WB_COMMAND,
+                                left_surface=DEFAULT_LEFT_SURFACE,
+                                right_surface=DEFAULT_RIGHT_SURFACE):
+    """Apply geodesic smoothing with Connectome Workbench to a CIFTI file."""
     if smoothing_fwhm <= 0:
-        return data
-    
-    # Convert FWHM to sigma for Gaussian kernel
-    # FWHM = 2.355 * sigma for Gaussian distribution
-    sigma = smoothing_fwhm / 2.355
-    
-    # Simple Gaussian smoothing (treats surface as a regular grid)
-    # For true surface-aware smoothing, use wb_command
-    smoothed = gaussian_filter(data, sigma=sigma, mode='nearest')
-    
-    return smoothed
+        return input_cifti
+
+    # Resolve wb_command robustly across host/container environments.
+    resolved_wb_command = None
+    wb_candidates = []
+    if wb_command:
+        wb_candidates.append(wb_command)
+    if wb_command and os.path.basename(wb_command) == wb_command:
+        which_match = shutil.which(wb_command)
+        if which_match:
+            wb_candidates.append(which_match)
+    else:
+        which_match = shutil.which('wb_command')
+        if which_match:
+            wb_candidates.append(which_match)
+    wb_candidates.extend([
+        '/usr/bin/wb_command',
+        '/usr/local/bin/wb_command',
+        '/opt/workbench/bin_linux64/wb_command',
+    ])
+
+    for candidate in wb_candidates:
+        if candidate and os.path.exists(candidate):
+            resolved_wb_command = candidate
+            break
+
+    if resolved_wb_command is None:
+        raise FileNotFoundError(
+            "Could not find wb_command. Tried configured path and common locations. "
+            "Pass a valid path with --wb-command or ensure wb_command is in PATH."
+        )
+
+    missing = []
+    for path in [resolved_wb_command, left_surface, right_surface, input_cifti]:
+        if not os.path.exists(path):
+            missing.append(path)
+    if missing:
+        raise FileNotFoundError(f"Missing required file(s) for Workbench smoothing: {missing}")
+
+    cmd = [
+        resolved_wb_command,
+        '-cifti-smoothing',
+        input_cifti,
+        str(smoothing_fwhm),
+        '0',
+        'COLUMN',
+        output_cifti,
+        '-left-surface',
+        left_surface,
+        '-right-surface',
+        right_surface,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Workbench smoothing failed. "
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+    return output_cifti
+
+
+def threshold_map(map_data, threshold, label='map'):
+    """Threshold a 1D map and print diagnostics about retained vertices."""
+    data_min = float(np.min(map_data))
+    data_max = float(np.max(map_data))
+    print(f"\n{label} range before threshold: min={data_min:.3f}, max={data_max:.3f}")
+
+    thresholded = map_data.copy()
+    thresholded[thresholded < threshold] = 0
+    n_suprathreshold = int(np.sum(thresholded > 0))
+    pct = 100 * n_suprathreshold / len(map_data)
+
+    print(f"Threshold: z > {threshold}")
+    print(f"Suprathreshold vertices: {n_suprathreshold} ({pct:.1f}%)")
+
+    if n_suprathreshold == 0:
+        print(
+            f"WARNING: No vertices survive z > {threshold}. "
+            "This usually means the threshold is too high for an averaged MD map."
+        )
+
+    return thresholded, n_suprathreshold
+
+
+def threshold_map_top_percent(map_data, threshold_percent, label='map'):
+    """Keep only the top X percent of vertices by value and zero-out the rest."""
+    if threshold_percent <= 0 or threshold_percent > 100:
+        raise ValueError(f"threshold_percent must be in (0, 100], got {threshold_percent}")
+
+    data_min = float(np.min(map_data))
+    data_max = float(np.max(map_data))
+    percentile = 100.0 - float(threshold_percent)
+    cutoff = float(np.percentile(map_data, percentile))
+
+    print(f"\n{label} range before threshold: min={data_min:.3f}, max={data_max:.3f}")
+    print(f"Threshold mode: top {threshold_percent}% of vertices")
+    print(f"Percentile cutoff ({percentile:.1f}th): {cutoff:.3f}")
+
+    thresholded = np.zeros_like(map_data)
+    keep_mask = map_data >= cutoff
+    thresholded[keep_mask] = map_data[keep_mask]
+
+    n_kept = int(np.sum(keep_mask))
+    pct = 100 * n_kept / len(map_data)
+    print(f"Retained vertices: {n_kept} ({pct:.1f}%)")
+
+    return thresholded, n_kept, cutoff
 
 
 def find_fixed_effects_contrasts(subject, contrast_base):
@@ -115,9 +222,9 @@ def find_fixed_effects_contrasts(subject, contrast_base):
     
     # Find all fixed-effects task directories
     glob_pattern = os.path.join(subject_dir, 'res_task-*_space-fsLR_dir-ffx')
-    print(f"  Glob pattern: {glob_pattern}")
+    #print(f"  Glob pattern: {glob_pattern}")
     task_dirs = sorted(glob.glob(glob_pattern))
-    print(f"  Found {len(task_dirs)} task directories: {task_dirs}")
+    #print(f"  Found {len(task_dirs)} task directories: {task_dirs}")
     
     results = {}
     
@@ -129,10 +236,10 @@ def find_fixed_effects_contrasts(subject, contrast_base):
         
         z_map_dir = os.path.join(task_dir, 'z_score_maps')
         
-        print(f"    Processing task '{task}':")
-        print(f"      Task dir: {task_dir}")
-        print(f"      Z-map dir: {z_map_dir}")
-        print(f"      Z-map dir exists: {os.path.exists(z_map_dir)}")
+        #print(f"    Processing task '{task}':")
+        #print(f"      Task dir: {task_dir}")
+        #print(f"      Z-map dir: {z_map_dir}")
+        #print(f"      Z-map dir exists: {os.path.exists(z_map_dir)}")
         
         if not os.path.exists(z_map_dir):
             if os.path.exists(task_dir):
@@ -146,9 +253,9 @@ def find_fixed_effects_contrasts(subject, contrast_base):
         
         # Find all z-score maps
         glob_pattern_z = os.path.join(z_map_dir, '*.dscalar.nii')
-        print(f"      Glob pattern for z-maps: {glob_pattern_z}")
+        #print(f"      Glob pattern for z-maps: {glob_pattern_z}")
         z_maps = glob.glob(glob_pattern_z)
-        print(f"      Found {len(z_maps)} z-maps")
+        #print(f"      Found {len(z_maps)} z-maps")
         
         if not z_maps:
             try:
@@ -168,7 +275,9 @@ def find_fixed_effects_contrasts(subject, contrast_base):
     return results
 
 
-def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True, smoothing_fwhm=4.0):
+def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True, smoothing_fwhm=4.0,
+                   threshold=None, threshold_percent=None, wb_command=DEFAULT_WB_COMMAND,
+                   left_surface=DEFAULT_LEFT_SURFACE, right_surface=DEFAULT_RIGHT_SURFACE):
     """
     Compute the MD system map for a single subject by averaging MD-related contrasts.
     
@@ -183,7 +292,13 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
     save_individual : bool
         Whether to save individual contrast contributions
     smoothing_fwhm : float
-        FWHM of Gaussian smoothing kernel in mm (0 = no smoothing)
+        FWHM of Workbench geodesic smoothing kernel in mm (0 = no smoothing)
+    threshold : float, optional
+        Z-score threshold for identifying reliable MD vertices.
+        If provided, saves both thresholded and unthresholded maps.
+    threshold_percent : float, optional
+        Keep top X percent of vertices by value (e.g., 10 for top 10%).
+        If provided, saves both thresholded and unthresholded maps.
     
     Returns
     -------
@@ -207,11 +322,33 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
     md_maps = []
     md_info = []  # Keep track of which contrasts were used
     template_img = None
+    smoothing_temp_dir = tempfile.mkdtemp(prefix=f'md_smooth_sub_{subject}_') if smoothing_fwhm > 0 else None
+    smoothing_attempts = 0
+    smoothing_successes = 0
     
     for task, contrast in MD_CONTRAST_LIST:
         if task in available_contrasts and contrast in available_contrasts[task]:
             z_map_path = available_contrasts[task][contrast]
-            data, img = load_contrast_map(z_map_path)
+            load_path = z_map_path
+
+            if smoothing_fwhm > 0:
+                smoothing_attempts += 1
+                smoothed_path = os.path.join(smoothing_temp_dir, f'{task}_{contrast}_smooth.dscalar.nii')
+                try:
+                    smooth_cifti_with_workbench(
+                        input_cifti=z_map_path,
+                        output_cifti=smoothed_path,
+                        smoothing_fwhm=smoothing_fwhm,
+                        wb_command=wb_command,
+                        left_surface=left_surface,
+                        right_surface=right_surface,
+                    )
+                    load_path = smoothed_path
+                    smoothing_successes += 1
+                except Exception as e:
+                    print(f"  ! Workbench smoothing failed for {task}/{contrast}, using unsmoothed map: {e}")
+
+            data, img = load_contrast_map(load_path)
             
             if data is not None:
                 md_maps.append(data)
@@ -233,16 +370,40 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
     md_map_mean = np.mean(md_maps_array, axis=0)
     md_map_std = np.std(md_maps_array, axis=0)
     
-    # Apply smoothing if requested
     if smoothing_fwhm > 0:
-        print(f"\nApplying Gaussian smoothing (FWHM={smoothing_fwhm}mm)...")
-        md_map_mean = smooth_surface_map(md_map_mean, smoothing_fwhm)
-        md_map_std = smooth_surface_map(md_map_std, smoothing_fwhm)
+        if smoothing_attempts == 0:
+            print(f"\nSmoothing requested (FWHM={smoothing_fwhm}mm), but no maps were available to smooth.")
+        elif smoothing_successes == smoothing_attempts:
+            print(f"\nApplied Workbench CIFTI smoothing to input contrasts (FWHM={smoothing_fwhm}mm)")
+        elif smoothing_successes == 0:
+            print(
+                f"\nWARNING: Smoothing requested (FWHM={smoothing_fwhm}mm) but all smoothing attempts failed. "
+                "Using unsmoothed contrasts."
+            )
+        else:
+            print(
+                f"\nApplied Workbench smoothing to {smoothing_successes}/{smoothing_attempts} contrasts "
+                f"(FWHM={smoothing_fwhm}mm)."
+            )
     
     n_contrasts = len(md_maps)
     print(f"\nCombined {n_contrasts} MD contrasts")
     print(f"Mean z-score: {np.mean(md_map_mean):.3f} ± {np.std(md_map_mean):.3f}")
     print(f"Max z-score: {np.max(md_map_mean):.3f}")
+    
+    # Apply threshold if requested
+    md_map_thresholded = None
+    threshold_suffix = None
+    if threshold_percent is not None:
+        md_map_thresholded, _, cutoff = threshold_map_top_percent(
+            md_map_mean,
+            threshold_percent,
+            label='Subject MD mean map',
+        )
+        threshold_suffix = f'top{threshold_percent:g}pct_cutoff{cutoff:.3f}'
+    elif threshold is not None:
+        md_map_thresholded, _ = threshold_map(md_map_mean, threshold, label='Subject MD mean map')
+        threshold_suffix = f'z{threshold:g}'
     
     # Save outputs if requested
     if output_dir and template_img:
@@ -258,6 +419,16 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
         mean_path = os.path.join(subject_output_dir, f'sub-{subject}_MD_mean.dscalar.nii')
         nib.save(mean_img, mean_path)
         print(f"\n✓ Saved mean MD map: {mean_path}")
+        
+        # Save thresholded MD map if threshold was applied
+        if md_map_thresholded is not None:
+            thresh_2d = md_map_thresholded.reshape(1, -1)
+            scalar_axis = nib.cifti2.ScalarAxis([f'MD_mean_thresh_{threshold_suffix}'])
+            new_header = nib.cifti2.Cifti2Header.from_axes((scalar_axis, brain_models_axis))
+            thresh_img = nib.Cifti2Image(thresh_2d, header=new_header)
+            thresh_path = os.path.join(subject_output_dir, f'sub-{subject}_MD_mean_thresh_{threshold_suffix}.dscalar.nii')
+            nib.save(thresh_img, thresh_path)
+            print(f"✓ Saved thresholded MD map: {thresh_path}")
         
         # Save std MD map
         std_2d = md_map_std.reshape(1, -1)
@@ -293,12 +464,29 @@ def compute_md_map(subject, contrast_base, output_dir=None, save_individual=True
                 nib.save(contrast_img, contrast_path)
             print(f"✓ Saved {n_contrasts} individual contrast maps")
     
+    if smoothing_temp_dir and os.path.exists(smoothing_temp_dir):
+        for temp_file in glob.glob(os.path.join(smoothing_temp_dir, '*.dscalar.nii')):
+            try:
+                os.remove(temp_file)
+            except OSError:
+                pass
+        try:
+            os.rmdir(smoothing_temp_dir)
+        except OSError:
+            pass
+
     return md_map_mean, n_contrasts
 
 
-def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0):
+def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0, threshold=None,
+                         threshold_percent=None,
+                         wb_command=DEFAULT_WB_COMMAND,
+                         left_surface=DEFAULT_LEFT_SURFACE,
+                         right_surface=DEFAULT_RIGHT_SURFACE):
     """
     Compute group-level MD map by averaging across subjects.
+
+    Also computes group-average maps for each MD task contrast.
     
     Parameters
     ----------
@@ -310,6 +498,10 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
         Directory to save group output
     smoothing_fwhm : float
         FWHM of Gaussian smoothing kernel in mm (0 = no smoothing)
+    threshold : float, optional
+        Z-score threshold for group map
+    threshold_percent : float, optional
+        Keep top X percent of group vertices by value
     """
     print(f"\n{'='*60}")
     print(f"Computing Group-Level MD Map")
@@ -318,12 +510,69 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
     subject_maps = []
     valid_subjects = []
     template_img = None
+    contrast_group_maps = defaultdict(list)
+    contrast_group_subjects = defaultdict(list)
     
     for subject in subjects:
+        available_contrasts = find_fixed_effects_contrasts(subject, contrast_base)
+
+        # Build group-average map for each MD task contrast separately.
+        smoothing_temp_dir = tempfile.mkdtemp(prefix=f'md_group_contrast_smooth_sub_{subject}_') if smoothing_fwhm > 0 else None
+        for task, contrast in MD_CONTRAST_LIST:
+            if task not in available_contrasts or contrast not in available_contrasts[task]:
+                continue
+
+            z_map_path = available_contrasts[task][contrast]
+            load_path = z_map_path
+
+            if smoothing_fwhm > 0:
+                smoothed_path = os.path.join(smoothing_temp_dir, f'{task}_{contrast}_smooth.dscalar.nii')
+                try:
+                    smooth_cifti_with_workbench(
+                        input_cifti=z_map_path,
+                        output_cifti=smoothed_path,
+                        smoothing_fwhm=smoothing_fwhm,
+                        wb_command=wb_command,
+                        left_surface=left_surface,
+                        right_surface=right_surface,
+                    )
+                    load_path = smoothed_path
+                except Exception as e:
+                    print(
+                        f"  ! Group per-contrast smoothing failed for sub-{subject} {task}/{contrast}, "
+                        f"using unsmoothed map: {e}"
+                    )
+
+            contrast_data, contrast_img = load_contrast_map(load_path)
+            if contrast_data is None:
+                continue
+
+            contrast_key = f'{task}_{contrast}'
+            contrast_group_maps[contrast_key].append(contrast_data)
+            contrast_group_subjects[contrast_key].append(subject)
+            if template_img is None and contrast_img is not None:
+                template_img = contrast_img
+
+        if smoothing_temp_dir and os.path.exists(smoothing_temp_dir):
+            for temp_file in glob.glob(os.path.join(smoothing_temp_dir, '*.dscalar.nii')):
+                try:
+                    os.remove(temp_file)
+                except OSError:
+                    pass
+            try:
+                os.rmdir(smoothing_temp_dir)
+            except OSError:
+                pass
+
         md_map, n_contrasts = compute_md_map(subject, contrast_base, 
                                              output_dir=output_dir, 
                                              save_individual=False,
-                                             smoothing_fwhm=smoothing_fwhm)
+                                             smoothing_fwhm=smoothing_fwhm,
+                                             threshold=None,
+                                             threshold_percent=None,
+                                             wb_command=wb_command,
+                                             left_surface=left_surface,
+                                             right_surface=right_surface)  # Don't threshold individual maps for group
         if md_map is not None and n_contrasts >= 2:  # Require at least 2 contrasts
             subject_maps.append(md_map)
             valid_subjects.append(subject)
@@ -350,17 +599,26 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
     group_std = np.std(subject_maps_array, axis=0)
     group_sem = group_std / np.sqrt(len(subject_maps))
     
-    # Apply additional smoothing to group map for cleaner visualization
-    if smoothing_fwhm > 0:
-        print(f"\nApplying additional smoothing to group map (FWHM={smoothing_fwhm}mm)...")
-        group_mean = smooth_surface_map(group_mean, smoothing_fwhm)
-        group_std = smooth_surface_map(group_std, smoothing_fwhm)
-        group_sem = smooth_surface_map(group_sem, smoothing_fwhm)
+    # Group map is computed from already smoothed subject maps; avoid double smoothing.
     
     print(f"\nGroup analysis: {len(valid_subjects)} subjects")
     print(f"Valid subjects: {', '.join(valid_subjects)}")
     print(f"Mean group z-score: {np.mean(group_mean):.3f}")
     print(f"Max group z-score: {np.max(group_mean):.3f}")
+    
+    # Apply threshold if requested
+    group_mean_thresholded = None
+    threshold_suffix = None
+    if threshold_percent is not None:
+        group_mean_thresholded, _, cutoff = threshold_map_top_percent(
+            group_mean,
+            threshold_percent,
+            label='Group MD mean map',
+        )
+        threshold_suffix = f'top{threshold_percent:g}pct_cutoff{cutoff:.3f}'
+    elif threshold is not None:
+        group_mean_thresholded, _ = threshold_map(group_mean, threshold, label='Group MD mean map')
+        threshold_suffix = f'z{threshold:g}'
     
     # Save group maps
     group_dir = os.path.join(output_dir, 'group')
@@ -377,6 +635,16 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
         mean_path = os.path.join(group_dir, 'group_MD_mean.dscalar.nii')
         nib.save(mean_img, mean_path)
         print(f"\n✓ Saved group mean: {mean_path}")
+        
+        # Save group thresholded map if threshold was applied
+        if group_mean_thresholded is not None:
+            thresh_2d = group_mean_thresholded.reshape(1, -1)
+            scalar_axis = nib.cifti2.ScalarAxis([f'MD_group_mean_thresh_{threshold_suffix}'])
+            new_header = nib.cifti2.Cifti2Header.from_axes((scalar_axis, brain_models_axis))
+            thresh_img = nib.Cifti2Image(thresh_2d, header=new_header)
+            thresh_path = os.path.join(group_dir, f'group_MD_mean_thresh_{threshold_suffix}.dscalar.nii')
+            nib.save(thresh_img, thresh_path)
+            print(f"✓ Saved group thresholded mean: {thresh_path}")
         
         # Save group std
         std_2d = group_std.reshape(1, -1)
@@ -395,6 +663,27 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
         sem_path = os.path.join(group_dir, 'group_MD_sem.dscalar.nii')
         nib.save(sem_img, sem_path)
         print(f"✓ Saved group SEM: {sem_path}")
+
+        # Save group-average map for each MD task contrast.
+        for task, contrast in MD_CONTRAST_LIST:
+            contrast_key = f'{task}_{contrast}'
+            if contrast_key not in contrast_group_maps or not contrast_group_maps[contrast_key]:
+                print(f"- No data for group contrast map: {task}/{contrast}")
+                continue
+
+            contrast_array = np.array(contrast_group_maps[contrast_key])
+            contrast_mean = np.mean(contrast_array, axis=0)
+
+            contrast_2d = contrast_mean.reshape(1, -1)
+            scalar_axis = nib.cifti2.ScalarAxis([f'{contrast_key}_group_mean'])
+            new_header = nib.cifti2.Cifti2Header.from_axes((scalar_axis, brain_models_axis))
+            contrast_img = nib.Cifti2Image(contrast_2d, header=new_header)
+
+            contrast_out = os.path.join(group_dir, f'group_{task}_{contrast}_mean.dscalar.nii')
+            nib.save(contrast_img, contrast_out)
+
+            n_sub = len(contrast_group_subjects[contrast_key])
+            print(f"✓ Saved group contrast mean ({n_sub} subj): {contrast_out}")
         
         # Save subject list
         info_path = os.path.join(group_dir, 'group_MD_info.txt')
@@ -405,6 +694,15 @@ def compute_group_md_map(subjects, contrast_base, output_dir, smoothing_fwhm=4.0
             f.write("Subjects included:\n")
             for subj in valid_subjects:
                 f.write(f"  - sub-{subj}\n")
+
+            f.write("\nGroup contrast maps:\n")
+            for task, contrast in MD_CONTRAST_LIST:
+                contrast_key = f'{task}_{contrast}'
+                n_sub = len(contrast_group_subjects.get(contrast_key, []))
+                if n_sub == 0:
+                    f.write(f"  - {task}/{contrast}: no data\n")
+                else:
+                    f.write(f"  - {task}/{contrast}: n={n_sub}\n")
         print(f"✓ Saved group info: {info_path}")
 
 
@@ -438,13 +736,29 @@ Examples:
     parser.add_argument('--output', type=str, required=True,
                        help='Output directory for MD maps')
     parser.add_argument('--smooth', type=float, default=4.0, metavar='FWHM',
-                       help='Gaussian smoothing FWHM in mm (default: 4.0, set to 0 for no smoothing)')
+                       help='Workbench geodesic smoothing FWHM in mm (default: 4.0, set to 0 for no smoothing)')
+    parser.add_argument('--wb-command', type=str, default=DEFAULT_WB_COMMAND,
+                       help=f'Path to wb_command (default: {DEFAULT_WB_COMMAND})')
+    parser.add_argument('--left-surface', type=str, default=DEFAULT_LEFT_SURFACE,
+                       help='Path to left midthickness surface for geodesic smoothing')
+    parser.add_argument('--right-surface', type=str, default=DEFAULT_RIGHT_SURFACE,
+                       help='Path to right midthickness surface for geodesic smoothing')
+    parser.add_argument('--threshold', type=float, default=None, metavar='Z',
+                       help='Z-score threshold for identifying MD regions (e.g., 2.3 for p<0.01 one-tailed, 3.1 for p<0.001)')
+    parser.add_argument('--threshold-percent', type=float, default=None, metavar='PCT',
+                       help='Keep top PCT%% vertices by value (e.g., 10 for top 10%%).')
     parser.add_argument('--group', action='store_true',
                        help='Compute group-level MD map')
     parser.add_argument('--no-individual-contrasts', action='store_true',
                        help='Do not save individual contrast contributions')
     
     args = parser.parse_args()
+
+    if args.threshold is not None and args.threshold_percent is not None:
+        parser.error('Use either --threshold or --threshold-percent, not both.')
+
+    if args.threshold_percent is not None and (args.threshold_percent <= 0 or args.threshold_percent > 100):
+        parser.error('--threshold-percent must be in (0, 100].')
     
     # Determine which subjects to process
     subjects = []
@@ -472,18 +786,33 @@ Examples:
     for subject in subjects:
         compute_md_map(subject, args.contrast_base, args.output, 
                       save_individual=not args.no_individual_contrasts,
-                      smoothing_fwhm=args.smooth)
+                      smoothing_fwhm=args.smooth,
+                      threshold=args.threshold,
+                      threshold_percent=args.threshold_percent,
+                      wb_command=args.wb_command,
+                      left_surface=args.left_surface,
+                      right_surface=args.right_surface)
     
     # Compute group map if requested
     if args.group and len(subjects) > 1:
-        compute_group_md_map(subjects, args.contrast_base, args.output, args.smooth)
+        compute_group_md_map(subjects, args.contrast_base, args.output, 
+                            smoothing_fwhm=args.smooth,
+                            threshold=args.threshold,
+                            threshold_percent=args.threshold_percent,
+                            wb_command=args.wb_command,
+                            left_surface=args.left_surface,
+                            right_surface=args.right_surface)
     
     print(f"\n{'='*60}")
     print("MD Mapping Complete!")
     print(f"{'='*60}")
     print(f"Results saved to: {args.output}")
     if args.smooth > 0:
-        print(f"Smoothing applied: FWHM={args.smooth}mm")
+        print(f"Workbench geodesic smoothing applied: FWHM={args.smooth}mm")
+    if args.threshold is not None:
+        print(f"Threshold applied: z > {args.threshold}")
+    if args.threshold_percent is not None:
+        print(f"Threshold applied: top {args.threshold_percent}% of vertices")
 
 
 if __name__ == '__main__':

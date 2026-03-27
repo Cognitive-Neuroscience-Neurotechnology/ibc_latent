@@ -1,14 +1,16 @@
-# Multiple-Demand Analysis: MD Mapping and MD-vs-FPN
+# Multiple-Demand Analysis: MD Mapping, MD-vs-FPN, and Easy/Hard Coupling
 
-This folder contains a compact two-stage workflow:
+This folder contains a compact three-stage workflow:
 
 1. Build subject and group MD maps from difficulty contrasts.
 2. Compare MD maps against subject-specific FPN_A/FPN_B subnetworks.
+3. Quantify Easy/Hard activation and condition-specific coupling to DMN/DAN.
 
 The goal is to quantify both:
 
 - where MD overlaps with FPN subnetworks (binary overlap), and
 - how strong MD activation is inside those subnetworks (value-based maps and summary stats).
+- how strongly FPN/FPNA/FPNB couple to DMN and DAN during hard vs easy blocks.
 
 ## Code Overview
 
@@ -48,11 +50,25 @@ Typical outputs:
 - overlap_dscalars/
 - approach_b_md_value_maps/
 
+### 3) md_easy_hard_fpn_coupling.py
+
+Computes Easy/Hard metrics for the four MD tasks (HcpWm, Stroop, Catell, Attention).
+
+- Activation: mean values in FPN, FPN_A, FPN_B for easy, hard, and hard-minus-easy.
+- Coupling: condition-restricted correlations between FPN seeds (FPN/FPN_A/FPN_B) and targets (DMN/DAN).
+- Uses task z-maps, task dtseries, events TSV files, relabeled FPN masks, and resting-state network labels.
+
+Typical outputs:
+
+- md_easy_hard_fpn_coupling/per_subject_results.csv
+- md_easy_hard_fpn_coupling/group_summary.csv
+
 ## Minimal Workflow
 
 1. Run MD mapping to create MD maps.
 2. Run MD-vs-FPN comparison using the MD maps and relabeled FPN maps.
-3. Visualize dscalar outputs in Workbench and use CSVs for statistics.
+3. Run Easy/Hard activation + coupling analysis.
+4. Visualize dscalar outputs in Workbench and use CSVs for statistics.
 
 ## Direct Python Usage
 
@@ -110,6 +126,23 @@ Optional override:
 
 ```bash
 THRESHOLD_PERCENT=20 sbatch md_vs_fpn_SLURM.sh
+```
+
+### Easy/Hard coupling job
+
+```bash
+sbatch md_easy_hard_fpn_coupling_SLURM.sh
+```
+
+Optional overrides:
+
+- K_INDEX=0 (row index in relabeled FPN file)
+- STRICT=1 (fail fast on missing subject/task inputs)
+
+Example:
+
+```bash
+K_INDEX=0 STRICT=0 sbatch md_easy_hard_fpn_coupling_SLURM.sh
 ```
 
 ### Monitor jobs

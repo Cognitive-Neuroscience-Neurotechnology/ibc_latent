@@ -29,7 +29,7 @@ OUTPUT_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/parcelized_fpn"
 
 # Runtime options (override via env at submit time)
 # Example:
-# OVERLAP_THRESHOLD=0.5 K_INDEX=0 sbatch Subnetworks/Subnetwork_Derivation/fpn_masks_to_parcels_SLURM.sh
+# OVERLAP_THRESHOLD=0.5 K_INtDEX=0 sbatch Subnetworks/Subnework_Derivation/fpn_masks_to_parcels_SLURM.sh
 K_INDEX="${K_INDEX:-0}"
 OVERLAP_THRESHOLD="${OVERLAP_THRESHOLD:-0.50}"
 PARCELLATION_PATH="${PARCELLATION_PATH:-}"

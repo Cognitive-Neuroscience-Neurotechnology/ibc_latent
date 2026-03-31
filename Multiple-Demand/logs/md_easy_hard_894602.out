@@ -1,0 +1,82 @@
+============================================
+MD Easy/Hard FPN Coupling (SLURM)
+============================================
+Job ID: 894602
+Node: compute-13
+Start time: Mon Mar 30 14:50:42 CEST 2026
+
+Contrast base:      /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR
+Dtseries base:      /ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out
+Events base:        /ptmp/hmueller2/2025_ibc_latent/data/ibc_raw
+Subnetwork dir:     /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap
+Network label base: /ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks
+Output directory:   /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling
+Subjects:           04 06 07 09 11 13 14 15 
+K index:            0
+Strict mode:        0
+Container:          /home/rglz/containers/gfae.sif
+
+============================================
+Running Easy/Hard FPN coupling analysis
+============================================
+Command: python Command: /home/hmueller2/ibc_code/ibc_latent/Multiple-Demand/md_easy_hard_fpn_coupling.py Command: --subjects Command: 04 Command: 06 Command: 07 Command: 09 Command: 11 Command: 13 Command: 14 Command: 15 Command: --contrast-base Command: /ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR Command: --dtseries-base Command: /ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out Command: --events-base Command: /ptmp/hmueller2/2025_ibc_latent/data/ibc_raw Command: --subnetwork-dir Command: /ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap Command: --network-label-base Command: /ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks Command: --all-contrasts-tsv Command: /home/hmueller2/ibc_code/ibc_latent/Data\ Info/all_contrasts.tsv Command: --output Command: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling Command: --k-index Command: 0 
+Subjects: 04 06 07 09 11 13 14 15
+Output: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling
+
+=== sub-04 ===
+sub-04 HcpWm: A(h-e)=0.1741/0.1429 runs=2 coupling_runs=2
+sub-04 Stroop: A(h-e)=-0.0060/-0.0381 runs=2 coupling_runs=2
+sub-04 Catell: A(h-e)=0.0575/-0.0082 runs=2 coupling_runs=2
+sub-04 Attention: A(h-e)=-0.0424/-0.0392 runs=2 coupling_runs=2
+
+=== sub-06 ===
+sub-06 HcpWm: A(h-e)=0.3018/0.4594 runs=2 coupling_runs=2
+sub-06 Stroop: A(h-e)=-0.0090/0.1115 runs=2 coupling_runs=2
+sub-06 Catell: A(h-e)=0.2330/0.1288 runs=2 coupling_runs=2
+sub-06 Attention: A(h-e)=0.0237/0.0008 runs=2 coupling_runs=2
+
+=== sub-07 ===
+sub-07 HcpWm: A(h-e)=0.2127/0.3000 runs=2 coupling_runs=2
+sub-07 Stroop: A(h-e)=-0.0261/-0.0584 runs=2 coupling_runs=2
+sub-07 Catell: A(h-e)=0.0826/0.1634 runs=2 coupling_runs=2
+sub-07 Attention: A(h-e)=-0.0426/0.0354 runs=2 coupling_runs=2
+
+=== sub-09 ===
+sub-09 HcpWm: A(h-e)=0.0792/0.1205 runs=2 coupling_runs=2
+sub-09 Stroop: A(h-e)=-0.0020/-0.1037 runs=2 coupling_runs=2
+sub-09 Catell: A(h-e)=-0.1566/-0.1678 runs=2 coupling_runs=2
+sub-09 Attention: A(h-e)=-0.0617/0.0093 runs=2 coupling_runs=2
+
+=== sub-11 ===
+sub-11 HcpWm: A(h-e)=0.1891/-0.0336 runs=2 coupling_runs=2
+sub-11 Stroop: A(h-e)=0.1738/0.0942 runs=2 coupling_runs=2
+sub-11 Catell: A(h-e)=0.1593/0.0977 runs=2 coupling_runs=2
+sub-11 Attention: A(h-e)=0.1204/0.1266 runs=2 coupling_runs=2
+
+=== sub-13 ===
+sub-13 HcpWm: A(h-e)=0.0734/0.0854 runs=2 coupling_runs=2
+sub-13 Stroop: A(h-e)=0.0903/-0.0971 runs=2 coupling_runs=2
+sub-13 Catell: A(h-e)=0.1581/0.2216 runs=2 coupling_runs=2
+sub-13 Attention: A(h-e)=-0.0910/-0.0152 runs=2 coupling_runs=2
+
+=== sub-14 ===
+sub-14 HcpWm: A(h-e)=-0.0775/-0.1646 runs=2 coupling_runs=2
+sub-14 Stroop: A(h-e)=0.0243/0.0479 runs=2 coupling_runs=2
+sub-14 Catell: A(h-e)=0.1774/0.1527 runs=2 coupling_runs=2
+sub-14 Attention: A(h-e)=0.0881/0.0619 runs=2 coupling_runs=2
+
+=== sub-15 ===
+sub-15 HcpWm: A(h-e)=0.0934/0.1829 runs=2 coupling_runs=2
+sub-15 Stroop: A(h-e)=0.0533/0.0749 runs=2 coupling_runs=2
+sub-15 Catell: A(h-e)=0.1680/0.3522 runs=2 coupling_runs=2
+sub-15 Attention: A(h-e)=0.0063/-0.0333 runs=2 coupling_runs=2
+
+Saved:
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling/per_subject_results.csv
+  /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling/group_summary.csv
+
+============================================
+Completed successfully!
+Results: /ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling
+End time: Mon Mar 30 14:53:11 CEST 2026
+============================================

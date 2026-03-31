@@ -38,7 +38,7 @@ DEFAULT_CONTRAST_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_ma
 DEFAULT_DTSERIES_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out"
 DEFAULT_EVENTS_BASE = "/ptmp/hmueller2/2025_ibc_latent/data/ibc_raw"
 DEFAULT_SUBNETWORK_DIR = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap"
-DEFAULT_NETWORK_LABEL_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks"
+DEFAULT_NETWORK_LABEL_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks"
 DEFAULT_ALL_CONTRASTS = "/home/hmueller2/ibc_code/ibc_latent/Data Info/all_contrasts.tsv"
 DEFAULT_OUTPUT = "/ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling"
 

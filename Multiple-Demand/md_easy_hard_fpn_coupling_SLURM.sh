@@ -28,7 +28,7 @@ CONTRAST_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR"
 DTSERIES_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out"
 EVENTS_BASE="/ptmp/hmueller2/2025_ibc_latent/data/ibc_raw"
 SUBNETWORK_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/subnetwork_derivation/infomap"
-NETWORK_LABEL_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks"
+NETWORK_LABEL_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks"
 ALL_CONTRASTS_TSV="/home/hmueller2/ibc_code/ibc_latent/Data Info/all_contrasts.tsv"
 OUTPUT_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/md_system/vertex_wise/md_easy_hard_fpn_coupling"
 

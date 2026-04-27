@@ -7,12 +7,18 @@ For each subject, this script:
 3) Retains parcel/network fragments whose parcel-fraction overlap exceeds a threshold.
 4) Writes a split-parcel manifest plus one dense mask per retained fragment.
 5) Keeps a hard parcel summary for downstream compatibility.
+
+Outputs:
+- sub-XX/parcel_network_assignment_subject.csv: summary of hard parcel assignments
+- sub-XX/split_parcels_manifest_subject_t0ZZ.csv: detailed manifest of split fragments and their properties
+- sub-XX/split_parcels_t0ZZ/parcel-YYY_*_partA.dscalar.nii: dense mask for each retained split fragment
+- sub-XX/sub-XX_split_parcels_combined_t0ZZ_parcel_colored.dlabel.nii: combined dlabel with all retained split parcels for parcel visualization
+- sub-XX/sub-XX_split_parcels_combined_t0ZZ_network_colored.dlabel.nii: combined dlabel with all retained split parcels for network visualization
 """
 
 from __future__ import annotations
 
 import argparse
-import re
 from pathlib import Path
 
 import nibabel as nib
@@ -20,18 +26,27 @@ import numpy as np
 import pandas as pd
 
 from hubness_utils import (
+    discover_subjects_from_subdirs,
     ensure_dir,
+    extract_network_colors_from_dlabel,
     infer_label_names_from_dlabel,
     is_fpn_network_name,
     load_glasser_parcellation,
+    load_subject_fpna_fpnb_flags,
     map_to_cortex,
+    sanitize_for_filename,
+    split_manifest_path,
+    split_parcels_dir,
+    split_threshold_tag,
+    subject_network_label_path,
 )
 
 DEFAULT_NETWORK_LABEL_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks"
 DEFAULT_PARCELIZED_FPN_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/parcelized_fpn"
 DEFAULT_OUTPUT_DIR = "/ptmp/hmueller2/2025_ibc_latent/outputs/hubness"
 DEFAULT_OVERLAP_THRESHOLD = 0.30
-NETWORK_DLABEL_NAME = "Bipartite_PhysicalCommunities+AlgorithmicLabeling.dlabel.nii"
+FPN_MODE_UNIFIED = "unified"
+FPN_MODE_SPLIT = "split"
 
 
 def _hsv_to_rgb(h: float, s: float, v: float) -> tuple[float, float, float]:
@@ -52,26 +67,6 @@ def _hsv_to_rgb(h: float, s: float, v: float) -> tuple[float, float, float]:
     else:
         r, g, b = c, 0, x
     return (r + m, g + m, b + m)
-
-
-def subject_network_label_path(network_label_base: str, subject: str) -> Path:
-    return Path(network_label_base) / f"sub-{subject}" / "resting_state" / NETWORK_DLABEL_NAME
-
-
-def load_subject_fpna_fpnb_flags(subject: str, parcelized_fpn_base: str) -> pd.DataFrame:
-    overlap_path = Path(parcelized_fpn_base) / f"sub-{subject}" / f"sub-{subject}_fpn_parcel_overlap.csv"
-    if not overlap_path.exists():
-        return pd.DataFrame(columns=["parcel_id", "fpna_selected", "fpnb_selected", "fpn_selected"])
-
-    df = pd.read_csv(overlap_path)
-    keep = [c for c in ["parcel_id", "fpna_selected", "fpnb_selected", "fpn_selected"] if c in df.columns]
-    return df[keep].copy() if keep else pd.DataFrame(columns=["parcel_id", "fpna_selected", "fpnb_selected", "fpn_selected"])
-
-
-def sanitize_for_filename(text: str) -> str:
-    text = re.sub(r"[^A-Za-z0-9._-]+", "_", str(text))
-    text = re.sub(r"_+", "_", text).strip("_")
-    return text or "unnamed"
 
 
 def save_split_mask(
@@ -153,8 +148,7 @@ def compute_subject_split_assignments(
 
     out = pd.DataFrame(split_rows)
     subject_dir = ensure_dir(output_dir / f"sub-{subject}")
-    threshold_str = f"_t{int(overlap_threshold * 100):03d}"
-    out_path = subject_dir / f"parcel_split_manifest_subject{threshold_str}.csv"
+    out_path = split_manifest_path(output_dir, subject, overlap_threshold)
     if not out.empty:
         out = out.sort_values(["parcel_id", "retained", "overlap_fraction", "network_id"], ascending=[True, False, False, True])
 
@@ -168,7 +162,7 @@ def compute_subject_split_assignments(
             retained_rank = int(row["retained_rank"])
             split_label = sanitize_for_filename(f"{parcel_name}__{net_name}__part{retained_rank}")
             mask = (parcellation_cortex == parcel_id) & (net_cortex == int(row["network_id"]))
-            split_dir = ensure_dir(subject_dir / f"split_parcels{threshold_str}")
+            split_dir = ensure_dir(split_parcels_dir(output_dir, subject, overlap_threshold))
             mask_path = split_dir / f"sub-{subject}_parcel-{parcel_id:03d}_{split_label}.dscalar.nii"
             save_split_mask(
                 template_img=template_img,
@@ -196,6 +190,7 @@ def compute_subject_assignment(
     output_dir: Path,
     parcellation_path: str | None,
     overlap_threshold: float,
+    fpn_mode: str,
 ) -> tuple[Path, Path]:
     parcellation_cortex, unique_parcels, parcel_name_map, cortical_indices, _ = load_glasser_parcellation(parcellation_path)
 
@@ -250,13 +245,19 @@ def compute_subject_assignment(
         )
 
     out = pd.DataFrame(rows)
-    fpn_flags = load_subject_fpna_fpnb_flags(subject, parcelized_fpn_base)
-    if not fpn_flags.empty:
-        out = out.merge(fpn_flags, on="parcel_id", how="left")
-    for col in ["fpna_selected", "fpnb_selected", "fpn_selected"]:
-        if col not in out.columns:
-            out[col] = 0
-        out[col] = out[col].fillna(0).astype(int)
+    if fpn_mode == FPN_MODE_SPLIT:
+        fpn_flags = load_subject_fpna_fpnb_flags(subject, parcelized_fpn_base)
+        if not fpn_flags.empty:
+            out = out.merge(fpn_flags, on="parcel_id", how="left")
+        for col in ["fpna_selected", "fpnb_selected", "fpn_selected"]:
+            if col not in out.columns:
+                out[col] = 0
+            out[col] = out[col].fillna(0).astype(int)
+    else:
+        # Unified mode: keep explicit FPN as a single flag and disable split flags.
+        out["fpna_selected"] = 0
+        out["fpnb_selected"] = 0
+        out["fpn_selected"] = out["is_fpn"].fillna(0).astype(int)
 
     subject_dir = ensure_dir(output_dir / f"sub-{subject}")
     hard_assignment_path = subject_dir / "parcel_network_assignment_subject.csv"
@@ -276,38 +277,6 @@ def compute_subject_assignment(
     )
     
     return hard_assignment_path, split_manifest_path
-
-
-def extract_network_colors(template_img: nib.Cifti2Image) -> dict[int, tuple[float, float, float, float]]:
-    """Extract RGBA colors from network dlabel label table.
-    
-    Returns a mapping of network_id -> (R, G, B, A) with values in [0, 1].
-    The label table is a dict where each network_id maps to (network_name, (R, G, B, A)).
-    """
-    network_colors = {}
-    first_axis = template_img.header.get_axis(0)
-    
-    # The label table is a numpy array of shape (1,) containing a dict
-    if hasattr(first_axis, 'label') and first_axis.label is not None:
-        try:
-            # Access the dict from the numpy array
-            label_dict = first_axis.label
-            if isinstance(label_dict, np.ndarray) and label_dict.dtype == object:
-                label_dict = label_dict[0]  # Extract the dict from shape (1,) array
-            
-            # Now iterate through the network labels
-            if isinstance(label_dict, dict):
-                for network_id, label_data in label_dict.items():
-                    if isinstance(label_data, tuple) and len(label_data) >= 2:
-                        # Format is (network_name, (R, G, B, A))
-                        network_name, rgba = label_data[0], label_data[1]
-                        if isinstance(rgba, (tuple, list)) and len(rgba) == 4:
-                            network_colors[network_id] = tuple(float(c) for c in rgba)
-        except (AttributeError, TypeError, IndexError, ValueError):
-            # If extraction fails, return empty dict and use fallback coloring
-            pass
-    
-    return network_colors
 
 
 def create_subject_split_dlabel(
@@ -330,8 +299,8 @@ def create_subject_split_dlabel(
                    "both" to create both versions.
     """
     subject_dir = Path(output_dir) / f"sub-{subject}"
-    threshold_str = f"_t{int(overlap_threshold * 100):03d}"
-    manifest_path = subject_dir / f"parcel_split_manifest_subject{threshold_str}.csv"
+    threshold_tag = split_threshold_tag(overlap_threshold)
+    manifest_path = split_manifest_path(output_dir, subject, overlap_threshold)
 
     if not manifest_path.exists():
         raise FileNotFoundError(f"Split manifest not found: {manifest_path}")
@@ -345,7 +314,7 @@ def create_subject_split_dlabel(
     # Get network colors if needed
     network_colors = {}
     if color_mode in ("network", "both"):
-        network_colors = extract_network_colors(template_img)
+        network_colors = extract_network_colors_from_dlabel(template_img)
 
     output_paths = []
     
@@ -410,45 +379,11 @@ def create_subject_split_dlabel(
 
         # Write output
         suffix = f"_{mode}_colored" if color_mode == "both" else ""
-        threshold_str = f"_t{int(overlap_threshold * 100):03d}"
-        out_path = subject_dir / f"sub-{subject}_split_parcels_combined{threshold_str}{suffix}.dlabel.nii"
+        out_path = subject_dir / f"sub-{subject}_split_parcels_combined{threshold_tag}{suffix}.dlabel.nii"
         nib.save(out_img, str(out_path))
         output_paths.append(out_path)
 
     return output_paths
-
-
-def build_group_consensus(subject_tables: list[Path], output_dir: Path) -> Path:
-    tables = [pd.read_csv(p) for p in subject_tables]
-    df = pd.concat(tables, ignore_index=True)
-
-    consensus_rows = []
-    for (parcel_id, parcel_name), grp in df.groupby(["parcel_id", "parcel_name"], sort=True):
-        counts = grp["assigned_network_name"].value_counts()
-        top_name = counts.index[0]
-        top_n = int(counts.iloc[0])
-        n_sub = int(len(grp))
-
-        consensus_rows.append(
-            {
-                "parcel_id": int(parcel_id),
-                "parcel_name": parcel_name,
-                "assigned_network_name": top_name,
-                "n_subjects": n_sub,
-                "n_subjects_assigned_top": top_n,
-                "pct_subjects_assigned_top": float(top_n / n_sub),
-                "assignment_fraction_mean": float(grp["assignment_fraction"].mean()),
-                "is_fpn": int(is_fpn_network_name(top_name)),
-                "fpna_selected_subjects": int(grp["fpna_selected"].sum()),
-                "fpnb_selected_subjects": int(grp["fpnb_selected"].sum()),
-                "fpn_selected_subjects": int(grp["fpn_selected"].sum()),
-            }
-        )
-
-    out = pd.DataFrame(consensus_rows).sort_values("parcel_id")
-    out_path = output_dir / "parcel_network_assignment_group.csv"
-    out.to_csv(out_path, index=False)
-    return out_path
 
 
 def parse_args() -> argparse.Namespace:
@@ -465,6 +400,12 @@ def parse_args() -> argparse.Namespace:
         help="Retain split fragments only when they cover at least this fraction of the original parcel.",
     )
     parser.add_argument(
+        "--fpn-mode",
+        choices=[FPN_MODE_UNIFIED, FPN_MODE_SPLIT],
+        default=FPN_MODE_UNIFIED,
+        help="FPN handling mode: unified FPN (default) or split FPNA/FPNB from subject-specific derivations.",
+    )
+    parser.add_argument(
         "--dlabel-coloring",
         choices=["parcel", "network", "both"],
         default="both",
@@ -472,8 +413,67 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--skip-dlabel", action="store_true", help="Skip creating combined dlabel file for wb_view visualization.")
     parser.add_argument("--dlabel-only", action="store_true", help="Only create dlabels from existing split_parcels; skip all other computations.")
-    parser.add_argument("--skip-group", action="store_true", help="Skip writing group consensus output.")
     return parser.parse_args()
+
+
+def create_subject_dlabels(
+    subject: str,
+    args: argparse.Namespace,
+    output_dir: Path,
+) -> list[Path]:
+    net_img = nib.load(str(subject_network_label_path(args.network_label_base, subject)))
+    net_data = net_img.get_fdata().squeeze().astype(int)
+    net_names = infer_label_names_from_dlabel(net_img)
+
+    parcellation_cortex, unique_parcels, parcel_name_map, cortical_indices, _ = load_glasser_parcellation(args.parcellation_path)
+    net_cortex = map_to_cortex(net_data, cortical_indices)
+
+    return create_subject_split_dlabel(
+        subject=subject,
+        output_dir=output_dir,
+        parcellation_cortex=parcellation_cortex,
+        unique_parcels=unique_parcels,
+        parcel_name_map=parcel_name_map,
+        template_img=net_img,
+        cortical_indices=cortical_indices,
+        net_cortex=net_cortex,
+        net_names=net_names,
+        color_mode=args.dlabel_coloring,
+        overlap_threshold=args.overlap_threshold,
+    )
+
+
+def process_subject_dlabel_only(subject: str, args: argparse.Namespace, output_dir: Path) -> list[str]:
+    manifest_path = split_manifest_path(output_dir, subject, args.overlap_threshold)
+
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Split manifest not found: {manifest_path}")
+
+    dlabel_paths = create_subject_dlabels(subject, args, output_dir)
+    return [f"sub-{subject}: wrote combined dlabel {dlabel_path}" for dlabel_path in dlabel_paths]
+
+
+def process_subject_full(subject: str, args: argparse.Namespace, output_dir: Path) -> list[str]:
+    hard_path, soft_path = compute_subject_assignment(
+        subject=subject,
+        network_label_base=args.network_label_base,
+        parcelized_fpn_base=args.parcelized_fpn_base,
+        output_dir=output_dir,
+        parcellation_path=args.parcellation_path,
+        overlap_threshold=args.overlap_threshold,
+        fpn_mode=args.fpn_mode,
+    )
+
+    messages = [
+        f"sub-{subject}: wrote parcel summary {hard_path}",
+        f"sub-{subject}: wrote split manifest {soft_path}",
+    ]
+
+    if not args.skip_dlabel:
+        dlabel_paths = create_subject_dlabels(subject, args, output_dir)
+        messages.extend([f"sub-{subject}: wrote combined dlabel {dlabel_path}" for dlabel_path in dlabel_paths])
+
+    return messages
 
 
 def main() -> None:
@@ -486,105 +486,24 @@ def main() -> None:
     if args.subjects:
         subjects = args.subjects
     else:
-        subjects = sorted([p.name.replace("sub-", "") for p in Path(args.network_label_base).glob("sub-*") if p.is_dir()])
+        subjects = discover_subjects_from_subdirs(args.network_label_base)
 
     if not subjects:
         raise ValueError("No subjects found")
 
-    subject_tables: list[Path] = []
     failures: list[tuple[str, str]] = []
 
-    # Mode 1: dlabel-only (fast): just create dlabels from existing split_parcels
-    if args.dlabel_only:
-        for subject in subjects:
-            try:
-                subject_dir = Path(output_dir) / f"sub-{subject}"
-                threshold_str = f"_t{int(args.overlap_threshold * 100):03d}"
-                manifest_path = subject_dir / f"parcel_split_manifest_subject{threshold_str}.csv"
-                
-                if not manifest_path.exists():
-                    raise FileNotFoundError(f"Split manifest not found: {manifest_path}")
-                
-                # Load the network dlabel to get its structure
-                net_img = nib.load(str(subject_network_label_path(args.network_label_base, subject)))
-                net_data = net_img.get_fdata().squeeze().astype(int)
-                net_names = infer_label_names_from_dlabel(net_img)
-                
-                # Load manifest to get network info
-                manifest = pd.read_csv(manifest_path)
-                retained_manifest = manifest[manifest["retained"] == 1].copy()
-                
-                # Load cortical data for mask reconstruction
-                parcellation_cortex, unique_parcels, parcel_name_map, cortical_indices, _ = load_glasser_parcellation(args.parcellation_path)
-                cortical_indices_arr = np.array(cortical_indices, dtype=bool)
-                net_cortex = map_to_cortex(net_data, cortical_indices)
-                
-                dlabel_paths = create_subject_split_dlabel(
-                    subject=subject,
-                    output_dir=output_dir,
-                    parcellation_cortex=parcellation_cortex,
-                    unique_parcels=unique_parcels,
-                    parcel_name_map=parcel_name_map,
-                    template_img=net_img,
-                    cortical_indices=cortical_indices,
-                    net_cortex=net_cortex,
-                    net_names=net_names,
-                    color_mode=args.dlabel_coloring,
-                    overlap_threshold=args.overlap_threshold,
-                )
-                for dlabel_path in dlabel_paths:
-                    print(f"sub-{subject}: wrote combined dlabel {dlabel_path}")
-                    
-            except Exception as exc:
-                failures.append((subject, str(exc)))
-                print(f"sub-{subject}: FAILED -> {exc}")
-    else:
-        # Mode 2: Full pipeline with assignments and dlabels
-        for subject in subjects:
-            try:
-                hard_path, soft_path = compute_subject_assignment(
-                    subject=subject,
-                    network_label_base=args.network_label_base,
-                    parcelized_fpn_base=args.parcelized_fpn_base,
-                    output_dir=output_dir,
-                    parcellation_path=args.parcellation_path,
-                    overlap_threshold=args.overlap_threshold,
-                )
-                subject_tables.append(hard_path)
-                print(f"sub-{subject}: wrote parcel summary {hard_path}")
-                print(f"sub-{subject}: wrote split manifest {soft_path}")
-
-                # Create combined dlabel for visualization (unless skipped)
-                if not args.skip_dlabel:
-                    parcellation_cortex, unique_parcels, parcel_name_map, cortical_indices, _ = load_glasser_parcellation(args.parcellation_path)
-                    net_img = nib.load(str(subject_network_label_path(args.network_label_base, subject)))
-                    net_data = net_img.get_fdata().squeeze().astype(int)
-                    net_cortex = map_to_cortex(net_data, cortical_indices)
-                    net_names = infer_label_names_from_dlabel(net_img)
-                    dlabel_paths = create_subject_split_dlabel(
-                        subject=subject,
-                        output_dir=output_dir,
-                        parcellation_cortex=parcellation_cortex,
-                        unique_parcels=unique_parcels,
-                        parcel_name_map=parcel_name_map,
-                        template_img=net_img,
-                        cortical_indices=cortical_indices,
-                        net_cortex=net_cortex,
-                        net_names=net_names,
-                        color_mode=args.dlabel_coloring,
-                        overlap_threshold=args.overlap_threshold,
-                    )
-                    for dlabel_path in dlabel_paths:
-                        print(f"sub-{subject}: wrote combined dlabel {dlabel_path}")
-            except Exception as exc:
-                failures.append((subject, str(exc)))
-                print(f"sub-{subject}: FAILED -> {exc}")
-
-        if subject_tables and not args.skip_group:
-            group_path = build_group_consensus(subject_tables, output_dir)
-            print(f"Wrote group consensus: {group_path}")
-        elif subject_tables and args.skip_group:
-            print("Skipped group consensus (--skip-group).")
+    for subject in subjects:
+        try:
+            if args.dlabel_only:
+                messages = process_subject_dlabel_only(subject, args, output_dir)
+            else:
+                messages = process_subject_full(subject, args, output_dir)
+            for msg in messages:
+                print(msg)
+        except Exception as exc:
+            failures.append((subject, str(exc)))
+            print(f"sub-{subject}: FAILED -> {exc}")
 
     if failures:
         print("\nCompleted with failures:")

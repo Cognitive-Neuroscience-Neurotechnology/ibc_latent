@@ -12,27 +12,26 @@
 # Split Glasser parcels by overlapping network labels per subject using SLURM array.
 # Run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Hubness/define_networks_SLURM.sh
 
-# Default behavior sets SKIP_GROUP=1 so each array task writes only subject-level outputs.
-# After array completion, run aggregation with SKIP_GROUP=0 and all subjects:
-#   sbatch --array=none /home/hmueller2/ibc_code/ibc_latent/Hubness/define_networks_SLURM.sh
 set -euo pipefail
 
 SUBJECTS_FILE="${SUBJECTS_FILE:-/ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt}"
-
 SUBJECT_LINE=$((SLURM_ARRAY_TASK_ID + 1))
 SUBJECT=$(sed -n "${SUBJECT_LINE}p" "$SUBJECTS_FILE")
+#SUBJECT=04
+SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/define_networks.py"
 
 NETWORK_LABEL_BASE="${NETWORK_LABEL_BASE:-/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks}"
 PARCELIZED_FPN_BASE="${PARCELIZED_FPN_BASE:-/ptmp/hmueller2/2025_ibc_latent/outputs/subnetworks/parcelized_fpn}"
 OUTPUT_DIR="${OUTPUT_DIR:-/ptmp/hmueller2/2025_ibc_latent/outputs/hubness}"
 PARCELLATION_PATH="${PARCELLATION_PATH:-}"
+
+# ---PARAMETERS------------------------------------------------------------
 OVERLAP_THRESHOLD="${OVERLAP_THRESHOLD:-0.30}" # change threshold
+FPN_MODE="${FPN_MODE:-unified}" # options: unified (default), split
 DLABEL_COLORING="${DLABEL_COLORING:-both}" # options: 'both' (default), 'network', 'parcel', 'none'
 SKIP_DLABEL="${SKIP_DLABEL:-0}" # set to 1 to skip dlabel creation (e.g. for testing or if only network outputs are needed)
 DLABEL_ONLY="${DLABEL_ONLY:-0}" # set to 1 to only create dlabel outputs (skips network and parcel outputs; use if only dlabels are needed)
-SKIP_GROUP="${SKIP_GROUP:-1}" # set to 0 to include group-level outputs (default is 1 to skip group outputs in array and run separately after with SKIP_GROUP=0)
-
-SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/define_networks.py"
+# --------------------------------------------------------------------------
 
 CONTAINER="${CONTAINER:-/home/rglz/containers/gfae.sif}"
 BIND_PATHS="${BIND_PATHS:-/run,/ptmp,/tmp,/opt/ohpc,/home/hmueller2}"
@@ -48,11 +47,11 @@ echo "Array Task: ${SLURM_ARRAY_TASK_ID:-single}/${SLURM_ARRAY_TASK_MAX:-single}
 echo "Script: ${SCRIPT}"
 echo "Output Dir: ${OUTPUT_DIR}"
 echo "Overlap Threshold: ${OVERLAP_THRESHOLD}"
+echo "FPN mode: ${FPN_MODE}"
 echo "Dlabel coloring: ${DLABEL_COLORING}"
 echo "Dlabel only mode: ${DLABEL_ONLY}"
 echo "Skip dlabel creation: ${SKIP_DLABEL}"
 echo "Container: ${CONTAINER}"
-echo "Skip group outputs: ${SKIP_GROUP}"
 echo "=========================================="
 
 CMD=(
@@ -62,6 +61,7 @@ CMD=(
     --parcelized-fpn-base "$PARCELIZED_FPN_BASE"
     --output-dir "$OUTPUT_DIR"
     --overlap-threshold "$OVERLAP_THRESHOLD"
+    --fpn-mode "$FPN_MODE"
     --dlabel-coloring "$DLABEL_COLORING"
 )
 
@@ -75,10 +75,6 @@ fi
 
 if [[ "$SKIP_DLABEL" == "1" ]]; then
     CMD+=(--skip-dlabel)
-fi
-
-if [[ "$SKIP_GROUP" == "1" ]]; then
-    CMD+=(--skip-group)
 fi
 
 if [[ -n "$CONTAINER" && -f "$CONTAINER" ]]; then
@@ -96,8 +92,3 @@ else
 fi
 
 echo "Subject ${SUBJECT}: complete"
-
-echo
-echo "NOTE: This array job runs with SKIP_GROUP=${SKIP_GROUP}; default is subject-level only (SKIP_GROUP=1)."
-echo "For final cohort-level group outputs after array completion, run:"
-echo "  SKIP_GROUP=0 sbatch --array=none /home/hmueller2/ibc_code/ibc_latent/Hubness/define_networks_SLURM.sh"

@@ -2,10 +2,8 @@
 Mapping the MD system in every individual by using task contrasts with difficulty manipulation.
 
 Contrasts to use:
-    HcpWm - 2back-0back
-    ItemRecognition - encode5-encode1 (probe5_mem-probe1_mem, probe5_new-probe1_new?)
-    Stroop - incongruent-congruent
-    Catell - hard-easy
+    Option 1 (mine): 2back-0back (HcpWm), incongruent-congruent (Stroop), hard-easy (Catell), double_incongruent-double_congruent (Attention)
+    Option 2 (Assem): 2back-0back (HcpWm), relational-match (HcpRelational), math-story (HcpLanguage)
 """
 
 import os
@@ -24,8 +22,11 @@ import shutil
 # ============================================================================
 
 MD_CONTRASTS = {
+    # ASSEM 2020 contrasts
     'HcpWm': ['2back-0back'],
-    'Stroop': ['incongruent-congruent'],
+    'HcpRelationalR': ['relational-match'],
+    #'HcpLanguage': ['math-story'],
+    #'Stroop': ['incongruent-congruent'],
     'Catell': ['hard-easy'],
     'Attention': ['double_incongruent-double_congruent'],
     #'ItemRecognition': ['probe5_mem-probe1_mem'],

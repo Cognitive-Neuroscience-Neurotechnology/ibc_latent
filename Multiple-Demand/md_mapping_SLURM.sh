@@ -24,7 +24,7 @@ echo ""
 
 # Set your paths here
 CONTRAST_BASE="/ptmp/hmueller2/2025_ibc_latent/outputs/glm/contrast_maps_fsLR"
-OUTPUT_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/md_system"
+OUTPUT_DIR="/ptmp/hmueller2/2025_ibc_latent/outputs/md_system_new"
 CONFIG_FILE="/ptmp/hmueller2/2025_ibc_latent/misc/subjects_resting.txt"
 
 # Pipeline mode: vertex | parcels | both
@@ -33,7 +33,7 @@ MODE="${MODE:-vertex}"
 
 # Common runtime options
 RUN_GROUP="${RUN_GROUP:-1}"                  # 1 = add --group
-SAVE_INDIVIDUAL="${SAVE_INDIVIDUAL:-0}"      # 0 = add --no-individual-contrasts
+SAVE_INDIVIDUAL="${SAVE_INDIVIDUAL:-1}"      # 0 = add --no-individual-contrasts
 
 # Vertex-wise options (md_mapping.py)
 SMOOTH_FWHM="${SMOOTH_FWHM:-4.0}"

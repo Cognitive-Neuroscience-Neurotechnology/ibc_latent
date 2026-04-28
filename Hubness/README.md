@@ -14,7 +14,7 @@ This folder contains a hubness workflow with the goals to:
   - Aggregation fallback: Max-overlap hard assignment (simple, deterministic)
 - GVC: Mean variability across all parcel connections (captures global connectivity volatility)
 - Task PC: Computed on variability matrix (measures task-modulation distribution)
-- Get inspiration from e.g. Cole et al 2013 (Flexible Hub) and 
+- Get inspiration from e.g. Cole et al (2013) (Flexible Hub) and e.g. Power et al. (2011) (Network static conectivity)
 
 ## Design Principles
 

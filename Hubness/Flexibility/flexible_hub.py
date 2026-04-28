@@ -72,11 +72,15 @@ def load_node_modules(subject: str, args: argparse.Namespace) -> pd.DataFrame:
         if not p.exists():
             raise FileNotFoundError(f"Missing network assignment file for sub-{subject}: {p}")
         df = pd.read_csv(p)
-        required = {"parcel_id", "assigned_network_name"}
+        required = {"parcel_id", "assigned_network_id", "assigned_network_name"}
         missing = required - set(df.columns)
         if missing:
             raise ValueError(f"Assignment file missing columns {missing}: {p}")
-        return df[["parcel_id", "assigned_network_name"]].copy()
+        return (
+            df[["assigned_network_id", "assigned_network_name"]]
+            .drop_duplicates()
+            .rename(columns={"assigned_network_id": "parcel_id", "assigned_network_name": "network_name"})
+        )
 
     manifest = load_split_parcel_manifest_retained(subject, args.assignment_dir, args.overlap_threshold)
     if manifest.empty:
@@ -189,10 +193,9 @@ def build_task_sigma_matrices(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray,
 def load_module_names_for_nodes(subject: str, args: argparse.Namespace, node_names: np.ndarray) -> np.ndarray:
     if args.analysis_level == ANALYSIS_LEVEL_NETWORK:
         assign = pd.read_csv(Path(args.assignment_dir) / f"sub-{subject}" / "parcel_network_assignment_subject.csv")
-        assign = assign.sort_values("parcel_id").reset_index(drop=True)
-        mapping = assign.set_index("assigned_network_name")["assigned_network_name"].to_dict()
-        # node_names are network names after collapse, so module names are identical.
-        return node_names.astype(str)
+        assign = assign[["assigned_network_id", "assigned_network_name"]].drop_duplicates().sort_values("assigned_network_id")
+        mapping = assign.set_index("assigned_network_id")["assigned_network_name"].to_dict()
+        return np.array([str(mapping.get(int(name), name)) if str(name).isdigit() else str(name) for name in node_names], dtype=str)
 
     manifest = load_split_parcel_manifest_retained(subject, args.assignment_dir, args.overlap_threshold)
     manifest = manifest.sort_values("split_mask_path").reset_index(drop=True)
@@ -305,7 +308,7 @@ def plot_circular(
         ax.text(x, y, str(node), fontsize=8, color="white", ha="center", va="center", fontweight="bold", zorder=4)
 
     ax.set_title(
-        f"sub-{subject} Flexible Hub Variability Circular Plot (top {100 - int(np.clip(edge_threshold_percentile, 0, 100))}% edges; center={node_names[center_idx]}; edges kept={kept})",
+        f"sub-{subject} Flexible Hub Variability Circular Plot (top {100 - int(np.clip(edge_threshold_percentile, 0, 100))}% edges; center={node_names[center_idx]})",
         fontsize=12,
         fontweight="bold",
     )
@@ -388,7 +391,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--assignment-dir", default=DEFAULT_ASSIGNMENT_DIR)
     parser.add_argument("--network-label-base", default=DEFAULT_NETWORK_LABEL_BASE)
     parser.add_argument("--overlap-threshold", type=float, default=0.30)
-    parser.add_argument("--edge-threshold-percentile", type=int, default=95)
+    parser.add_argument("--edge-threshold-percentile", type=int, default=80)
     parser.add_argument("--hub-selection-metric", choices=["gvc", "participation"], default="gvc")
     return parser.parse_args()
 
@@ -412,14 +415,8 @@ def main() -> None:
             module_map = load_node_modules(subject, args)
             stage1 = attach_modules(stage1, module_map)
 
-            if args.analysis_level == ANALYSIS_LEVEL_NETWORK:
-                stage1 = collapse_to_network_level(stage1)
-
             if stage1.empty:
                 raise ValueError(f"No usable PPI rows for sub-{subject}")
-
-            stage1 = stage1.rename(columns={"seed_module": "seed_name", "target_module": "target_name"}) if "seed_module" in stage1.columns else stage1
-            stage1 = stage1.rename(columns={"seed_name": "seed_name", "target_name": "target_name"})
 
             sigma, sigma_std, node_names, task_names = build_task_sigma_matrices(stage1)
             modules = load_module_names_for_nodes(subject, args, node_names)

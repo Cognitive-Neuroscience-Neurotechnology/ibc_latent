@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Group aggregation for the flexible hub pipeline.
-
+"""
+Group aggregation for the flexible hub pipeline.
 Loads subject-level variability matrices saved by flexible_hub.py, aligns them
 by node name, averages them, and writes group-level summaries and plots.
 """
@@ -80,7 +80,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--assignment-dir", default=DEFAULT_ASSIGNMENT_DIR)
     parser.add_argument("--network-label-base", default=DEFAULT_NETWORK_LABEL_BASE)
-    parser.add_argument("--edge-threshold-percentile", type=int, default=95)
+    parser.add_argument("--edge-threshold-percentile", type=int, default=80)
     parser.add_argument("--hub-selection-metric", choices=["gvc", "participation"], default="gvc")
     return parser.parse_args()
 

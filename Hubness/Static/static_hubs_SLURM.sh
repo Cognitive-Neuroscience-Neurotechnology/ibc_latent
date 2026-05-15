@@ -11,7 +11,7 @@
 
 # Compute resting-state FC and hub metrics for Glasser 360 or split network parcels.
 
-# Run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Hubness/static_hubs_SLURM.sh
+# Run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Hubness/Static/static_hubs_SLURM.sh
 
 # Environment variable options (set before sbatch to override):
 #   ANALYSIS_LEVEL=network_parcel - Analysis level: network | network_parcel
@@ -31,7 +31,7 @@ SUBJECTS_FILE="${SUBJECTS_FILE:-/ptmp/hmueller2/2025_ibc_latent/misc/subjects_re
 SUBJECT_LINE=$((SLURM_ARRAY_TASK_ID + 1))
 SUBJECT=$(sed -n "${SUBJECT_LINE}p" "$SUBJECTS_FILE")
 #SUBJECT=04
-SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/static_hubs.py"
+SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/Static/static_hubs.py"
 
 FMRIPREP_BASE="${FMRIPREP_BASE:-/ptmp/hmueller2/2025_ibc_latent/outputs/preprocessing/fmriprep_out}"
 ASSIGNMENT_DIR="${ASSIGNMENT_DIR:-/ptmp/hmueller2/2025_ibc_latent/outputs/hubness}"
@@ -39,17 +39,17 @@ OUTPUT_DIR="${OUTPUT_DIR:-/ptmp/hmueller2/2025_ibc_latent/outputs/hubness}"
 PARCELLATION_PATH="${PARCELLATION_PATH:-}"
 
 # ---PARAMETERS------------------------------------------------------------
-ANALYSIS_LEVEL="${ANALYSIS_LEVEL:-network}"
+ANALYSIS_LEVEL="${ANALYSIS_LEVEL:-network_parcel}" 
 FPN_MODE="${FPN_MODE:-unified}"
 SPLIT_PARCELS="${SPLIT_PARCELS:-1}"
 OVERLAP_THRESHOLD="${OVERLAP_THRESHOLD:-0.30}"
-EDGE_THRESHOLD_PCT="${EDGE_THRESHOLD_PCT:-50}"
+EDGE_THRESHOLD_PCT="${EDGE_THRESHOLD_PCT:-95}"
 TOP_HUBS_K="${TOP_HUBS_K:-15}"
-HUB_SELECTION_METRIC="${HUB_SELECTION_METRIC:-strength}"
+HUB_SELECTION_METRIC="${HUB_SELECTION_METRIC:-strength}" # Options: strength (default), participation
 SAVE_NETWORK_FC="${SAVE_NETWORK_FC:-1}"
 SAVE_TOP_HUBS_DLABEL="${SAVE_TOP_HUBS_DLABEL:-1}"
-# Use this flag to skip FC recomputation and just regenerate the spring plot from the saved FC npz file (useful for tweaking plot parameters without rerunning the whole analysis)
-PLOT_ONLY_FROM_SAVED_FC="${PLOT_ONLY_FROM_SAVED_FC:-0}"
+# Use flag -1 to skip FC recomputation and just regenerate the spring plot from the saved FC npz file (useful for tweaking plot parameters without rerunning the whole analysis)
+PLOT_ONLY_FROM_SAVED_FC="${PLOT_ONLY_FROM_SAVED_FC:-1}"
 # --------------------------------------------------------------------------
 
 CONTAINER="${CONTAINER:-/home/rglz/containers/gfae.sif}"

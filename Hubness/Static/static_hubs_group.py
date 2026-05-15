@@ -21,7 +21,7 @@ import pandas as pd
 
 from hubness_utils import ensure_dir
 from hubness_utils import extract_network_colors_from_dlabel
-from static_hubs import build_circular_plot_filename, create_circular_network_plot
+from Hubness.Static.static_hubs import build_circular_plot_filename, create_circular_network_plot
 import nibabel as nib
 
 DEFAULT_NETWORK_LABEL_BASE = "/ptmp/hmueller2/2025_ibc_latent/outputs/individual_networks/derived_networks"

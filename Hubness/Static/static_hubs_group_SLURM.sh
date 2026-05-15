@@ -9,7 +9,7 @@
 #SBATCH --mail-type=FAIL,TIME_LIMIT
 
 # Aggregate subject-level collapsed network FC outputs and make a group circular plot.
-# Run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Hubness/static_hubs_group_SLURM.sh
+# Run with: sbatch /home/hmueller2/ibc_code/ibc_latent/Hubness/Static/static_hubs_group_SLURM.sh
 
 # Environment variable options:
 #   OUTPUT_DIR=/ptmp/.../outputs/hubness
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/static_hubs_group.py"
+SCRIPT="/home/hmueller2/ibc_code/ibc_latent/Hubness/Static/static_hubs_group.py"
 OUTPUT_DIR="${OUTPUT_DIR:-/ptmp/hmueller2/2025_ibc_latent/outputs/hubness}"
 EDGE_THRESHOLD_PCT="${EDGE_THRESHOLD_PCT:-50}"
 HUB_SELECTION_METRIC="${HUB_SELECTION_METRIC:-strength}"

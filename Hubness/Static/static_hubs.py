@@ -16,6 +16,7 @@ Outputs:
 """
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -24,6 +25,10 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+
+HUBNESS_DIR = Path(__file__).resolve().parents[1]
+if str(HUBNESS_DIR) not in sys.path:
+    sys.path.insert(0, str(HUBNESS_DIR))
 
 from hubness_utils import (
     compute_participation_coefficient,

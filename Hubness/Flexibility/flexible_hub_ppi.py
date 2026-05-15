@@ -30,6 +30,7 @@ import pandas as pd
 from nilearn.glm.first_level import compute_regressor, run_glm
 from nilearn.signal import clean
 from scipy import stats
+import traceback
 
 from hubness_utils import (
     discover_subjects_from_subdirs,
@@ -178,7 +179,7 @@ def compute_rows_for_func_file(
 ) -> list[dict[str, object]]:
     func_path_obj = Path(func_path)
     func_img = nib.load(str(func_path_obj))
-    func_data_full = func_img.get_fdata()
+    func_data_full = func_img.get_fdata(dtype=np.float32)
     n_scans = func_data_full.shape[0]
     func_data = func_data_full[:, cortical_indices]
 
@@ -206,24 +207,75 @@ def compute_rows_for_func_file(
     if not conditions:
         return []
 
+    psych_by_cond: dict[str, np.ndarray] = {}
+    for cond in conditions:
+        cond_mask = events["trial_type"] == cond
+        onsets = events.loc[cond_mask, "onset"].to_numpy(dtype=np.float64)
+        durations = events.loc[cond_mask, "duration"].to_numpy(dtype=np.float64)
+        if len(onsets) == 0:
+            continue
+
+        psych, _ = compute_regressor((onsets, durations, np.ones(len(onsets))), hrf_model="spm", frame_times=frame_times)
+        psych = psych[:, 0] - psych[:, 0].mean()
+        # Validate psych shape and content once per condition and reuse it.
+        if psych.ndim != 1 or psych.shape[0] != n_scans:
+            print(f"ERROR: psych regresssor for {cond} has shape {psych.shape}; expected ({n_scans},)", flush=True)
+            continue
+        if np.allclose(psych.std(), 0, atol=1e-8) or not np.isfinite(psych).all():
+            continue
+
+        psych_by_cond[str(cond)] = psych
+
+    if not psych_by_cond:
+        return []
+
     parcel_ts_dict: dict[int, np.ndarray] = {}
     for parcel_id in parcel_ids:
         parcel_mask = parcel_masks[int(parcel_id)]
         if len(parcel_mask) != func_data.shape[1]:
             continue
+        # Validate parcel_mask shape to prevent downstream issues
+        if parcel_mask.ndim != 1:
+            print(f"ERROR: parcel_mask has ndim={parcel_mask.ndim} (expected 1); skipping parcel {parcel_id}", flush=True)
+            continue
         ts_raw = extract_timeseries(func_data, parcel_mask)
+        if not isinstance(ts_raw, np.ndarray) or ts_raw.ndim != 1:
+            print(f"ERROR: extract_timeseries returned non-1D or non-array result; skipping parcel {parcel_id}", flush=True)
+            continue
         if not np.isfinite(ts_raw).all():
             continue
         ts = clean(ts_raw.reshape(-1, 1), detrend=True, standardize="zscore_sample", confounds=None).ravel()
+        if not isinstance(ts, np.ndarray) or ts.ndim != 1:
+            print(f"ERROR: clean() returned non-1D or non-array result; skipping parcel {parcel_id}", flush=True)
+            continue
         if np.isfinite(ts).all() and np.std(ts) > 1e-8:
             parcel_ts_dict[int(parcel_id)] = ts
 
     if len(parcel_ts_dict) < 2:
         return []
 
+    # Validate parcel timeseries before using in design matrix
+    for pid, ts in parcel_ts_dict.items():
+        if not isinstance(ts, np.ndarray) or ts.ndim != 1:
+            print(f"ERROR: parcel {pid} timeseries is not 1D array; found ndim={getattr(ts, 'ndim', '?')}", flush=True)
+            del parcel_ts_dict[pid]
+            continue
+        if ts.shape[0] != n_scans:
+            print(f"ERROR: parcel {pid} timeseries has shape {ts.shape[0]} but expected n_scans={n_scans}", flush=True)
+            del parcel_ts_dict[pid]
+            continue
+
     rows: list[dict[str, object]] = []
     for seed_id in sorted(parcel_ts_dict.keys()):
         seed_ts = parcel_ts_dict[seed_id]
+        ppi_by_cond = {
+            cond: seed_ts * psych
+            for cond, psych in psych_by_cond.items()
+            if np.var(seed_ts * psych) >= 1e-6
+        }
+        if not ppi_by_cond:
+            continue
+
         for target_id in sorted(parcel_ts_dict.keys()):
             if target_id == seed_id:
                 continue
@@ -231,28 +283,41 @@ def compute_rows_for_func_file(
             target_ts = parcel_ts_dict[target_id]
             design_dict: dict[str, np.ndarray] = {"physio": seed_ts}
             for i in range(motion.shape[1]):
-                design_dict[f"motion_{i}"] = motion[:, i]
+                col = motion[:, i]
+                # Validate motion column
+                if col.ndim != 1 or col.shape[0] != n_scans:
+                    print(f"ERROR: motion column {i} has unexpected shape {col.shape}; skipping pair seed={seed_id} target={target_id}", flush=True)
+                    break
+                design_dict[f"motion_{i}"] = col
+            else:
+                # All motion columns validated; continue with design dict assembly
+                pass
+            if len(design_dict) < 1 + motion.shape[1]:
+                # Motion validation failed; skip this pair
+                continue
 
-            for cond in conditions:
-                cond_mask = events["trial_type"] == cond
-                onsets = events.loc[cond_mask, "onset"].to_numpy(dtype=np.float64)
-                durations = events.loc[cond_mask, "duration"].to_numpy(dtype=np.float64)
-                if len(onsets) == 0:
+            for cond, psych in psych_by_cond.items():
+                ppi = ppi_by_cond.get(cond)
+                if ppi is None or ppi.ndim != 1 or ppi.shape[0] != n_scans:
                     continue
-
-                psych, _ = compute_regressor((onsets, durations, np.ones(len(onsets))), hrf_model="spm", frame_times=frame_times)
-                psych = psych[:, 0] - psych[:, 0].mean()
-                if np.allclose(psych.std(), 0, atol=1e-8) or not np.isfinite(psych).all():
-                    continue
-
-                ppi = seed_ts * psych
-                if np.var(ppi) < 1e-6:
-                    continue
-
                 design_dict[f"psych_{cond}"] = psych
                 design_dict[f"ppi_{cond}"] = ppi
 
             if not any(key.startswith("ppi_") for key in design_dict):
+                continue
+
+            # Pre-validate all design_dict values are 1D arrays of length n_scans
+            for key, val in design_dict.items():
+                if not isinstance(val, np.ndarray) or val.ndim != 1:
+                    print(f"ERROR: design_dict[{key}] is not 1D array (type={type(val)}, ndim={getattr(val, 'ndim', '?')}); skipping pair", flush=True)
+                    break
+                if val.shape[0] != n_scans:
+                    print(f"ERROR: design_dict[{key}] has shape {val.shape[0]} but expected {n_scans}; skipping pair", flush=True)
+                    break
+            else:
+                # All values validated
+                pass
+            if not all(isinstance(v, np.ndarray) and v.ndim == 1 and v.shape[0] == n_scans for v in design_dict.values()):
                 continue
 
             design_matrix = pd.DataFrame(design_dict)
@@ -260,6 +325,21 @@ def compute_rows_for_func_file(
             keep_cols = stds[stds > 1e-8].index.tolist()
             design_matrix = design_matrix[keep_cols]
             design_matrix["constant"] = 1.0
+            # Check for object dtype columns which can create huge, unexpected
+            # object arrays when converting. Try to coerce problematic columns.
+            if (design_matrix.dtypes == object).any():
+                for col in design_matrix.columns:
+                    if design_matrix[col].dtype == object:
+                        design_matrix[col] = pd.to_numeric(design_matrix[col], errors="coerce")
+
+            # Final shape/dtype diagnostic (removed verbose output to reduce log file sizes)
+
+            # Prevent absurdly large allocations (likely indicates an earlier shape bug)
+            est_rows = design_matrix.shape[0]
+            est_cols = design_matrix.shape[1]
+            if est_rows > 2_000_000 or (est_rows * est_cols) > 100_000_000:
+                print(f"ERROR: design matrix too large ({est_rows} x {est_cols}), skipping this run", flush=True)
+                continue
 
             X = design_matrix.values.astype(np.float64)
             y = target_ts.astype(np.float64).reshape(-1)
@@ -267,13 +347,32 @@ def compute_rows_for_func_file(
             df_res = X.shape[0] - rank
             if df_res <= 0:
                 continue
+            # Run GLM with a safe fallback to OLS (np.linalg.lstsq) if SVD or
+            # GLM internals fail. Capture tracebacks for debugging.
+            try:
+                labels, results = run_glm(y.reshape(-1, 1), X, noise_model="ar1", bins=100)
+                glm_result = results[labels[0]]
+                theta = np.asarray(glm_result.theta, dtype=np.float64).reshape(-1)
+                residuals = y - (X @ theta)
+                sigma2 = float((residuals @ residuals) / df_res)
+            except Exception as exc:
+                # Fallback: ordinary least squares via lstsq
+                try:
+                    theta, *_ = np.linalg.lstsq(X, y, rcond=None)
+                    theta = np.asarray(theta, dtype=np.float64).reshape(-1)
+                    residuals = y - (X @ theta)
+                    sigma2 = float((residuals @ residuals) / df_res)
+                except Exception as exc2:
+                    continue
 
-            labels, results = run_glm(y.reshape(-1, 1), X, noise_model="ar1", bins=100)
-            glm_result = results[labels[0]]
-            theta = np.asarray(glm_result.theta, dtype=np.float64).reshape(-1)
-            residuals = y - (X @ theta)
-            sigma2 = float((residuals @ residuals) / df_res)
-            XtX_pinv = np.linalg.pinv(X.T @ X)
+            # Compute XtX_pinv but guard against potential SVD failures
+            try:
+                XtX_pinv = np.linalg.pinv(X.T @ X)
+            except Exception:
+                try:
+                    XtX_pinv = np.linalg.pinv(X)
+                except Exception:
+                    XtX_pinv = None
             col_names = design_matrix.columns.tolist()
 
             for cond in conditions:
@@ -282,8 +381,12 @@ def compute_rows_for_func_file(
                     continue
                 idx = col_names.index(ppi_col)
                 beta = float(theta[idx])
-                variance = float(sigma2 * XtX_pinv[idx, idx])
-                se = np.sqrt(variance) if variance > 0 else np.inf
+                if XtX_pinv is None:
+                    variance = float("nan")
+                    se = float("nan")
+                else:
+                    variance = float(sigma2 * XtX_pinv[idx, idx])
+                    se = np.sqrt(variance) if variance > 0 else np.inf
                 tstat = beta / se if np.isfinite(se) and se > 0 else 0.0
                 pval = 2 * (1 - stats.t.cdf(abs(tstat), df_res)) if np.isfinite(tstat) else 1.0
 

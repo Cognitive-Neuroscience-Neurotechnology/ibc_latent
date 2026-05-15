@@ -49,7 +49,7 @@ def color_from_name(name: str, alpha: float = 1.0) -> Tuple[float, float, float,
     return float(rgba[0]), float(rgba[1]), float(rgba[2]), float(alpha)
 
 
-def build_plot_filename(analysis_level: str, edge_threshold_percentile: int, hub_selection_metric: str) -> str:
+def build_plot_filename(analysis_level: str, edge_threshold_percentile: float, hub_selection_metric: str) -> str:
     kept_pct = 100 - int(np.clip(edge_threshold_percentile, 0, 100))
     return f"flexible_hub_{analysis_level}_edges{kept_pct:03d}_{hub_selection_metric}.png"
 
@@ -64,6 +64,25 @@ def load_stage1_results(subject: str, args: argparse.Namespace) -> pd.DataFrame:
     if df.empty:
         raise ValueError(f"Stage 1 PPI file is empty for sub-{subject}: {stage1_path}")
     return df
+
+
+def load_variability_state(subject: str, args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    subject_dir = Path(args.output_dir) / f"sub-{subject}" / "flexible"
+    state_path = subject_dir / f"flexible_hub_variability_{args.analysis_level}.npz"
+    if not state_path.exists():
+        raise FileNotFoundError(f"Missing saved variability state for sub-{subject}: {state_path}")
+
+    with np.load(state_path, allow_pickle=True) as data:
+        required = {"sigma", "sigma_std", "node_names", "node_modules", "task_names"}
+        missing = required - set(data.files)
+        if missing:
+            raise ValueError(f"Variability state missing keys {missing}: {state_path}")
+        sigma = np.asarray(data["sigma"], dtype=float)
+        sigma_std = np.asarray(data["sigma_std"], dtype=float)
+        node_names = np.asarray(data["node_names"], dtype=str)
+        modules = np.asarray(data["node_modules"], dtype=str)
+        task_names = np.asarray(data["task_names"], dtype=str)
+    return sigma, sigma_std, node_names, modules, task_names
 
 
 def load_node_modules(subject: str, args: argparse.Namespace) -> pd.DataFrame:
@@ -261,7 +280,7 @@ def plot_circular(
     modules: np.ndarray,
     subject: str,
     output_path: Path,
-    edge_threshold_percentile: int,
+    edge_threshold_percentile: float,
     hub_selection_metric: str,
     color_map: dict[str, tuple[float, float, float, float]],
 ) -> None:
@@ -325,15 +344,19 @@ def plot_spring(
     modules: np.ndarray,
     subject: str,
     output_path: Path,
-    edge_threshold_percentile: int,
+    edge_threshold_percentile: float,
     hub_selection_metric: str,
     color_map: dict[str, tuple[float, float, float, float]],
+    spring_k: float,
+    spring_iterations: int,
+    spring_scale: float,
+    max_labels: int,
 ) -> None:
     node_metric = np.mean(sigma, axis=1) if hub_selection_metric == "gvc" else compute_participation_coefficient(sigma, modules)
     sizes_rank = np.argsort(np.argsort(node_metric)).astype(float)
     if len(node_metric) > 1:
         sizes_rank = sizes_rank / float(len(node_metric) - 1)
-    node_sizes = 40.0 + 350.0 * (sizes_rank ** 1.7)
+    node_sizes = 28.0 + 260.0 * (sizes_rank ** 1.7)
 
     G = nx.Graph()
     for idx, node in enumerate(node_names):
@@ -343,6 +366,7 @@ def plot_spring(
     edge_vals = sigma[tri]
     edge_vals = edge_vals[np.isfinite(edge_vals)]
     threshold = np.percentile(edge_vals, float(np.clip(edge_threshold_percentile, 0, 100))) if edge_vals.size else np.inf
+    edge_span = max(float(np.max(edge_vals)) - float(threshold), 1e-9) if edge_vals.size else 1.0
     kept = 0
     for i, j in zip(*tri):
         value = float(sigma[i, j])
@@ -351,26 +375,36 @@ def plot_spring(
         kept += 1
         G.add_edge(i, j, weight=value)
 
-    pos = nx.spring_layout(G, seed=42, k=2.0 if len(G) < 50 else 1.5, iterations=200)
+    pos = nx.spring_layout(
+        G,
+        seed=42,
+        k=float(spring_k),
+        iterations=int(spring_iterations),
+        weight=None,
+        scale=float(spring_scale),
+        center=(0.0, 0.0),
+    )
     fig, ax = plt.subplots(figsize=(16, 14))
 
     for i, j, data in G.edges(data=True):
         value = float(data.get("weight", 0.0))
-        width = 0.5 + 5.0 * (value / max(float(np.max(edge_vals)) if edge_vals.size else 1.0, 1e-9))
-        alpha = 0.12 + 0.8 * (value / max(float(np.max(edge_vals)) if edge_vals.size else 1.0, 1e-9))
+        edge_norm = np.clip((value - float(threshold)) / edge_span, 0.0, 1.0)
+        width = 0.7 + 4.8 * (edge_norm ** 1.2)
+        alpha = 0.20 + 0.70 * (edge_norm ** 0.9)
+        edge_color = plt.cm.magma(0.25 + 0.75 * edge_norm)
         x0, y0 = pos[i]
         x1, y1 = pos[j]
-        ax.plot([x0, x1], [y0, y1], color="#3a3a3a", alpha=alpha, linewidth=width, zorder=1)
+        ax.plot([x0, x1], [y0, y1], color=edge_color, alpha=alpha, linewidth=width, zorder=1)
 
-    hub_rank = np.argsort(node_metric)[-min(20, len(node_metric)) :][::-1]
+    hub_rank = np.argsort(node_metric)[-min(max_labels, len(node_metric)) :][::-1]
     hub_set = set(int(i) for i in hub_rank)
     for idx, node in enumerate(node_names):
         module_name = str(modules[idx])
         rgba = color_map.get(module_name, color_from_name(module_name))
         x, y = pos[idx]
-        ax.scatter([x], [y], s=[node_sizes[idx] * (1.4 if idx in hub_set else 1.0)], c=[rgba], edgecolors="black", linewidth=2.0 if idx in hub_set else 1.0, zorder=3)
+        ax.scatter([x], [y], s=[node_sizes[idx] * (1.55 if idx in hub_set else 1.05)], c=[rgba], edgecolors="black", linewidth=2.2 if idx in hub_set else 1.0, zorder=3)
         if idx in hub_set:
-            ax.text(x, y, str(node)[:14], fontsize=6, color="white", ha="center", va="center", fontweight="bold", zorder=4)
+            ax.text(x, y, str(node)[:16], fontsize=6, color="white", ha="center", va="center", fontweight="bold", zorder=4)
 
     ax.set_title(
         f"sub-{subject} Flexible Hub Variability Spring Plot (top {100 - int(np.clip(edge_threshold_percentile, 0, 100))}% edges; edges kept={kept})",
@@ -391,8 +425,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--assignment-dir", default=DEFAULT_ASSIGNMENT_DIR)
     parser.add_argument("--network-label-base", default=DEFAULT_NETWORK_LABEL_BASE)
     parser.add_argument("--overlap-threshold", type=float, default=0.30)
-    parser.add_argument("--edge-threshold-percentile", type=int, default=80)
+    parser.add_argument("--edge-threshold-percentile", type=float, default=80.0)
     parser.add_argument("--hub-selection-metric", choices=["gvc", "participation"], default="gvc")
+    parser.add_argument("--plot-only", action="store_true", help="Only regenerate plots from the saved variability .npz files.")
+    parser.add_argument("--spring-k", type=float, default=3.0, help="Spring-layout repulsion strength; larger values spread nodes further apart.")
+    parser.add_argument("--spring-iterations", type=int, default=400, help="Number of iterations for the spring layout solver.")
+    parser.add_argument("--spring-scale", type=float, default=5.0, help="Final scale of the spring layout coordinates.")
+    parser.add_argument("--spring-max-labels", type=int, default=15, help="Number of highest-ranked nodes to label in the spring plot.")
     return parser.parse_args()
 
 
@@ -411,29 +450,32 @@ def main() -> None:
     failures: list[tuple[str, str]] = []
     for subject in subjects:
         try:
-            stage1 = load_stage1_results(subject, args)
-            module_map = load_node_modules(subject, args)
-            stage1 = attach_modules(stage1, module_map)
-
-            if stage1.empty:
-                raise ValueError(f"No usable PPI rows for sub-{subject}")
-
-            sigma, sigma_std, node_names, task_names = build_task_sigma_matrices(stage1)
-            modules = load_module_names_for_nodes(subject, args, node_names)
-            metrics = summarize_variability(sigma, node_names, modules, subject)
-
             subject_dir = ensure_dir(output_dir / f"sub-{subject}" / "flexible")
-            np.savez_compressed(
-                subject_dir / f"flexible_hub_variability_{args.analysis_level}.npz",
-                sigma=sigma,
-                sigma_std=sigma_std,
-                node_names=node_names,
-                node_modules=modules,
-                task_names=task_names,
-                analysis_level=args.analysis_level,
-                subject=subject,
-            )
-            metrics.to_csv(subject_dir / f"flexible_hub_metrics_{args.analysis_level}.csv", index=False)
+            if args.plot_only:
+                sigma, sigma_std, node_names, modules, task_names = load_variability_state(subject, args)
+            else:
+                stage1 = load_stage1_results(subject, args)
+                module_map = load_node_modules(subject, args)
+                stage1 = attach_modules(stage1, module_map)
+
+                if stage1.empty:
+                    raise ValueError(f"No usable PPI rows for sub-{subject}")
+
+                sigma, sigma_std, node_names, task_names = build_task_sigma_matrices(stage1)
+                modules = load_module_names_for_nodes(subject, args, node_names)
+                metrics = summarize_variability(sigma, node_names, modules, subject)
+
+                np.savez_compressed(
+                    subject_dir / f"flexible_hub_variability_{args.analysis_level}.npz",
+                    sigma=sigma,
+                    sigma_std=sigma_std,
+                    node_names=node_names,
+                    node_modules=modules,
+                    task_names=task_names,
+                    analysis_level=args.analysis_level,
+                    subject=subject,
+                )
+                metrics.to_csv(subject_dir / f"flexible_hub_metrics_{args.analysis_level}.csv", index=False)
 
             color_map = load_infomap_color_map(subject, args, modules)
             if args.analysis_level == ANALYSIS_LEVEL_NETWORK:
@@ -457,9 +499,16 @@ def main() -> None:
                     edge_threshold_percentile=args.edge_threshold_percentile,
                     hub_selection_metric=args.hub_selection_metric,
                     color_map=color_map,
+                    spring_k=args.spring_k,
+                    spring_iterations=args.spring_iterations,
+                    spring_scale=args.spring_scale,
+                    max_labels=args.spring_max_labels,
                 )
 
-            print(f"sub-{subject}: wrote flexible variability outputs ({args.analysis_level})")
+            if args.plot_only:
+                print(f"sub-{subject}: rewrote flexible plot only ({args.analysis_level})")
+            else:
+                print(f"sub-{subject}: wrote flexible variability outputs ({args.analysis_level})")
         except Exception as exc:
             failures.append((subject, str(exc)))
             print(f"sub-{subject}: FAILED -> {exc}")

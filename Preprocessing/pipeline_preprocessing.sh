@@ -87,6 +87,7 @@ import numpy as np
 from scipy.signal import detrend
 img = nib.load("${bold}")
 data = img.get_fdata()
+### Bugfix: NEED TO TRANSPOSE BEFORE OR JUST USE AXIS=0??? ###
 demeaned = data - data.mean(axis=-1, keepdims=True)
 detrended = detrend(demeaned, axis=-1, type='linear')
 nib.save(nib.Cifti2Image(detrended, img.header), "${demeaned_detrended}")

@@ -140,6 +140,89 @@ def map_to_cortex(data_1d: np.ndarray, cortical_indices: np.ndarray) -> np.ndarr
     )
 
 
+def load_cifti_row(path: str | Path, row_index: int = 0) -> tuple[np.ndarray, nib.Cifti2Image]:
+    img = nib.load(str(path))
+    data = np.asarray(img.get_fdata())
+
+    if data.ndim == 1:
+        if row_index != 0:
+            raise ValueError(f"Requested row {row_index} from 1D CIFTI data in {path}")
+        row = data
+    elif data.ndim == 2:
+        if row_index < 0 or row_index >= data.shape[0]:
+            raise ValueError(f"Row index {row_index} out of range for shape {data.shape} in {path}")
+        row = data[row_index]
+    else:
+        raise ValueError(f"Unsupported CIFTI data shape {data.shape} for {path}")
+
+    return np.asarray(row), img
+
+
+def build_binary_mask(
+    data_1d: np.ndarray,
+    include_values: Iterable[int] | None = None,
+    positive_as_true: bool = True,
+) -> np.ndarray:
+    if include_values is not None:
+        include_array = np.array(list(include_values), dtype=int)
+        return np.isin(data_1d.astype(int), include_array)
+
+    if positive_as_true:
+        return np.asarray(data_1d > 0)
+
+    return np.asarray(data_1d != 0)
+
+
+def calculate_cifti_overlap_mask(
+    data_a: np.ndarray,
+    data_b: np.ndarray,
+    include_values_a: Iterable[int] | None = None,
+    include_values_b: Iterable[int] | None = None,
+) -> np.ndarray:
+    mask_a = build_binary_mask(data_a, include_values=include_values_a)
+    mask_b = build_binary_mask(data_b, include_values=include_values_b)
+    if mask_a.shape != mask_b.shape:
+        raise ValueError(f"Mask shape mismatch: {mask_a.shape} vs {mask_b.shape}")
+    return mask_a & mask_b
+
+
+def subject_mask_count_map(masks: list[np.ndarray]) -> np.ndarray:
+    if not masks:
+        raise ValueError("No masks provided")
+
+    first_shape = masks[0].shape
+    for idx, mask in enumerate(masks, start=1):
+        if mask.shape != first_shape:
+            raise ValueError(
+                f"Mask {idx} has shape {mask.shape}, expected {first_shape}"
+            )
+
+    stack = np.stack([np.asarray(mask, dtype=np.uint8) for mask in masks], axis=0)
+    return np.sum(stack, axis=0).astype(np.int16)
+
+
+def count_to_fraction_map(count_map: np.ndarray, n_subjects: int) -> np.ndarray:
+    if n_subjects <= 0:
+        raise ValueError("n_subjects must be > 0")
+    return np.asarray(count_map, dtype=np.float32) / float(n_subjects)
+
+
+def save_dscalar_maps(path: str | Path, maps_2d: np.ndarray, map_names: list[str], template_img: nib.Cifti2Image) -> None:
+    maps_2d = np.asarray(maps_2d)
+    if maps_2d.ndim != 2:
+        raise ValueError(f"Expected 2D array for dscalar maps, got shape {maps_2d.shape}")
+    if maps_2d.shape[0] != len(map_names):
+        raise ValueError(
+            f"Number of maps ({maps_2d.shape[0]}) does not match map names ({len(map_names)})"
+        )
+
+    brain_axis = template_img.header.get_axis(1)
+    scalar_axis = nib.cifti2.ScalarAxis(map_names)
+    header = nib.cifti2.Cifti2Header.from_axes((scalar_axis, brain_axis))
+    out_img = nib.Cifti2Image(maps_2d.astype(np.float32), header=header)
+    nib.save(out_img, str(path))
+
+
 def is_fpn_network_name(name: str) -> bool:
     n = canonicalize_label(name)
     return "frontoparietal" in n or n.startswith("fpn") or "frontpar" in n
